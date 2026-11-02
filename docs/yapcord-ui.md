@@ -54,7 +54,10 @@ window state, theme, locale, scroll position and synthetic content. Freeze
 animations and allow loading to finish. Capture the app window only. Compare
 regions such as navigation, header and composer separately when content cannot
 be normalized. Different text, avatars or scroll positions dominate a whole
-window pixel difference even when the layout is close.
+window pixel difference even when the layout is close. Check that captures
+contain the rendered application before comparing: Windows capture APIs can
+return a correctly sized blank frame while a window is starting or resizing.
+Retry the capture rather than interpreting that as a client regression.
 
 Optional masks exclude unstable or private regions from both images and from
 the metric denominator. Supply a JSON array of integer `[x, y, width, height]`
