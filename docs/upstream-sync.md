@@ -4,6 +4,27 @@ YapCord preserves Yapfast's Git history and uses ordinary merges to incorporate
 updates. It is an independent GitHub repository; synchronization does not require
 membership in GitHub's fork network.
 
+## Check for existing upstream work
+
+Fetch upstream at the start of each development session. Review new commits
+and relevant issues and pull requests before starting an area of work. Merge
+reviewed updates before each UI milestone, and prioritize applicable security
+and protocol fixes. This is an active development habit, not a scheduled job.
+
+Check what the current implementation already offers before replacing it.
+For example, Yapfast already has a Discord-like Bonfire palette and status
+menus; a richer account popover may be a visual extension of those facilities.
+An upstream PR might supply part of the work, but remains unshipped until it
+is merged and verified. Record the decision to reuse, wait, adapt or implement
+in the relevant YapCord development notes.
+
+The initial review on November 2, 2026 found
+[PR 36](https://github.com/yapfast/yapfast/pull/36) for composer/header/channel
+alignment and [issue 29](https://github.com/yapfast/yapfast/issues/29) for UI
+polish. Treat these links as a dated snapshot; check their current state before
+working on those details. [AGENTS.md](../AGENTS.md) makes this workflow part of
+the project's development instructions.
+
 ## Remotes
 
 The initial checkout has:
