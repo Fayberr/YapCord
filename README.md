@@ -14,7 +14,7 @@ That means treating visual hierarchy, predictable navigation and everyday intera
 
 **Initial setup.** The YapCord-specific interface has not been implemented. The application currently retains Yapfast's interface, backend, package names and build infrastructure.
 
-The initial YapCord changes, dated November 2, 2026, are limited to this README and developer documentation. There are no YapCord binaries or releases, and no independently verified YapCord performance improvements or benchmarks. Historical tags come from upstream and do not represent YapCord releases.
+The initial YapCord changes, dated November 2, 2026, are limited to this README and developer documentation. A local Windows development build has since been cross-compiled on ARM64 Linux and passed its native Windows build smoke check; see the [build record](docs/windows-arm64-build.md). No prebuilt YapCord downloads or releases are published, and no YapCord performance improvements or benchmarks have been independently verified. Historical tags come from upstream and do not represent YapCord releases.
 
 ## Project goals
 

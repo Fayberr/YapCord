@@ -3,6 +3,11 @@
 Recorded November 2, 2026. This is a documentation-only downstream setup;
 it does not certify a runnable build or a redesigned interface.
 
+Follow-up: a Windows development build was subsequently cross-compiled on
+ARM64 Linux and passed the native Windows smoke check. The
+[build and deployment record](windows-arm64-build.md) describes that result.
+The original setup checks and limitations below remain a historical record.
+
 ## Provenance and scope
 
 - Upstream: <https://github.com/yapfast/yapfast>.
