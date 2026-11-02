@@ -51,8 +51,7 @@ bounds; upstream mode keeps its 48px tiles. The rail remains 72px wide.
 
 The account dock is an inset 60px card with 8px side/bottom margins and a
 40px avatar. The microphone, headphone, device menus and settings controls
-keep their existing callbacks. The status selector remains the inherited menu;
-this is not yet Discord's richer account popover.
+keep their existing callbacks. The account menu now uses the downstream popover described below.
 
 On the DM home, the existing room filter moves into the 48px header. Its
 label says what it actually searches: conversations. Friends and Requests stay
@@ -76,6 +75,44 @@ Upstream was fetched again for this pass on November 2, 2026. Main remained
 at `b64b9a7`; PR 36 was still open. No shipped upstream account-popover or
 caption-bar replacement was found. These changes are downstream presentation
 work, while protocol, media, core state and dependency pins remain unchanged.
+
+## Account popover and user settings
+
+The third pass follows the owner's additional Discord references. The account
+popover lives in `ui/yapcord/account-popover.slint`: a 300px card with an 80px
+avatar, the account name, available custom status and game activity, and grouped
+profile, presence and settings actions. Status choices reuse `StatusOption`;
+opening the card resets the expanded status list. Changing presence, editing
+profiles and custom status keep their existing callbacks. Copy User ID uses
+`AppState.discord_user` through one adapter property and the inherited clipboard
+function. It is omitted when no ID is available. The card scrolls within the
+space above the account dock on shorter windows.
+
+The header uses a neutral theme surface. The account summary does not provide
+banner, biography, pronoun or badge data, so those fields are absent. There are
+no placeholder subscription, account-switching or billing actions. Fetching a
+richer own profile remains future work and should reuse upstream profile APIs.
+
+User settings now use a 1400px modal with a 72px vertical outer inset at the
+reference viewport. The 266px sidebar contains the account identity, existing
+profile editor action, a case-insensitive filter over supported page names and
+40px navigation rows. A 48px page header holds the title and close action;
+the body centers a column up to 696px wide. Navigation and content scroll
+independently. Switch faces move to the right and use 48px by 24px bounds,
+while their focus, disabled and controlled-state behavior remains upstream.
+
+`SettingsFrame` opts into this shell only through `SettingsScreen`. Server and
+channel settings keep their existing frame and content-bar coordinates. The
+section IDs, settings page contents, device refresh and Escape handling remain
+inherited. Adding an upstream settings page requires adding its destination to
+`ui/yapcord/settings-nav.slint` and its header title in `SettingsScreen`; merging
+a backend feature alone does not create a new custom navigation entry.
+
+Upstream was checked again before this work: main remained at `b64b9a7`, PR 36
+was still open, and no open PR supplied this account/settings replacement.
+[Issue 64](https://github.com/yapfast/yapfast/issues/64) discusses Discord design
+parity and had no answer at the time of review. This is not evidence that
+upstream has ruled out similar work; check again before the next milestone.
 
 ## Screenshot comparison
 
@@ -139,8 +176,9 @@ Remove-Item Env:YAPCORD_UI
 
 Run a second preview without that environment variable and with a different
 empty data directory for YapCord's defaults. Do not run two normal sessions
-against the same data directory. The account menu, rich message cards and most settings controls remain
-inherited components. Upstream mode retains the original title bar and desktop
+against the same data directory. Rich message cards and most settings controls
+remain inherited components. Upstream mode also retains the original status
+menu, settings navigation, title bar and desktop
 frame policy as well as the original widget metrics.
 
 ## Build and verification limits
@@ -201,3 +239,40 @@ still need interactive review.
 These checks exercise the inherited UI callback contract and the presentation
 changes. They do not validate real-account messages, voice, screen sharing,
 Discord policy compatibility or a complete Discord replica.
+
+## Third-pass local verification
+
+The next pass was developed and reviewed entirely on ARM64 Linux. An isolated
+Slint 1.18.1 interpreter harness loaded the actual interface with the patched
+core and a headless software renderer, using synthetic account data. Before
+the implementation, the reference-position Appearance action and the new
+account-settings destination failed their checks. Afterward, local scenarios
+verified settings navigation and filtering, device refresh, Escape and header
+close, profile editing, status selection, user-ID clipboard contents and switch
+state/callbacks. The inherited status-menu actions also passed.
+
+Both overlays were reviewed at 1920x1080 and the application's 800x560 minimum.
+An equal-state settings capture in upstream mode matched the pre-pass image
+with zero changed pixels. This is one Linux-rendered state, not complete
+regression coverage or a Windows screenshot comparison. Owner references and
+all derived comparisons remain private.
+
+Two production Rust UI regression tests cover navigation/search/close and
+account-menu clipboard/settings behavior. Windows execution is deferred for
+this pass under the owner's temporary local-only rule. The earlier Windows
+suite results above belong to the second pass. Linux software previews do
+not establish Windows font rendering, native frame behavior or real-account
+compatibility for these changes.
+
+The production Windows-target test executable cross-compiled successfully on
+Linux in 8 minutes 33 seconds after clearing only the generated UI incremental
+cache. A retained-cache attempt had been stopped after sustained memory
+reclaim. Rust dependency and native-library caches were preserved. The build
+reported the same inherited Windows unused-code and missing CRT PDB warnings;
+it did not execute the Windows tests.
+
+The application executable then cross-compiled in 40 seconds. Strict
+cross-target Clippy was attempted and remains blocked by the same three
+inherited unused-code errors in `src/notify.rs` and `src/paste.rs` listed above.
+Those files are unchanged, and the warning gate was not weakened. Formatting,
+documentation links, visual-tool tests, diff checks and vibe-check passed.

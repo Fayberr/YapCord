@@ -12,11 +12,11 @@ That means treating visual hierarchy, predictable navigation and everyday intera
 
 ## Project status
 
-**Early interface development.** The current YapCord presentation pass changes navigation proportions, window chrome, the account dock, message and composer spacing, system typography and the default palette. It reuses Yapfast's widgets and Bonfire theme. A complete Discord-like redesign, including account popovers and settings navigation, remains ahead; the current interface is not pixel-identical to Discord.
+**Early interface development.** YapCord now adjusts navigation proportions, window chrome, the account dock and popover, settings navigation, message and composer spacing, system typography and the default palette. It reuses Yapfast's application logic, settings pages and Bonfire theme. Richer profile content and further visual and interaction work remain ahead; the current interface is not pixel-identical to Discord.
 
 The backend, package names and build infrastructure remain inherited. A local Windows development build has been cross-compiled on ARM64 Linux; see the [build record](docs/windows-arm64-build.md). There are no published YapCord downloads or releases, and no independently verified YapCord performance improvements or benchmarks. Historical tags come from upstream and do not represent YapCord releases.
 
-The [UI development guide](docs/yapcord-ui.md) describes the first pass, upstream comparison mode and screenshot overlay workflow. Private owner references are not included in the repository.
+The [UI development guide](docs/yapcord-ui.md) describes the current presentation, upstream comparison mode and screenshot overlay workflow. Private owner references are not included in the repository.
 
 ## Project goals
 

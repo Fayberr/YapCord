@@ -1,3 +1,4 @@
+import { AccountPopover } from "yapcord/account-popover.slint";
 import { ClientStyle } from "yapcord/style.slint";
 import { WindowBar } from "yapcord/window-bar.slint";
 import { Palette } from "std-widgets.slint";
@@ -284,6 +285,7 @@ export component YapfastWindow inherits Window {
     in property <[MessageRow]> messages;
     in property <string> account;
     in property <string> account-name;
+    in property <string> account-user-id;
     in property <string> account-initial;
     /// The Discord-only build's own status for the account's dot, as
     /// StatusDot takes it; empty to show the connection instead.
@@ -1701,8 +1703,10 @@ export component YapfastWindow inherits Window {
         }
     }
     // The status menu opens above the account panel, along its left edge.
+    property <bool> account-status-expanded;
     function open-status-menu() {
-        root.menu-x = account-panel.absolute-position.x + 8px;
+        root.account-status-expanded = false;
+        root.menu-x = account-panel.absolute-position.x + (ClientStyle.enabled ? 0px : 8px);
         root.menu-y = account-panel.absolute-position.y;
         root.game-duration-due();
         status-menu.show();
@@ -1735,19 +1739,37 @@ export component YapfastWindow inherits Window {
         }
     }
     status-menu := PopupWindow {
-        width: 248px; height: status-menu-content.preferred-height;
+        width: ClientStyle.enabled ? 300px : 248px; height: status-menu-content.preferred-height;
         x: max(8px, min(root.width - self.width - 8px, root.menu-x));
         y: max(8px, root.menu-y - self.height - 4px);
         close-policy: PopupClosePolicy.close-on-click-outside;
-        status-menu-content := StatusMenu {
-            status: root.discord-status; has-custom-status: root.has-custom-status;
-            game-name: root.game-activity-name; game-duration: root.game-activity-duration;
-            game-duration-due => { root.game-duration-due(); }
-            choose(status) => { root.set-status(status); status-menu.close(); }
-            custom-status => { root.open-status(); status-menu.close(); }
-            edit-profile => { root.edit-profile(); status-menu.close(); }
+        status-menu-content := VerticalLayout {
+            if ClientStyle.enabled: AccountPopover {
+                available-height: max(120px, root.menu-y - 12px);
+                name: root.account-name; initial: root.account-initial; tint: root.account-tint; picture: root.account-picture;
+                user-id: root.account-user-id;
+                status: root.discord-status; has-custom-status: root.has-custom-status;
+                custom-text: root.account-status; custom-emoji: root.account-status-emoji;
+                game-name: root.game-activity-name; game-duration: root.game-activity-duration;
+                expanded <=> root.account-status-expanded;
+                game-duration-due => { root.game-duration-due(); }
+                choose(status) => { root.set-status(status); status-menu.close(); }
+                custom-status => { root.open-status(); status-menu.close(); }
+                edit-profile => { root.edit-profile(); status-menu.close(); }
+                copy-id => { root.copy-text(root.account-user-id); status-menu.close(); }
+                settings => { root.settings-section = 0; root.settings-open = true; status-menu.close(); }
+            }
+            if !ClientStyle.enabled: StatusMenu {
+                status: root.discord-status; has-custom-status: root.has-custom-status;
+                game-name: root.game-activity-name; game-duration: root.game-activity-duration;
+                game-duration-due => { root.game-duration-due(); }
+                choose(status) => { root.set-status(status); status-menu.close(); }
+                custom-status => { root.open-status(); status-menu.close(); }
+                edit-profile => { root.edit-profile(); status-menu.close(); }
+            }
         }
     }
+
     function open-menu(message: MessageRow) {
         root.open-message-menu(message, -1, false);
     }
@@ -3344,8 +3366,12 @@ export component YapfastWindow inherits Window {
     // Settings over the window, showing one section.
     settings-motion := PopupMotion { open: root.settings-open; }
     if settings-motion.shown: SettingsScreen {
-        y: root.title-height; height: root.height - root.title-height;
+        y: ClientStyle.enabled ? 0px : root.title-height; height: root.height - self.y;
         motion: settings-motion.amount;
+        account-name: root.account-name; account-initial: root.account-initial;
+        account-tint: root.account-tint; account-picture: root.account-picture;
+        may-edit-profile: root.discord-linked;
+        edit-profile => { root.settings-open = false; root.edit-profile(); }
         settings-section <=> root.settings-section;
         discord-build: root.discord-build; preview: root.preview;
         close => { root.settings-open = false; }

@@ -7051,3 +7051,115 @@ fn yapcord_dm_heading_keeps_friend_and_new_message_actions() {
     );
     window.hide().unwrap();
 }
+
+#[test]
+fn yapcord_settings_navigation_and_header_keep_the_existing_actions() {
+    use slint::platform::{Key, PointerEventButton, WindowEvent};
+    i_slint_backend_testing::init_no_event_loop();
+    let window = YapfastWindow::new().unwrap();
+    window.set_own_title_bar(true);
+    window.set_account_name("Alex".into());
+    window.set_account_initial("A".into());
+    window.set_discord_build(true);
+    window.set_discord_linked(true);
+    window.set_settings_open(true);
+    window.set_settings_section(1);
+    let refreshed = Rc::new(Cell::new(0));
+    let seen = refreshed.clone();
+    window.on_refresh_devices(move || seen.set(seen.get() + 1));
+    window.show().unwrap();
+    window
+        .window()
+        .set_size(slint::LogicalSize::new(1920., 1080.));
+    let click = |x, y| {
+        let position = slint::LogicalPosition::new(x, y);
+        window.window().dispatch_event(WindowEvent::PointerPressed {
+            position,
+            button: PointerEventButton::Left,
+        });
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: PointerEventButton::Left,
+            });
+    };
+    // Reference geometry: a 1400px card, 72px outer inset, 266px navigation.
+    click(350., 500.);
+    assert_eq!(
+        window.get_settings_section(),
+        7,
+        "Appearance remains reachable"
+    );
+    click(350., 340.);
+    assert_eq!(window.get_settings_section(), 1);
+    assert_eq!(refreshed.get(), 1, "Voice still refreshes the device list");
+    click(350., 180.);
+    for character in "APPEAR".chars() {
+        let text: SharedString = character.to_string().into();
+        window
+            .window()
+            .dispatch_event(WindowEvent::KeyPressed { text: text.clone() });
+        window
+            .window()
+            .dispatch_event(WindowEvent::KeyReleased { text });
+    }
+    click(350., 236.);
+    assert_eq!(
+        window.get_settings_section(),
+        7,
+        "search filters supported pages regardless of case"
+    );
+    click(1636., 96.);
+    assert!(!window.get_settings_open(), "the header close action works");
+    window.set_settings_open(true);
+    window.window().dispatch_event(WindowEvent::KeyPressed {
+        text: Key::Escape.into(),
+    });
+    assert!(
+        !window.get_settings_open(),
+        "Escape still dismisses settings"
+    );
+    window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_account_popover_copies_its_id_and_opens_settings_without_changing_status() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    let window = one_message("Synthetic message");
+    window.global::<ClientStyle>().set_enabled(true);
+    window.set_own_title_bar(true);
+    window.set_discord_linked(true);
+    window.set_preview(false);
+    window.set_account_name("Alex".into());
+    window.set_account_initial("A".into());
+    window.set_account_user_id("123456789012345678".into());
+    let status_changes = Rc::new(Cell::new(0));
+    let seen = status_changes.clone();
+    window.on_set_status(move |_| seen.set(seen.get() + 1));
+    for (x, y) in [(100., 722.), (160., 600.), (100., 722.), (160., 652.)] {
+        let position = slint::LogicalPosition::new(x, y);
+        window.window().dispatch_event(WindowEvent::PointerPressed {
+            position,
+            button: PointerEventButton::Left,
+        });
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: PointerEventButton::Left,
+            });
+    }
+    assert_eq!(
+        i_slint_core::window::WindowInner::from_pub(window.window())
+            .context()
+            .platform()
+            .clipboard_text(i_slint_core::platform::Clipboard::DefaultClipboard)
+            .as_deref(),
+        Some("123456789012345678")
+    );
+    assert!(window.get_settings_open());
+    assert_eq!(window.get_settings_section(), 0);
+    assert_eq!(status_changes.get(), 0);
+    window.hide().unwrap();
+}
