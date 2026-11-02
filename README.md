@@ -12,9 +12,11 @@ That means treating visual hierarchy, predictable navigation and everyday intera
 
 ## Project status
 
-**Initial setup.** The YapCord-specific interface has not been implemented. The application currently retains Yapfast's interface, backend, package names and build infrastructure.
+**Early interface development.** The first YapCord presentation pass changes navigation proportions, composer spacing, system typography and the default palette. It reuses Yapfast's widgets and Bonfire theme. A complete Discord-like redesign, including account popovers and settings navigation, remains ahead; the current interface is not pixel-identical to Discord.
 
-The initial YapCord changes, dated November 2, 2026, are limited to this README and developer documentation. A local Windows development build has since been cross-compiled on ARM64 Linux and passed its native Windows build smoke check; see the [build record](docs/windows-arm64-build.md). No prebuilt YapCord downloads or releases are published, and no YapCord performance improvements or benchmarks have been independently verified. Historical tags come from upstream and do not represent YapCord releases.
+The backend, package names and build infrastructure remain inherited. A local Windows development build has been cross-compiled on ARM64 Linux; see the [build record](docs/windows-arm64-build.md). There are no published YapCord downloads or releases, and no independently verified YapCord performance improvements or benchmarks. Historical tags come from upstream and do not represent YapCord releases.
+
+The [UI development guide](docs/yapcord-ui.md) describes the first pass, upstream comparison mode and screenshot overlay workflow. Private owner references are not included in the repository.
 
 ## Project goals
 
@@ -42,7 +44,7 @@ The application is written in Rust, with a Slint interface rendered through Skia
 
 The default build enables desktop Discord support. Matrix remains an optional inherited Cargo feature. No new UI framework or plugin system has been added.
 
-See the inherited [architecture guide](docs/architecture.md) and the proposed [YapCord UI approach](docs/yapcord-architecture.md).
+See the inherited [architecture guide](docs/architecture.md) and the [YapCord UI approach](docs/yapcord-architecture.md).
 
 ## Build it yourself
 
@@ -53,7 +55,7 @@ git clone https://github.com/Fayberr/YapCord.git
 cd YapCord
 git remote add upstream https://github.com/yapfast/yapfast.git
 
-# Preview the inherited interface without an account
+# Preview with synthetic content, without an account
 nix develop path:./nix --command cargo run --locked -- --preview
 
 # Run the default desktop Discord build

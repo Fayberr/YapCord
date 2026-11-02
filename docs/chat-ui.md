@@ -1,5 +1,9 @@
 # Chat UI
 
+This guide describes the inherited widgets and behavior. YapCord overrides a
+small set of presentation defaults; see [YapCord interface development](yapcord-ui.md)
+for the current metrics and upstream comparison mode.
+
 The chat window for Matrix and Discord, laid out after Discord's client.
 Matrix messages are sent through the SDK's Markdown feature, and Slint's
 Markdown draws formatted text. `pulldown-cmark` in `yapfast-core` reads

@@ -1,5 +1,13 @@
 use super::*;
 
+// Keep upstream coordinate and appearance regressions in their original mode.
+// The YapCord tests below exercise the downstream defaults separately.
+fn upstream_window() -> YapfastWindow {
+    let window = YapfastWindow::new().unwrap();
+    window.global::<ClientStyle>().set_enabled(false);
+    window
+}
+
 fn message_row_plain(message: &ChatMessage) -> MessageRow {
     message_row(message, &HashSet::new())
 }
@@ -127,36 +135,45 @@ fn blank_lines_between_lines_show() {
 fn the_composer_sends_on_enter_and_breaks_lines_on_shift_enter() {
     use slint::platform::{Key, WindowEvent};
     let window = one_message("Hi");
-    let sent = Rc::new(Cell::new(0));
-    let count = sent.clone();
-    window.on_send(move || count.set(count.get() + 1));
-    window.invoke_focus_composer();
-    let press = |text: SharedString| {
+    if cfg!(windows) {
         window
-            .window()
-            .dispatch_event(WindowEvent::KeyPressed { text: text.clone() });
-        window
-            .window()
-            .dispatch_event(WindowEvent::KeyReleased { text });
-    };
-    press("a".into());
-    window.window().dispatch_event(WindowEvent::KeyPressed {
-        text: Key::Shift.into(),
-    });
-    press(Key::Return.into());
-    window.window().dispatch_event(WindowEvent::KeyReleased {
-        text: Key::Shift.into(),
-    });
-    press("b".into());
-    assert_eq!(window.get_draft(), "a\nb");
-    assert_eq!(sent.get(), 0);
-    press(Key::Return.into());
-    assert_eq!(sent.get(), 1);
-    assert_eq!(
-        window.get_draft(),
-        "a\nb",
-        "sending is the application's to clear"
-    );
+            .global::<ClientStyle>()
+            .set_native_font("Segoe UI".into());
+    }
+    for enabled in [false, true] {
+        window.global::<ClientStyle>().set_enabled(enabled);
+        window.set_draft("".into());
+        let sent = Rc::new(Cell::new(0));
+        let count = sent.clone();
+        window.on_send(move || count.set(count.get() + 1));
+        window.invoke_focus_composer();
+        let press = |text: SharedString| {
+            window
+                .window()
+                .dispatch_event(WindowEvent::KeyPressed { text: text.clone() });
+            window
+                .window()
+                .dispatch_event(WindowEvent::KeyReleased { text });
+        };
+        press("a".into());
+        window.window().dispatch_event(WindowEvent::KeyPressed {
+            text: Key::Shift.into(),
+        });
+        press(Key::Return.into());
+        window.window().dispatch_event(WindowEvent::KeyReleased {
+            text: Key::Shift.into(),
+        });
+        press("b".into());
+        assert_eq!(window.get_draft(), "a\nb");
+        assert_eq!(sent.get(), 0);
+        press(Key::Return.into());
+        assert_eq!(sent.get(), 1);
+        assert_eq!(
+            window.get_draft(),
+            "a\nb",
+            "sending is the application's to clear"
+        );
+    }
 }
 
 #[test]
@@ -473,7 +490,7 @@ fn preferences_set_the_clock_text_size_previews_and_unmuting() {
             .is_empty()
     );
 
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     layout.apply(&window);
     assert!(window.get_twelve_hour_clock() && !window.get_link_previews());
     // Discord calls suppress noise with the chosen network, as far as chosen.
@@ -536,7 +553,7 @@ fn push_to_talk_keeps_its_mode_key_and_release_delay() {
     }))
     .unwrap();
     assert_eq!(layout.release_delay(), 2000, "Discord's slider ends at 2 s");
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     layout.apply(&window);
     assert_eq!(window.get_input_mode(), 1);
     assert_eq!(window.get_talk_key(), "V");
@@ -568,7 +585,7 @@ fn each_sounds_own_volume_counts_only_while_adjusting_each() {
     assert!((layout.sound_gain(Sound::Mute) - 0.0625).abs() < 1e-6);
     assert!((layout.sound_gain(Sound::Join) - 0.25).abs() < 1e-6);
 
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     layout.apply(&window);
     assert_eq!(window.get_sound_set(), 3);
     assert_eq!(window.get_sound_volume(), 50);
@@ -602,7 +619,7 @@ fn each_sounds_own_volume_counts_only_while_adjusting_each() {
 fn the_renderer_setting_is_remembered() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -621,7 +638,7 @@ fn the_renderer_setting_is_remembered() {
 fn custom_games_are_remembered_and_edited_in_place() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -708,7 +725,7 @@ fn a_chosen_device_that_went_away_shows_as_not_connected() {
 fn call_volumes_play_while_dragged_and_are_remembered() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -746,7 +763,7 @@ fn call_volumes_play_while_dragged_and_are_remembered() {
 fn sound_settings_are_remembered() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -827,7 +844,7 @@ fn messages(lines: &[(&str, &str)]) -> YapfastWindow {
 /// index, with the composer.
 fn showing(chat: Vec<ChatMessage>) -> YapfastWindow {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     copy_whole_messages(&window);
     // Without the adapter's clipboard reading, Ctrl+V pastes text, as it
     // does when the clipboard holds no files or picture.
@@ -1209,7 +1226,7 @@ fn styled_messages_select_by_dragging_and_copy_as_plain_text() {
 fn pointer_input_reaches_navigation_buttons() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1245,7 +1262,7 @@ fn pointer_input_reaches_navigation_buttons() {
 fn menus_list_their_choices_and_carry_them_out() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1309,7 +1326,7 @@ fn menus_list_their_choices_and_carry_them_out() {
 fn a_server_members_menu_follows_permissions_and_ticks_roles() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1464,7 +1481,7 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
 fn invite_to_server_lists_the_servers_in_a_submenu() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1504,7 +1521,7 @@ fn an_event_shows_when_it_runs_and_where() {
     use yapfast_core::{application::EventDialog, chat::EventPreview, clock};
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1554,7 +1571,7 @@ fn an_event_shows_when_it_runs_and_where() {
 #[test]
 fn menus_give_each_row_its_own_submenu_and_tick_checkboxes() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let row = |id: &str, checkbox: bool| MenuRow {
         id: id.into(),
         text: id.into(),
@@ -1611,7 +1628,7 @@ fn menus_give_each_row_its_own_submenu_and_tick_checkboxes() {
 fn the_input_caret_opens_its_menu_and_measures_only_while_open() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1652,7 +1669,7 @@ fn the_input_caret_opens_its_menu_and_measures_only_while_open() {
 fn dragging_the_sidebar_edge_resizes_it_within_limits_and_remembers_it() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1701,7 +1718,7 @@ fn dragging_the_sidebar_edge_resizes_it_within_limits_and_remembers_it() {
     assert_eq!(window.get_sidebar_shown(), 308.);
     drag(380., 252.);
     // A new window starts at the stored width.
-    let next = YapfastWindow::new().unwrap();
+    let next = upstream_window();
     adapter.borrow_mut().attach(&next);
     assert_eq!(next.get_sidebar_width(), 180.);
     window.hide().unwrap();
@@ -1711,7 +1728,7 @@ fn dragging_the_sidebar_edge_resizes_it_within_limits_and_remembers_it() {
 fn a_window_made_again_shows_what_the_last_one_did() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1745,7 +1762,7 @@ fn a_window_made_again_shows_what_the_last_one_did() {
     assert!(!before.1.is_empty());
     assert_eq!(before.3, "Plans for the weekend");
     drop(window);
-    let next = YapfastWindow::new().unwrap();
+    let next = upstream_window();
     adapter.borrow_mut().attach(&next);
     bind_callbacks(&next, &adapter);
     adapter.borrow_mut().refresh(&next);
@@ -1756,7 +1773,7 @@ fn a_window_made_again_shows_what_the_last_one_did() {
 fn dragging_the_thread_beside_resizes_it_within_limits_and_remembers_it() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1796,7 +1813,7 @@ fn dragging_the_thread_beside_resizes_it_within_limits_and_remembers_it() {
     drag(1080., 0.);
     assert_eq!(window.get_aside_shown(), 1400. - 72. - 240. - 420.);
     // A new window starts at the stored width.
-    let next = YapfastWindow::new().unwrap();
+    let next = upstream_window();
     adapter.borrow_mut().attach(&next);
     assert_eq!(next.get_aside_width(), 668.);
     window.hide().unwrap();
@@ -1806,7 +1823,7 @@ fn dragging_the_thread_beside_resizes_it_within_limits_and_remembers_it() {
 fn the_member_list_shows_for_text_channels_and_remembers_being_closed() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1856,7 +1873,7 @@ fn the_member_list_shows_for_text_channels_and_remembers_being_closed() {
 fn forwarding_and_frequent_reactions_reach_the_window() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1927,7 +1944,7 @@ fn forwarding_and_frequent_reactions_reach_the_window() {
 fn the_quick_switcher_reaches_the_window() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1966,7 +1983,7 @@ fn the_quick_switcher_reaches_the_window() {
 #[test]
 fn a_room_asks_for_earlier_messages_only_once_near_their_start() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let asked = Rc::new(Cell::new(0));
     window.on_earlier({
         let asked = asked.clone();
@@ -2030,7 +2047,7 @@ fn a_room_asks_for_earlier_messages_only_once_near_their_start() {
 #[test]
 fn scrolling_up_leaves_the_latest_message() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -2086,7 +2103,7 @@ fn scrolling_up_leaves_the_latest_message() {
 #[test]
 fn a_wheel_spun_fast_scrolls_farther_for_each_notch() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -2160,7 +2177,7 @@ fn a_wheel_spun_fast_scrolls_farther_for_each_notch() {
 fn a_middle_click_scrolls_towards_the_pointer_until_the_next_press() {
     use slint::platform::{PointerEventButton, WindowEvent};
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     mark_autoscrolls(&window);
     window.set_workspace(true);
     window.set_room_selected(true);
@@ -2252,7 +2269,7 @@ fn a_middle_click_scrolls_towards_the_pointer_until_the_next_press() {
 #[test]
 fn older_messages_go_in_above_without_moving_those_shown() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -2384,7 +2401,7 @@ fn older_messages_go_in_above_without_moving_those_shown() {
 #[test]
 fn scrolling_up_through_styled_messages_stays_up() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -2477,7 +2494,7 @@ fn scrolling_up_through_styled_messages_stays_up() {
 fn callbacks_preserve_drafts_scope_voice_and_clear_session_inputs() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -2552,7 +2569,7 @@ fn callbacks_preserve_drafts_scope_voice_and_clear_session_inputs() {
 fn message_actions_reach_the_shared_application_in_the_preview() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -2612,7 +2629,7 @@ fn message_actions_reach_the_shared_application_in_the_preview() {
 fn signed_in_controls_keep_trust_and_plaintext_sending_gates() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -2721,7 +2738,7 @@ fn rows_with_ids_change_only_where_they_changed() {
 fn typing_and_the_call_show_without_building_the_rest_again() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -2814,7 +2831,7 @@ fn collapsed_categories_keep_the_open_unread_and_occupied_channels() {
 fn clicking_a_category_collapses_it() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -2842,7 +2859,7 @@ fn clicking_a_category_collapses_it() {
 #[test]
 fn opening_at_the_new_divider_puts_it_at_the_top_and_the_bar_jumps_back() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -2927,7 +2944,7 @@ fn opening_at_the_new_divider_puts_it_at_the_top_and_the_bar_jumps_back() {
 #[test]
 fn reading_the_newest_message_tells_the_application() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -3065,7 +3082,7 @@ fn rows_mark_mentions_and_the_new_bar_counts_what_others_sent() {
 #[test]
 fn virtualized_lists_request_only_nearby_avatars() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     window.set_workspace(true);
     window.set_room_selected(true);
     window.set_room_ready(true);
@@ -3155,7 +3172,7 @@ fn virtualized_lists_request_only_nearby_avatars() {
 fn replacing_a_temporary_item_reports_the_view_without_changing_row_count() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -3188,7 +3205,7 @@ fn replacing_a_temporary_item_reports_the_view_without_changing_row_count() {
 fn an_unread_dm_shows_on_the_rail_above_the_servers_and_opens() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -3322,7 +3339,7 @@ fn a_folder_on_the_rail_holds_its_servers_until_opened() {
 fn a_right_click_on_a_folder_asks_for_its_menu() {
     use slint::platform::{PointerEventButton, WindowEvent};
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let folder = "discord-folder:7";
     window.set_workspace(true);
     window.set_servers(ModelRc::new(VecModel::from(vec![ServerRow {
@@ -3553,7 +3570,7 @@ fn a_call_shows_on_its_servers_icon_and_its_closed_folder() {
 fn closing_the_viewer_lets_go_of_its_picture() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -3600,7 +3617,7 @@ fn closing_the_viewer_lets_go_of_its_picture() {
 fn a_pictures_menu_links_to_it_when_it_has_an_address() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -3710,7 +3727,7 @@ fn discord_server_adapter(
 fn the_bell_and_channel_menus_offer_the_same_notification_choices() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = discord_server_adapter(&window, directory.path());
     let rows = |window: &YapfastWindow| -> Vec<(String, String, bool)> {
         window
@@ -3809,7 +3826,7 @@ fn a_server_search_names_the_server_and_heads_results_with_their_channels() {
     use yapfast_core::chat::{Event, SearchHit};
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = discord_server_adapter(&window, directory.path());
     let hit = |room: &str, item: &str| SearchHit {
         room: room.into(),
@@ -3893,7 +3910,7 @@ fn discord_server_window_changed(
     };
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -5660,7 +5677,7 @@ fn a_threads_activity_reads_as_discords_list_of_threads_says_it() {
 #[test]
 fn a_theme_paints_the_window_and_the_mentions_in_its_rows() {
     i_slint_backend_testing::init_no_event_loop();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     assert_eq!(
         theme::Theme::shown(&window),
         theme::YAP,
@@ -5696,7 +5713,7 @@ fn a_theme_paints_the_window_and_the_mentions_in_its_rows() {
 fn a_chosen_theme_is_kept_and_survives_a_window_made_again() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -5716,7 +5733,7 @@ fn a_chosen_theme_is_kept_and_survives_a_window_made_again() {
     );
 
     // Closing to the tray drops the window; the next one starts in Nord.
-    let again = YapfastWindow::new().unwrap();
+    let again = upstream_window();
     adapter.borrow_mut().attach(&again);
     assert_eq!(theme::Theme::shown(&again), nord);
     assert_eq!(again.get_theme_id(), "nord");
@@ -5725,7 +5742,7 @@ fn a_chosen_theme_is_kept_and_survives_a_window_made_again() {
     // has shows Yap.
     again.invoke_choose_theme("missing".into());
     assert_eq!(theme::Theme::shown(&again), nord);
-    let fresh = YapfastWindow::new().unwrap();
+    let fresh = upstream_window();
     Layout {
         theme: Some("gone".into()),
         ..Default::default()
@@ -5840,7 +5857,7 @@ fn custom_theme_ids_stay_apart_from_built_in_ones_and_each_other() {
 fn a_custom_theme_is_made_edited_and_deleted_in_appearance() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -5915,7 +5932,7 @@ fn a_custom_theme_is_made_edited_and_deleted_in_appearance() {
     assert_eq!(layout.custom_themes[0].base, "nord");
 
     // A window made again starts in it.
-    let again = YapfastWindow::new().unwrap();
+    let again = upstream_window();
     bind_callbacks(&again, &adapter);
     adapter.borrow_mut().attach(&again);
     assert_eq!(theme::Theme::shown(&again), midnight);
@@ -5978,7 +5995,7 @@ fn a_custom_theme_is_made_edited_and_deleted_in_appearance() {
 fn a_window_made_again_while_editing_drops_the_edit() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -5994,7 +6011,7 @@ fn a_window_made_again_while_editing_drops_the_edit() {
     window.invoke_theme_colour_edited(link as i32, "#ff0000".into());
     assert_eq!(theme::mention_color(), 0xff0000);
 
-    let again = YapfastWindow::new().unwrap();
+    let again = upstream_window();
     adapter.borrow_mut().attach(&again);
     assert!(adapter.borrow().theme_editor.is_none());
     assert!(
@@ -6040,7 +6057,7 @@ fn a_reactions_tooltip_names_up_to_three_as_discords_client_does() {
 fn the_thread_beside_keeps_its_rows_when_a_new_layout_builds_them_again() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -6671,7 +6688,7 @@ fn a_found_message_shows_its_blocks_with_spoilers_hidden() {
 fn the_gif_picker_keeps_the_width_it_was_dragged_to() {
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = YapfastWindow::new().unwrap();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -6682,7 +6699,7 @@ fn the_gif_picker_keeps_the_width_it_was_dragged_to() {
     window.invoke_gif_picker_width_chosen(648.);
     assert_eq!(Layout::read(directory.path()).gif_picker_width, Some(648.));
     // A new window starts at the stored width.
-    let next = YapfastWindow::new().unwrap();
+    let next = upstream_window();
     adapter.borrow_mut().attach(&next);
     assert_eq!(next.get_gif_picker_width(), 648.);
 }
@@ -6841,4 +6858,37 @@ fn dragging_the_gif_pickers_left_edge_widens_it_no_further_than_the_server_list(
     assert_eq!(window.get_gif_picker_width(), room);
     assert_eq!(right_edge(), 1058.);
     window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_navigation_matches_the_reference_column_width() {
+    i_slint_backend_testing::init_no_event_loop();
+    let window = YapfastWindow::new().unwrap();
+    // The supplied 2560px reference places chat at x=376: 72px rail + 304px list.
+    assert_eq!(window.get_sidebar_width(), 304.0);
+    assert_eq!(window.get_sidebar_shown(), 304.0);
+
+    window.global::<ClientStyle>().set_enabled(false);
+    assert_eq!(window.get_sidebar_width(), 240.0);
+    assert_eq!(window.get_sidebar_shown(), 240.0);
+    Layout::default().apply_appearance(&window);
+    assert_eq!(window.get_theme_id(), "yap");
+}
+
+#[test]
+fn yapcord_defaults_to_bonfire_and_keeps_saved_appearance_choices() {
+    i_slint_backend_testing::init_no_event_loop();
+    let window = YapfastWindow::new().unwrap();
+    Layout::default().apply_appearance(&window);
+    assert_eq!(window.get_theme_id(), "bonfire");
+    assert_eq!(window.get_sidebar_width(), 304.0);
+
+    let saved = Layout {
+        theme: Some("nord".into()),
+        sidebar_width: Some(280.0),
+        ..Default::default()
+    };
+    saved.apply_appearance(&window);
+    assert_eq!(window.get_theme_id(), "nord");
+    assert_eq!(window.get_sidebar_width(), 280.0);
 }

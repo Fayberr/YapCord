@@ -1,3 +1,7 @@
+YapCord uses installed Segoe UI on Windows. The fonts below remain bundled
+for upstream presentation mode and other platforms. No Segoe UI or proprietary
+Discord font files are distributed by this repository.
+
 Atkinson Hyperlegible Next by the Braille Institute, the UI's typeface: the
 static TTF styles Regular, Italic, Medium, Bold, Bold Italic and ExtraBold,
 copied unmodified from the googlefonts/atkinson-hyperlegible-next repository at

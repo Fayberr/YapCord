@@ -93,6 +93,11 @@ planning documents and future custom UI while incorporating relevant upstream
 fixes. For shared adapter or core files, reconcile the actual interfaces and
 behavior; neither side should be selected wholesale without review.
 
+If upstream changes a metric wrapped by `ClientStyle`, update the inherited
+branch of that style value to match the new upstream default. Keep the YapCord
+value grounded in its references. Upstream comparison mode should follow
+reviewed upstream changes rather than silently freezing old defaults.
+
 After editing each conflicted file, stage that file with `git add <path>`.
 Once conflicts are resolved, inspect `git diff --cached`, run the applicable
 checks, and complete the merge with `git commit`. Use `git merge --abort` to

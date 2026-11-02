@@ -1,8 +1,8 @@
-# Future YapCord UI architecture
+# YapCord UI architecture
 
-Planning only. No UI separation or redesign is implemented by this document.
-Reviewed against Yapfast commit `70f9369f394e1875cad8ef9e56782e06c93cc796`
-on November 2, 2026.
+The first UI pass introduces a small presentation boundary, while continuing to
+compile the inherited window and widgets. A fully separate interface remains
+future work. Reviewed against upstream `b64b9a7` on November 2, 2026.
 
 ## Reuse the existing core
 
@@ -20,19 +20,32 @@ send commands through `send`, report rejected commands through
 `Application::stopped`. Keep session, draft, send-retry and voice lifecycle
 behavior in the core rather than duplicating it in widgets.
 
-## Introduce a separate Slint source tree
+## Current presentation boundary
 
-A practical first approach is a future `ui/yapcord/` directory with its own root
-Slint file and visual components. Leave `ui/yapfast.slint` and its sibling
-components available as the upstream reference. Reuse existing licensed assets
-and rendering infrastructure where appropriate; do not introduce Discord's
+`ui/yapcord/style.slint` owns the initial navigation, composer, typography and
+settings-frame metrics. Small bindings in the inherited Slint components use
+those values. `src/ui/yapcord.rs` selects the presentation at window creation;
+`YAPCORD_UI=upstream` retains the inherited metrics for comparison. The adapter
+selects the existing Bonfire palette only when no theme has been saved. Saved
+appearance choices continue to win.
+
+This deliberately reuses the upstream component tree instead of copying the
+entire 4,000-line root window. Newly merged widgets therefore remain reachable
+through the existing adapter and exports. The boundary isolates design values,
+not every UI component or interaction. Shared widget changes can still conflict.
+
+## Future custom components
+
+Introduce distinct visual components under `ui/yapcord/` as individual areas
+are redesigned, with small integration points in the inherited root. Reuse
+licensed assets and rendering infrastructure. Do not introduce Discord's
 proprietary artwork or fonts.
 
-The existing [`crates/yapfast-ui/build.rs`](../crates/yapfast-ui/build.rs)
-currently compiles exactly `../../ui/yapfast.slint`, with a `live-preview` path.
-A small, explicit build selection could later choose the YapCord root while
-retaining the upstream root as an alternative. Both normal compilation and
-live preview would need to select the same root. No selector is added now.
+[`crates/yapfast-ui/build.rs`](../crates/yapfast-ui/build.rs) still compiles
+`../../ui/yapfast.slint`, including its `live-preview` path. No second root or
+build selector is needed for the first pass. If the layouts later diverge
+enough to justify separate roots, normal compilation and live preview must
+select the same root and preserve the adapter contract.
 
 Initially, preserve the generated interface contract exported by
 [`ui/yapfast.slint`](../ui/yapfast.slint): `YapfastWindow`, its properties and
@@ -46,7 +59,7 @@ two windows does not automatically make their adapters interchangeable.
 
 | File or area | Likely future change |
 | --- | --- |
-| `crates/yapfast-ui/build.rs`, its `Cargo.toml`, root `Cargo.toml` | Select and propagate the interface build option while preserving Slint pins and patches |
+| `crates/yapfast-ui/build.rs`, its `Cargo.toml`, root `Cargo.toml` | Only if separate roots become necessary: select and propagate the interface option while preserving pins and patches |
 | `src/ui.rs` | Connect the selected window and preserve effects, event reception and desktop lifecycle |
 | `src/ui/callbacks.rs`, `src/ui/refresh.rs` | Bind new inputs and present newly exposed state when the window contract changes |
 | `src/ui/messages.rs`, `pictures.rs`, `theme.rs`, `menus.rs` and related adapter modules | Adjust presentation where layouts, row data or interactions diverge |
@@ -68,7 +81,7 @@ a generic abstraction before its requirements are known.
 
 ## Keep upstream merges manageable
 
-Concentrate visual changes in `ui/yapcord/`. Keep the build selector and adapter
+Concentrate visual changes in `ui/yapcord/`. Keep integration and adapter
 edits small, with separate commits for upstream fixes and YapCord presentation.
 Keep crate names, paths, feature defaults and dependency versions unless a
 specific reviewed change requires otherwise. Preserve the patched Slint code

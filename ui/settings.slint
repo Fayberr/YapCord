@@ -1,3 +1,4 @@
+import { ClientStyle } from "yapcord/style.slint";
 import { ComboBox } from "std-widgets.slint";
 import { ScrollView } from "scrollview.slint";
 import { Theme, Middle, Label, Tip, Popup } from "theme.slint";
@@ -309,7 +310,8 @@ export component SettingsCard inherits Rectangle {
     Rectangle { background: #000000b3; opacity: root.motion; }
     TouchArea { clicked => { root.close(); } }
     Rectangle {
-        width: min(1080px, root.width - 80px); height: min(800px, root.height - 80px);
+        width: min(ClientStyle.settings-width, root.width - ClientStyle.settings-margin);
+        height: min(ClientStyle.settings-height, root.height - ClientStyle.settings-margin);
         opacity: Popup.opacity(root.motion); transform-scale: Popup.scale(root.motion);
         border-radius: 12px; border-width: 1px; border-color: Theme.edge;
         // The shadow shows once the card is open: a card this large costs
