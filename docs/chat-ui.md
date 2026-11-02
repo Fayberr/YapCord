@@ -301,7 +301,9 @@ Weston's desktop shell, whose windows move and resize, where its kiosk shell
 makes the window full screen, which hides the bar. A window
 without the desktop's frame gets no shadow from KWin or Mutter, and the
 desktop's title bar menu isn't offered: winit can't show it on Linux. In
-full screen, as a call's stage is, the bar goes. Windows keeps its own frame.
+full screen, as a call's stage is, the bar goes. Upstream presentation on Windows
+keeps its own frame. YapCord defaults to its integrated Windows bar, with the
+same saved system-frame setting; see [YapCord UI](yapcord-ui.md).
 
 The window follows Discord's arrangement:
 

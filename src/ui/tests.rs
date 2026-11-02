@@ -6892,3 +6892,162 @@ fn yapcord_defaults_to_bonfire_and_keeps_saved_appearance_choices() {
     assert_eq!(window.get_theme_id(), "nord");
     assert_eq!(window.get_sidebar_width(), 280.0);
 }
+
+#[test]
+fn yapcord_caption_buttons_keep_the_existing_window_actions() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    i_slint_backend_testing::init_no_event_loop();
+    let window = YapfastWindow::new().unwrap();
+    window.set_own_title_bar(true);
+    let actions = Rc::new(RefCell::new(Vec::new()));
+    let seen = actions.clone();
+    window.on_minimize_window(move || seen.borrow_mut().push("minimize"));
+    let seen = actions.clone();
+    window.on_maximize_window(move || seen.borrow_mut().push("maximize"));
+    let seen = actions.clone();
+    window.on_close_window(move || seen.borrow_mut().push("close"));
+    window.show().unwrap();
+    for width in [800., 1120.] {
+        window
+            .window()
+            .set_size(slint::LogicalSize::new(width, 760.));
+        for offset in [90., 54., 18.] {
+            let position = slint::LogicalPosition::new(width - offset, 16.);
+            window.window().dispatch_event(WindowEvent::PointerPressed {
+                position,
+                button: PointerEventButton::Left,
+            });
+            window
+                .window()
+                .dispatch_event(WindowEvent::PointerReleased {
+                    position,
+                    button: PointerEventButton::Left,
+                });
+        }
+    }
+    assert_eq!(
+        *actions.borrow(),
+        [
+            "minimize", "maximize", "close", "minimize", "maximize", "close"
+        ]
+    );
+    window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_inset_account_card_keeps_settings_and_audio_actions_reachable() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    let window = one_message("Synthetic message");
+    window.global::<ClientStyle>().set_enabled(true);
+    window.set_own_title_bar(true);
+    window.set_preview(true);
+    let muted = Rc::new(Cell::new(false));
+    let seen = muted.clone();
+    window.on_toggle_mute(move || seen.set(true));
+    let deafened = Rc::new(Cell::new(false));
+    let seen = deafened.clone();
+    window.on_toggle_deafen(move || seen.set(true));
+    for (x, y) in [(236., 722.), (290., 722.), (344., 722.)] {
+        let position = slint::LogicalPosition::new(x, y);
+        window.window().dispatch_event(WindowEvent::PointerPressed {
+            position,
+            button: PointerEventButton::Left,
+        });
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: PointerEventButton::Left,
+            });
+    }
+    assert!(
+        muted.get(),
+        "the microphone remains operable inside the inset card"
+    );
+    assert!(
+        deafened.get(),
+        "the headphone toggle remains operable inside the inset card"
+    );
+    assert!(window.get_settings_open(), "settings remain reachable");
+    window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_docked_profile_opens_the_existing_full_profile() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    let window = one_message("Synthetic message");
+    window.global::<ClientStyle>().set_enabled(true);
+    window.set_own_title_bar(true);
+    window.set_profile_available(true);
+    window.set_panel_profile_shown(true);
+    window.set_panel_profile(ProfileData {
+        name: "Sam".into(),
+        initial: "S".into(),
+        ..Default::default()
+    });
+    let opened = Rc::new(Cell::new(false));
+    let seen = opened.clone();
+    window.on_enlarge_panel_profile(move || seen.set(true));
+    let position = slint::LogicalPosition::new(970., 722.);
+    window.window().dispatch_event(WindowEvent::PointerPressed {
+        position,
+        button: PointerEventButton::Left,
+    });
+    window
+        .window()
+        .dispatch_event(WindowEvent::PointerReleased {
+            position,
+            button: PointerEventButton::Left,
+        });
+    assert!(
+        opened.get(),
+        "the docked profile footer opens the full profile through its adapter callback"
+    );
+    window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_dm_heading_keeps_friend_and_new_message_actions() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    let window = one_message("Synthetic message");
+    window.global::<ClientStyle>().set_enabled(true);
+    window.set_own_title_bar(true);
+    window.set_dms_selected(true);
+    window.set_discord_linked(true);
+    window.set_preview(false);
+    window.set_rooms(ModelRc::new(VecModel::from(vec![RoomRow {
+        id: "synthetic-dm".into(),
+        name: "Sam".into(),
+        direct: true,
+        person: true,
+        ..Default::default()
+    }])));
+    let friend = Rc::new(Cell::new(false));
+    let seen = friend.clone();
+    window.on_open_add_friend(move || seen.set(true));
+    let message = Rc::new(Cell::new(false));
+    let seen = message.clone();
+    window.on_open_new_dm(move || seen.set(true));
+    for x in [328., 356.] {
+        let position = slint::LogicalPosition::new(x, 182.);
+        window.window().dispatch_event(WindowEvent::PointerPressed {
+            position,
+            button: PointerEventButton::Left,
+        });
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: PointerEventButton::Left,
+            });
+    }
+    assert!(
+        friend.get(),
+        "the existing add-friend action remains reachable"
+    );
+    assert!(
+        message.get(),
+        "the existing new-DM action remains reachable"
+    );
+    window.hide().unwrap();
+}

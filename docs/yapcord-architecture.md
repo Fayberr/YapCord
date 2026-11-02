@@ -22,8 +22,9 @@ behavior in the core rather than duplicating it in widgets.
 
 ## Current presentation boundary
 
-`ui/yapcord/style.slint` owns the initial navigation, composer, typography and
-settings-frame metrics. Small bindings in the inherited Slint components use
+`ui/yapcord/style.slint` owns navigation, account dock, message, composer,
+typography and settings-frame metrics. The caption bar and DM heading have
+downstream components beside it. Small bindings in the inherited Slint components use
 those values. `src/ui/yapcord.rs` selects the presentation at window creation;
 `YAPCORD_UI=upstream` retains the inherited metrics for comparison. The adapter
 selects the existing Bonfire palette only when no theme has been saved. Saved
