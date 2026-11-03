@@ -13,6 +13,7 @@ use std::{
 use serde_json::Value;
 
 use crate::{
+    collectibles::{self, Nameplate, Plate},
     components::{self, Card},
     embed::{self, Embed},
     marked::ServerMarks,
@@ -978,6 +979,12 @@ pub struct SavedNames {
     usernames: Vec<(String, String)>,
     #[serde(default)]
     bots: Vec<String>,
+    /// Avatar decorations' SKUs by user id.
+    #[serde(default)]
+    decorations: Vec<(String, String)>,
+    /// Nameplates by user id: their SKU and palette.
+    #[serde(default)]
+    nameplates: Vec<(String, String, String)>,
 }
 
 /// [`Names`] serialized as [`SavedNames`]; see [`Names::saving`].
@@ -994,7 +1001,7 @@ impl serde::Serialize for SavingNames<'_> {
             }
         }
         let names = self.0;
-        let mut saved = serializer.serialize_struct("SavedNames", 8)?;
+        let mut saved = serializer.serialize_struct("SavedNames", 10)?;
         saved.serialize_field(
             "users",
             &List(|| names.users.iter().map(|(user, name)| (Text(*user), name))),
@@ -1049,6 +1056,24 @@ impl serde::Serialize for SavingNames<'_> {
             }),
         )?;
         saved.serialize_field("bots", &List(|| names.bots.iter().copied().map(Text)))?;
+        saved.serialize_field(
+            "decorations",
+            &List(|| {
+                names
+                    .decorations
+                    .iter()
+                    .map(|(user, sku)| (Text(*user), Text(*sku)))
+            }),
+        )?;
+        saved.serialize_field(
+            "nameplates",
+            &List(|| {
+                names
+                    .nameplates
+                    .iter()
+                    .map(|(user, plate)| (Text(*user), Text(plate.sku), plate.palette_name()))
+            }),
+        )?;
         saved.end()
     }
 }
@@ -1092,6 +1117,10 @@ pub struct Names {
     avatars: HashMap<Id, String>,
     /// Server avatar hashes by server and user id.
     member_avatars: HashMap<(Id, Id), String>,
+    /// The SKUs of the avatar decorations people equip, by user id.
+    decorations: HashMap<Id, Id>,
+    /// The nameplates people equip, by user id.
+    nameplates: HashMap<Id, Plate>,
     /// Members' roles by server and user id, for the colour of their name.
     /// Member lists and the core share each, rather than copying it.
     roles: HashMap<(Id, Id), Arc<[String]>>,
@@ -1166,6 +1195,18 @@ impl Names {
                 .collect(),
             usernames: by_user(saved.usernames),
             bots: saved.bots.iter().filter_map(|user| id(user)).collect(),
+            decorations: saved
+                .decorations
+                .iter()
+                .filter_map(|(user, sku)| Some((id(user)?, id(sku)?)))
+                .collect(),
+            nameplates: saved
+                .nameplates
+                .iter()
+                .filter_map(|(user, sku, palette)| {
+                    Some((id(user)?, Plate::restore(id(sku)?, palette)?))
+                })
+                .collect(),
             ..Self::default()
         };
         // Those kept from before go before anyone learned since.
@@ -1225,6 +1266,8 @@ impl Names {
         self.usernames.retain(|user, _| seen.contains_key(user));
         self.bots.retain(|user| seen.contains_key(user));
         self.avatars.retain(|user, _| seen.contains_key(user));
+        self.decorations.retain(|user, _| seen.contains_key(user));
+        self.nameplates.retain(|user, _| seen.contains_key(user));
         self.nicknames
             .retain(|(_, user), _| seen.contains_key(user));
         self.members.retain(|(_, user)| seen.contains_key(user));
@@ -1269,6 +1312,19 @@ impl Names {
             }
             Some(Value::Null) => learned |= changed(&mut self.avatars, id, None),
             _ => {}
+        }
+        // Partial user objects leave both out; null, or nothing equipped,
+        // removes them.
+        if let Some(data) = user.get("avatar_decoration_data") {
+            learned |= changed(
+                &mut self.decorations,
+                id,
+                collectibles::decoration_sku(data),
+            );
+        }
+        if let Some(equipped) = user.get("collectibles") {
+            let plate = Plate::parse(&equipped["nameplate"]);
+            learned |= changed(&mut self.nameplates, id, plate);
         }
         self.version += u64::from(known && learned);
     }
@@ -1458,6 +1514,23 @@ impl Names {
         }
         let hash = user_id.and_then(|user| self.avatars.get(&user));
         ready::avatar(user, hash.map(String::as_str))
+    }
+
+    /// The address of the decoration a user wears around their avatar.
+    pub fn decoration(&self, user: &str) -> Option<String> {
+        let user = id(user)?;
+        self.touch(user);
+        self.decorations
+            .get(&user)
+            .copied()
+            .map(collectibles::picture)
+    }
+
+    /// The nameplate a user equips.
+    pub fn nameplate(&self, user: &str) -> Option<Nameplate> {
+        let user = id(user)?;
+        self.touch(user);
+        self.nameplates.get(&user).map(Plate::shown)
     }
 
     /// The avatar hash [`Self::avatar`] makes a user's address from outside
@@ -2248,6 +2321,41 @@ mod tests {
         assert_eq!(names.version(), member, "the same again");
         names.learn_member("10", &json!({"user_id": "2", "nick": "Annie", "roles": []}));
         assert!(names.version() > member, "a nickname");
+    }
+
+    #[test]
+    fn learns_decorations_and_nameplates_and_keeps_them_over_partial_users() {
+        let mut names = Names::default();
+        let ann = json!({
+            "id": "2", "username": "ann",
+            "avatar_decoration_data": {"asset": "a_x", "sku_id": "77", "expires_at": null},
+            "collectibles": {"nameplate": {"sku_id": "88", "asset": "nameplates/x/",
+                                           "label": "X", "palette": "teal"}},
+        });
+        names.learn_user(&ann);
+        assert!(
+            names
+                .decoration("2")
+                .unwrap()
+                .ends_with("/collectibles-shop/77/static")
+        );
+        let plate = names.nameplate("2").unwrap();
+        assert_eq!(plate.color, 0x086460);
+        assert!(plate.picture.ends_with("/collectibles-shop/88/static"));
+        assert_eq!(names.decoration("3"), None);
+        // A partial user, such as a mention in a message, says nothing.
+        names.learn_user(&json!({"id": "2", "username": "ann"}));
+        assert!(names.decoration("2").is_some() && names.nameplate("2").is_some());
+        // They survive being saved and restored.
+        let saved = serde_json::to_string(&names.saving()).unwrap();
+        let restored = Names::restore(serde_json::from_str(&saved).unwrap());
+        assert_eq!(restored.decoration("2"), names.decoration("2"));
+        assert_eq!(restored.nameplate("2"), names.nameplate("2"));
+        // Null takes them off; so does no nameplate among the collectibles.
+        names.learn_user(&json!({"id": "2", "username": "ann",
+            "avatar_decoration_data": null, "collectibles": {}}));
+        assert_eq!(names.decoration("2"), None);
+        assert_eq!(names.nameplate("2"), None);
     }
 
     #[test]
