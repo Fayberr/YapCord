@@ -220,23 +220,38 @@ component ProfileBadge inherits Rectangle {
         clicked => { if root.badge.link != "" { root.open-link(root.badge.link); } }
         changed has-hover => {
             if self.has-hover {
-                if root.badge.title != "" {
-                    BadgeTip.kind = root.badge.kind;
-                    BadgeTip.title = root.badge.title;
-                    BadgeTip.progress = root.badge.progress;
-                    BadgeTip.picture-url = root.badge.picture;
-                    BadgeTip.x = self.absolute-position.x + self.width / 2;
-                    BadgeTip.y = self.absolute-position.y;
-                } else {
-                    Tip.text = root.badge.description;
-                    Tip.side = 0;
-                    Tip.x = self.absolute-position.x + self.width / 2;
-                    Tip.y = self.absolute-position.y;
+                tip-delay.running = true;
+            } else {
+                tip-delay.running = false;
+                if BadgeTip.title == root.badge.title && root.badge.title != "" {
+                    BadgeTip.title = "";
+                } else if Tip.text == root.badge.description {
+                    Tip.text = "";
+                    Tip.pop = false;
                 }
-            } else if BadgeTip.title == root.badge.title && root.badge.title != "" {
-                BadgeTip.title = "";
-            } else if Tip.text == root.badge.description {
-                Tip.text = "";
+            }
+        }
+    }
+    // Discord's tooltips wait for the pointer to rest on a badge for about
+    // half a second before they pop up.
+    tip-delay := Timer {
+        interval: 500ms;
+        running: false;
+        triggered => {
+            self.running = false;
+            if root.badge.title != "" {
+                BadgeTip.kind = root.badge.kind;
+                BadgeTip.title = root.badge.title;
+                BadgeTip.progress = root.badge.progress;
+                BadgeTip.picture-url = root.badge.picture;
+                BadgeTip.x = badge-pointer.absolute-position.x + badge-pointer.width / 2;
+                BadgeTip.y = badge-pointer.absolute-position.y;
+            } else {
+                Tip.pop = true;
+                Tip.text = root.badge.description;
+                Tip.side = 0;
+                Tip.x = badge-pointer.absolute-position.x + badge-pointer.width / 2;
+                Tip.y = badge-pointer.absolute-position.y;
             }
         }
     }
@@ -248,6 +263,18 @@ component ProfileBadge inherits Rectangle {
 // the kind, the level in capitals and the progress 4px apart.
 export component BadgeTipCard inherits Rectangle {
     property <image> level-picture: BadgeTip.picture-url != "" ? PictureStore.picture(BadgeTip.picture-url, PictureStore.revision) : @image-url("");
+    // It pops up: fades in and grows from the caret, as Discord's does.
+    property <bool> shown: false;
+    opacity: root.shown ? 1 : 0;
+    animate opacity { duration: 120ms; easing: ease-out; }
+    transform-scale: root.shown ? 1 : 0.95;
+    transform-origin: { x: self.width / 2, y: self.height };
+    animate transform-scale { duration: 120ms; easing: ease-out; }
+    Timer {
+        interval: 16ms;
+        running: true;
+        triggered => { self.running = false; root.shown = true; }
+    }
     width: 200px;
     height: card.preferred-height;
     background: #242429;
