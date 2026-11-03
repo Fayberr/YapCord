@@ -517,14 +517,18 @@ export component ProfileCard inherits Rectangle {
                             color: Theme.secondary; font-size: 14px; wrap: word-wrap; max-height: 40px;
                         }
                     }
-                    // Discord sets the badges in a small dark pill of their own.
+                    // Discord sets the badges in a pill of their own: 20px icons 2px
+                    // apart, 3px by 1px inside a 1px border, 8px corners, a grey wash
+                    // that brightens when the pointer is over it.
                     if root.data.badges.length > 0: HorizontalLayout {
                         alignment: start;
                         Rectangle {
-                            width: root.data.badges.length * 24px + 4px; height: 28px;
-                            background: #ffffff10; border-radius: 8px;
+                            width: root.data.badges.length * 22px + 6px; height: 24px;
+                            background: pill-hover.has-hover ? #97979f33 : #97979f1f;
+                            border-radius: 8px; border-width: 1px; border-color: #97979f0a;
+                            pill-hover := TouchArea { mouse-cursor: MouseCursor.default; }
                             HorizontalLayout {
-                                padding: 4px; spacing: 4px;
+                                padding-left: 3px; padding-right: 3px; padding-top: 1px; padding-bottom: 1px; spacing: 2px;
                                 for badge in root.data.badges: ProfileBadge {
                                     badge: badge;
                                     open-link(url) => { root.open-link(url); }
