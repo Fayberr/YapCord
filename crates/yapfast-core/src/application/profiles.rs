@@ -234,6 +234,18 @@ impl Application {
         }
     }
 
+    /// Gives the profiles on screen of `user` the levels of their badges, which
+    /// come after the rest.
+    pub(super) fn show_badge_levels(&mut self, user: &str, badges: Vec<ProfileBadge>) {
+        for view in [&mut self.state.profile, &mut self.state.panel_profile]
+            .into_iter()
+            .filter_map(Option::as_mut)
+            .filter(|view| view.profile.id == user && !view.loading)
+        {
+            view.profile.badges.clone_from(&badges);
+        }
+    }
+
     /// The profiles on screen of `user` waiting for Discord's.
     fn loading_profiles(&mut self, user: &str) -> impl Iterator<Item = &mut ProfileView> {
         [&mut self.state.profile, &mut self.state.panel_profile]

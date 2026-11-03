@@ -2358,7 +2358,7 @@ async fn shows_profiles() {
     } = Fixture::start("shows_profiles").await;
     // Bob's profile: in the server, his server bio wins over his own; from
     // a DM, his own shows.
-    let in_server = discord.profile(&guild, &bob, |_| {}).await.unwrap();
+    let mut in_server = discord.profile(&guild, &bob, |_| {}).await.unwrap();
     assert_eq!(in_server.name, "Bob");
     assert_eq!(in_server.pronouns.as_deref(), Some("he/him"));
     assert_eq!(in_server.bio.as_deref(), Some("Keeps #general tidy."));
@@ -2380,7 +2380,10 @@ async fn shows_profiles() {
         .collect();
     assert_eq!(badges, ["HypeSquad Bravery", "Active Developer", "Spielzeit"]);
     assert!(in_server.badges[0].link.is_some() && in_server.badges[1].link.is_none());
-    // Only the badge that levels up has a level, taken from /users/{id}/badges.
+    // The levels come after the profile, from /users/{id}/badges, and only the
+    // badge that levels up has one.
+    assert!(in_server.badges.iter().all(|badge| badge.level.is_none()));
+    assert!(discord.badge_levels(&guild, &bob, &mut in_server).await);
     assert!(in_server.badges[..2].iter().all(|badge| badge.level.is_none()));
     let level = in_server.badges[2].level.as_ref().expect("playing time has a level");
     assert_eq!(level.kind.as_deref(), Some("Spielzeit"));

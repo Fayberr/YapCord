@@ -3241,6 +3241,12 @@ pub enum Event {
         user: String,
         result: Result<Profile, String>,
     },
+    /// The badges of a profile [`Event::Profile`] brought, now with the levels
+    /// their tooltips show, which Discord answers after the profile.
+    BadgeLevels {
+        user: String,
+        badges: Vec<ProfileBadge>,
+    },
     /// The profile Yapfast kept of someone [`DiscordCommand::Profile`] asked
     /// for, to show until [`Event::Profile`] comes.
     KeptProfile {
