@@ -7071,6 +7071,8 @@ fn yapcord_settings_navigation_and_header_keep_the_existing_actions() {
     window
         .window()
         .set_size(slint::LogicalSize::new(1920., 1080.));
+    // The settings card fades in; let the animation finish so it takes clicks.
+    i_slint_backend_testing::mock_elapsed_time(std::time::Duration::from_millis(1000));
     let click = |x, y| {
         let position = slint::LogicalPosition::new(x, y);
         window.window().dispatch_event(WindowEvent::PointerPressed {

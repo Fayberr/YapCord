@@ -429,7 +429,7 @@ export component ChannelRow inherits Rectangle {
     callback context-menu(length, length);
     property <bool> in-voice: root.voice-channel != "";
     property <bool> has-detail: root.detail != "" || root.detail-emoji != "";
-    height: root.person ? ClientStyle.dm-row-height : 34px;
+    height: root.person ? ClientStyle.dm-row-height : ClientStyle.channel-row-height;
     border-radius: 6px;
     background: root.selected ? Theme.active : pointer.has-hover ? Theme.hover : transparent;
     animate background { duration: 90ms; }
@@ -1225,7 +1225,7 @@ export component RoomList inherits Rectangle {
     // What's dragged follows the pointer, faint, as a browser draws it.
     if root.arranging > 0: Rectangle {
         x: 8px; y: root.drag-y - root.absolute-position.y - root.grab-y;
-        width: root.width - 16px; height: root.dragged-category ? 36px : 34px;
+        width: root.width - 16px; height: root.dragged-category ? 36px : (root.dragged-row.person ? ClientStyle.dm-row-height : ClientStyle.channel-row-height);
         border-radius: root.dragged-category ? 4px : 6px;
         background: Theme.active; opacity: 0.6;
         if root.dragged-category: HorizontalLayout {
