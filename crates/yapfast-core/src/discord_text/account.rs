@@ -183,10 +183,24 @@ pub(super) fn command(
                         });
                         return;
                     };
+                    // The effect over the card is the shop's to describe, and
+                    // comes after the card does.
+                    let effect = profile.effect.clone();
                     let _ = events.send(Event::Profile {
                         user: user.clone(),
                         result: Ok(chat_profile(&discord, &guild, profile.clone())),
                     });
+                    if let Some(sku) = effect {
+                        match discord.profile_effect(&sku).await {
+                            Ok(Some(effect)) => {
+                                let _ =
+                                    events.send(Event::ProfileEffect(Arc::new((&*effect).into())));
+                            }
+                            Ok(None) => {}
+                            Err(error) => {
+                                tracing::warn!(%error, "could not fetch a Discord profile effect");
+                            }
+                        }
                     // The badges' levels come after the card is on screen.
                     if discord.badge_levels(&guild, &user, &mut profile).await {
                         let badges = chat_profile(&discord, &guild, profile).badges;

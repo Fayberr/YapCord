@@ -594,6 +594,12 @@ impl Api {
     /// are: `{"badges": [...]}`. The tooltips of a profile's badges show it.
     pub async fn badges(&self, user: &str) -> Result<Value> {
         self.json(self.request(Method::GET, &format!("/users/{user}/badges")))
+    }
+
+    /// A shop product, such as the profile effect of a SKU, as the client
+    /// fetches it to show the effect.
+    pub async fn collectibles_product(&self, sku: &str) -> Result<Value> {
+        self.json(self.request(Method::GET, &format!("/collectibles-products/{sku}")))
             .await
     }
 
