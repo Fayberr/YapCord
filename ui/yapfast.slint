@@ -3910,17 +3910,6 @@ export component YapfastWindow inherits Window {
         x: max(8px, min(root.width - self.w - 8px, ReactionHover.x - self.w / 2));
         y: max(4px, ReactionHover.y - self.h - 6px);
         width: self.w; height: self.h;
-        property <bool> shown: !Tip.pop;
-        opacity: self.shown ? 1 : 0;
-        animate opacity { duration: 120ms; easing: ease-out; }
-        transform-scale: self.shown ? 1 : 0.95;
-        transform-origin: { x: self.w / 2, y: self.h };
-        animate transform-scale { duration: 120ms; easing: ease-out; }
-        if Tip.pop: Timer {
-            interval: 16ms;
-            running: true;
-            triggered => { self.running = false; tip-card.shown = true; }
-        }
         border-radius: 6px; background: Theme.tooltip;
         drop-shadow-blur: 12px; drop-shadow-color: #00000080; drop-shadow-offset-y: 3px;
         accessible-role: button;
@@ -4043,10 +4032,10 @@ export component YapfastWindow inherits Window {
         transform-scale: self.shown ? 1 : 0.95;
         transform-origin: { x: self.w / 2, y: self.h };
         animate transform-scale { duration: 120ms; easing: ease-out; }
-        if Tip.pop: Timer {
+        Timer {
             interval: 16ms;
-            running: true;
-            triggered => { self.running = false; parent.shown = true; }
+            running: Tip.pop && !tip-card.shown;
+            triggered => { tip-card.shown = true; }
         }
         border-radius: 6px; background: Theme.tooltip;
         drop-shadow-blur: 12px; drop-shadow-color: #00000080; drop-shadow-offset-y: 3px;
