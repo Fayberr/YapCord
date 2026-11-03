@@ -1511,6 +1511,16 @@ impl Adapter {
                         tint: tint(&member.name),
                         picture: slint::Image::default(),
                         picture_url: member.avatar.as_deref().unwrap_or_default().into(),
+                        tag: member
+                            .tag
+                            .as_ref()
+                            .map_or_else(Default::default, |tag| tag.text.as_str().into()),
+                        tag_badge: member
+                            .tag
+                            .as_ref()
+                            .and_then(|tag| tag.badge.as_deref())
+                            .unwrap_or_default()
+                            .into(),
                         timed_out: member.timed_out_until.is_some_and(|until| until > now),
                         presence: presence_name(member.presence).into(),
                         color: role_color(member.color),

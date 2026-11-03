@@ -601,6 +601,15 @@ pub enum Role {
     Member,
 }
 
+/// The server tag a Discord user wears beside their name: a few letters
+/// from a server they represent, with that server's badge.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ServerTag {
+    pub text: String,
+    /// The address of the badge's picture; see [`DiscordCommand::Pictures`].
+    pub badge: Option<String>,
+}
+
 /// A person's profile, as their profile card shows it. Matrix gives what the
 /// member list knows; Discord adds the rest.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -631,6 +640,8 @@ pub struct Profile {
     /// The servers and friends this account shares with them.
     pub servers: Vec<ProfileServer>,
     pub friends: Vec<ProfileFriend>,
+    /// The server tag they wear by their name, on Discord.
+    pub tag: Option<ServerTag>,
 }
 
 /// A server a profile's person shares with this account.
@@ -693,6 +704,8 @@ pub struct ChatMember {
     /// When their Discord timeout ends, in Unix milliseconds, while they're
     /// timed out as far as Yapfast knows.
     pub timed_out_until: Option<u64>,
+    /// The server tag they wear by their name, on Discord.
+    pub tag: Option<ServerTag>,
 }
 
 /// Someone to start a DM with.
@@ -1400,6 +1413,8 @@ pub struct ChatMessage {
     pub color: Option<u32>,
     /// The author is a Discord bot or webhook.
     pub bot: bool,
+    /// The server tag the author wears by their name, on Discord.
+    pub tag: Option<ServerTag>,
     /// Forwarded on Discord: its body, files and embeds are the original's.
     pub forwarded: bool,
     pub body: String,
