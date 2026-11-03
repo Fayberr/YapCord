@@ -236,7 +236,7 @@ impl Application {
 
     /// Gives the profiles on screen of `user` the levels of their badges, which
     /// come after the rest.
-    pub(super) fn show_badge_levels(&mut self, user: &str, badges: Vec<ProfileBadge>) {
+    pub(super) fn show_badge_levels(&mut self, user: &str, badges: Vec<crate::chat::ProfileBadge>) {
         for view in [&mut self.state.profile, &mut self.state.panel_profile]
             .into_iter()
             .filter_map(Option::as_mut)
