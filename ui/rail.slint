@@ -2,7 +2,7 @@ import { DmHeading } from "yapcord/dm-heading.slint";
 import { ClientStyle } from "yapcord/style.slint";
 import { ListView } from "scrollview.slint";
 import { Theme, Tip, Middle, Label } from "theme.slint";
-import { Avatar, PictureStore, StatusText, VoiceSpot } from "controls.slint";
+import { Avatar, PictureStore, StatusText, StyledName, NameStyleRow, VoiceSpot } from "controls.slint";
 import { DiscordBadge } from "discord.slint";
 import { PersonRow, LivePill } from "voice.slint";
 
@@ -42,8 +42,9 @@ export struct RoomRow {
     /// A DM's avatar or group icon, and whether it's a Discord DM.
     picture: image, discord: bool,
     picture-url: string,
-    /// The address of the decoration around a one-to-one DM's avatar.
-    decoration-url: string,
+    /// The address of the decoration around a one-to-one DM's avatar, and how
+    /// its person's name is drawn.
+    decoration-url: string, name-style: NameStyleRow,
     /// Listed but not open to join, such as a Discord channel the account's roles keep it out of.
     locked: bool,
     /// A one-to-one DM, whose other person has a profile.
@@ -381,6 +382,7 @@ export component ChannelRow inherits Rectangle {
     in property <image> picture;
     in property <string> picture-url;
     in property <string> decoration-url;
+    in property <NameStyleRow> name-style;
     /// Marks a Discord DM, as the rail marks Discord servers.
     in property <bool> discord;
     in property <bool> selected;
@@ -511,9 +513,12 @@ export component ChannelRow inherits Rectangle {
                 if !root.person && !root.thread: Image { source: root.icon; width: 20px; image-fit: contain; colorize: root.danger ? Theme.danger : root.selected || root.unread ? Theme.secondary : Theme.faint; }
                 VerticalLayout {
                     alignment: center; spacing: 0px; horizontal-stretch: 1;
-                    Text {
+                    if root.name-style.effect == 0: Text {
                         text: root.text; color: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
                         vertical-alignment: center; overflow: elide;
+                    }
+                    if root.name-style.effect > 0: StyledName {
+                        text: root.text; style: root.name-style; ink: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
                     }
                     // Their voice channel in full when nothing else is said here,
                     // else a speaker before what is, as the friends list has it.
@@ -1071,7 +1076,7 @@ export component RoomList inherits Rectangle {
                     chat: room.chat;
                     open-chat => { root.open-chat(room.id); }
                     picture: room.picture; picture-url: room.picture-url; discord: room.discord;
-                    decoration-url: room.decoration-url;
+                    decoration-url: room.decoration-url; name-style: room.name-style;
                     selected: room.selected; unread: room.unread; badge: room.badge; locked: room.locked;
                     call: room.call; presence: room.presence; detail: room.detail; detail-emoji: room.detail-emoji;
                     voice-channel: room.voice-channel; voice-server: room.voice-server;

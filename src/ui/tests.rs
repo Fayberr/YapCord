@@ -7426,3 +7426,194 @@ fn yapcord_server_rail_scroll_snapshot_benchmark() {
     );
     window.hide().unwrap();
 }
+
+// PROBE-BEGIN
+#[test]
+#[ignore = "renders the member list with Skia; probe for decorations"]
+fn probe_render_names() {
+    use yapfast_discord::collectibles::Style;
+    slint::platform::set_platform(Box::new(i_slint_backend_testing::TestingBackend::new(
+        i_slint_backend_testing::TestingBackendOptions {
+            mock_time: true,
+            threading: false,
+            renderer_name: Some("skia-software".into()),
+        },
+    )))
+    .unwrap();
+    let window = yapcord::window().unwrap();
+    Layout::default().apply_appearance(&window);
+    let directory = tempfile::tempdir().unwrap();
+    let adapter = Adapter::new(
+        Arc::new(BackgroundRuntime::new().unwrap()),
+        directory.path().into(),
+        &window,
+    )
+    .unwrap();
+    bind_callbacks(&window, &adapter);
+    adapter.borrow_mut().action(&window, Action::Preview);
+    window.show().unwrap();
+    window
+        .window()
+        .set_size(slint::LogicalSize::new(1400., 900.));
+    let load = |name: &str, bound: (u32, u32)| {
+        let bytes = std::fs::read(format!("/tmp/icons/{name}")).unwrap();
+        Arc::new(yapfast_core::chat::decode_picture(&bytes, bound.0, bound.1).unwrap())
+    };
+    let pictures = [
+        ("dec-cherry.png", load("dec-cherry.png", (672, 192))),
+        ("plate-ymirx.png", load("plate-ymirx.png", (672, 192))),
+        ("plate-fayber.png", load("plate-fayber.png", (672, 192))),
+        ("plate-3.png", load("plate-3.png", (672, 192))),
+    ];
+    for (url, picture) in &pictures {
+        pictures::show_picture_for_test(url, picture);
+    }
+    let avatar = |name: &str| {
+        slint::Image::load_from_path(std::path::Path::new(&format!("/tmp/icons/{name}"))).unwrap()
+    };
+    let style = |font: u64, effect: u64, colors: &[u64]| {
+        (
+            font,
+            Style::parse(
+                &serde_json::json!({"font_id": font, "effect_id": effect, "colors": colors}),
+            ),
+        )
+    };
+    let people: Vec<(&str, &str, &str, &str, (u64, Option<Style>), &str)> = vec![
+        (
+            "[AQE]-Ymirx",
+            "av-ymirx.png",
+            "online",
+            "SWR COLABORATOR - 3",
+            style(11, 1, &[0x71368a]),
+            "plate-ymirx.png",
+        ),
+        (
+            "Fayber",
+            "av-fayber.png",
+            "online",
+            "",
+            style(11, 1, &[0x71368a]),
+            "plate-fayber.png",
+        ),
+        (
+            "angie",
+            "av-luki.png",
+            "dnd",
+            "STYLES",
+            style(16, 2, &[0x2ecc71, 0x1abc9c]),
+            "",
+        ),
+        (
+            "little leopard",
+            "av-revi.png",
+            "idle",
+            "",
+            style(3, 2, &[0xff7eb3, 0x7a5cff]),
+            "",
+        ),
+        (
+            "neon Mainframe",
+            "av-swrm.png",
+            "online",
+            "",
+            style(14, 3, &[0x00ff99]),
+            "",
+        ),
+        (
+            "toon Jellybean",
+            "av-gabe.png",
+            "online",
+            "",
+            style(4, 4, &[0xf42098]),
+            "",
+        ),
+        (
+            "pop 8Bit",
+            "av-luki.png",
+            "online",
+            "",
+            style(8, 5, &[0x0fc986]),
+            "",
+        ),
+        (
+            "prism Tempo",
+            "av-revi.png",
+            "online",
+            "",
+            style(12, 7, &[0xff5555, 0x55ff55, 0x5555ff]),
+            "",
+        ),
+        (
+            "gummy Modern",
+            "av-swrm.png",
+            "online",
+            "",
+            style(6, 8, &[0xff8800, 0x00aaff]),
+            "",
+        ),
+        (
+            "glow Vampyre",
+            "av-gabe.png",
+            "offline",
+            "",
+            style(10, 6, &[0xaa66ff, 0xff66aa]),
+            "",
+        ),
+        (
+            "Monkey Bars",
+            "av-ymirx.png",
+            "online",
+            "",
+            style(13, 1, &[0xffcc00]),
+            "",
+        ),
+        (
+            "Headbang",
+            "av-fayber.png",
+            "online",
+            "",
+            style(15, 1, &[0xff6666]),
+            "",
+        ),
+    ];
+    let rows: Vec<MemberRow> = people
+        .into_iter()
+        .map(
+            |(name, picture, presence, heading, name_style, plate)| MemberRow {
+                id: name.into(),
+                name: name.into(),
+                initial: "X".into(),
+                tint: slint::Color::from_rgb_u8(0x6b, 0x72, 0x80),
+                picture: avatar(picture),
+                heading: heading.into(),
+                presence: presence.into(),
+                color: slint::Color::from_rgb_u8(0x71, 0x36, 0x8a),
+                has_color: true,
+                name_style: name_style::row(name_style.1.map(Into::into), name),
+                decoration_url: if name == "Fayber" {
+                    "dec-cherry.png".into()
+                } else {
+                    Default::default()
+                },
+                nameplate_url: plate.into(),
+                nameplate_color: slint::Color::from_rgb_u8(0x73, 0x0b, 0xc8),
+                ..Default::default()
+            },
+        )
+        .collect();
+    window.set_roster(ModelRc::new(VecModel::from(rows)));
+    for _ in 0..3 {
+        window.window().take_snapshot().unwrap();
+    }
+    let frame = window.window().take_snapshot().unwrap();
+    image::save_buffer(
+        "/tmp/decscenes/probe-members.png",
+        frame.as_bytes(),
+        frame.width(),
+        frame.height(),
+        image::ColorType::Rgba8,
+    )
+    .unwrap();
+}
+// PROBE-END

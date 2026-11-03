@@ -24,6 +24,7 @@ use crate::{
     notifications::Change,
     oauth,
     profile::{self, Profile},
+    profile_effect,
     ready::{self, PRIVATE, Server},
     scheduled_event, search, server_settings,
     settings::{self, CustomStatus},
@@ -659,6 +660,8 @@ pub struct Discord {
     names: Arc<RwLock<Names>>,
     /// Profiles fetched lately, oldest first.
     profiles: Arc<Mutex<Vec<Kept>>>,
+    /// Profile effects fetched lately, oldest first.
+    effects: Arc<Mutex<Vec<Arc<profile_effect::Effect>>>>,
     /// The threads a list of a channel's threads found, by id, while it's
     /// open: one opens from what Discord gave rather than asking again.
     listed_threads: Arc<Mutex<HashMap<String, Value>>>,
@@ -679,6 +682,9 @@ pub struct Discord {
 /// many more as spam; Yapfast keeps a margin.
 const NEW_DMS: usize = 8;
 const NEW_DM_SPAN: Duration = Duration::from_secs(10 * 60);
+
+/// The most profile effects kept: a few cards' worth.
+const EFFECTS: usize = 8;
 
 /// A profile fetched lately, for a user in a server.
 struct Kept {
@@ -760,6 +766,7 @@ impl Discord {
             api,
             names,
             profiles: Arc::default(),
+            effects: Arc::default(),
             listed_threads: Arc::default(),
             new_dms: Arc::new(Mutex::new(limits::Window::new(NEW_DMS, NEW_DM_SPAN))),
             application_icons: Arc::default(),
@@ -1758,6 +1765,31 @@ impl Discord {
         self.lock_profiles().retain(|kept| {
             Some(&kept.user) != me.as_ref() || guild.is_some_and(|guild| kept.guild != guild)
         });
+    }
+
+    /// The profile effect sold as `sku`: its layers, from the shop, asked for
+    /// once and kept for the next few cards. None for a SKU that isn't one.
+    pub async fn profile_effect(&self, sku: &str) -> Result<Option<Arc<profile_effect::Effect>>> {
+        let lock = || {
+            self.effects
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+        };
+        if let Some(kept) = lock().iter().find(|effect| effect.sku == sku) {
+            return Ok(Some(kept.clone()));
+        }
+        let product = self.api.collectibles_product(sku).await?;
+        let Some(effect) = profile_effect::parse(sku, &product) else {
+            return Ok(None);
+        };
+        let effect = Arc::new(effect);
+        let mut kept = lock();
+        kept.retain(|old| old.sku != sku);
+        kept.push(effect.clone());
+        if kept.len() > EFFECTS {
+            kept.remove(0);
+        }
+        Ok(Some(effect))
     }
 
     fn lock_profiles(&self) -> std::sync::MutexGuard<'_, Vec<Kept>> {
