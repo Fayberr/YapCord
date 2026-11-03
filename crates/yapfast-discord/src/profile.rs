@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::{
     message::{iso_ms, snowflake_ms},
-    ready,
+    profile_effect, ready,
 };
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -33,6 +33,10 @@ pub struct Profile {
     pub mutual_servers: Vec<MutualServer>,
     /// The friends this account shares with them.
     pub mutual_friends: Vec<MutualFriend>,
+    /// The SKU of the profile effect they equip, which
+    /// [`crate::service::Discord::profile_effect`] describes.
+    #[serde(default)]
+    pub effect: Option<String>,
 }
 
 /// A server this account shares with someone.
@@ -205,6 +209,7 @@ pub fn parse(value: &Value, guild: Option<&str>) -> Option<Profile> {
                 })
             })
             .collect(),
+        effect: profile_effect::sku(value, guild.is_some()),
         user_id: id,
     })
 }

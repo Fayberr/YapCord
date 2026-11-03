@@ -179,7 +179,25 @@ pub(super) fn command(
                             tracing::warn!(%error, "could not fetch a Discord profile");
                             error.to_string()
                         });
+                    // The effect over the card is the shop's to describe, and
+                    // comes after the card does.
+                    let effect = result
+                        .as_ref()
+                        .ok()
+                        .and_then(|profile| profile.effect.clone());
                     let _ = events.send(Event::Profile { user, result });
+                    if let Some(sku) = effect {
+                        match discord.profile_effect(&sku).await {
+                            Ok(Some(effect)) => {
+                                let _ =
+                                    events.send(Event::ProfileEffect(Arc::new((&*effect).into())));
+                            }
+                            Ok(None) => {}
+                            Err(error) => {
+                                tracing::warn!(%error, "could not fetch a Discord profile effect");
+                            }
+                        }
+                    }
                 });
             }
             (discord, _) => {

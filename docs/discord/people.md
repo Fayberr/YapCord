@@ -333,6 +333,22 @@ client (`lw({userValue, guildValue})`); everywhere else their own show. A
 member object that leaves a key out says nothing, and `null` takes the
 server's off. `Names` keeps these beside the user's own, by server and user.
 
+## Profile effects
+
+A profile names the effect its person equips, `profile_effect: {id,
+expires_at}`, in `user_profile` (or `guild_member_profile`, which wins in its
+server). The effect itself is the shop's: Yapfast asks for it once the card
+shows, `GET /collectibles-products/{sku}` with the account's own login, as
+Discord's client does, and takes the first item with `effects`: its
+`animationType` (1 persistent, 2 intermittent), `staticFrameSrc`,
+`accessibilityLabel` and `effects`, each layer with `src`, `loop`, `start`,
+`duration` and `loopDelay` in milliseconds, `position` and `zIndex` (the
+fields are camelCase, as the client reads them). The layers are APNGs on the
+CDN, drawn 450 by 880 pixels and scaled to the card; they decode at that size
+(`EFFECT_SIZE`), and stay in the picture cache while their card shows. The
+backend keeps the last eight effects (`Event::ProfileEffect`); each card's
+profile points to one by SKU.
+
 ## Display name styles
 
 A name can carry a style, `display_name_styles: {font_id, effect_id, colors}`,
