@@ -59,6 +59,7 @@ export component MemberPanel inherits Rectangle {
                   if member.nameplate-url != "": Nameplate {
                       radius: 6px; picture-url: member.nameplate-url; palette: member.nameplate-color;
                       hovered: member-pointer.has-hover; selected: member.id == root.selected;
+                      animate: member-pointer.has-hover || member.id == root.selected;
                       ground: member.id == root.selected ? Theme.active : member-pointer.has-hover ? Theme.hover : Theme.sidebar;
                       content-width: min(text-column.preferred-width, text-column.width);
                       opacity: member.presence == "offline" ? 0.5 : 1;
@@ -81,7 +82,7 @@ export component MemberPanel inherits Rectangle {
                     Middle {
                         Rectangle {
                             width: 32px; height: 32px;
-                            Avatar { size: 32px; initial: member.initial; tint: member.tint; picture: member.picture; picture-url: member.picture-url; decoration-url: member.decoration-url; opacity: member.presence == "offline" ? 0.4 : 1; }
+                            Avatar { size: 32px; initial: member.initial; tint: member.tint; picture: member.picture; picture-url: member.picture-url; decoration-url: member.decoration-url; animate: member-pointer.has-hover; opacity: member.presence == "offline" ? 0.4 : 1; }
                             if member.presence != "" && member.presence != "offline": StatusDot { x: 20px; y: 20px; presence: member.presence; ring: Theme.sidebar; }
                         }
                     }
@@ -595,7 +596,7 @@ export component ProfileCard inherits Rectangle {
                         x: root.pad - 6px; y: root.banner-height - root.avatar-size / 2 - 6px;
                         width: root.avatar-size + 12px; height: self.width; border-radius: self.width / 2;
                         background: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
-                        Avatar { size: root.avatar-size; initial: root.data.initial; tint: root.data.tint; picture: root.data.picture; decoration-url: root.data.decoration-url; }
+                        Avatar { size: root.avatar-size; initial: root.data.initial; tint: root.data.tint; picture: root.data.picture; decoration-url: root.data.decoration-url; animate: true; }
                         if root.data.presence != "" && root.data.presence != "offline": StatusDot {
                             x: parent.width - self.width - (root.large ? 14px : 10px); y: parent.height - self.height - (root.large ? 14px : 10px);
                             presence: root.data.presence; ring: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;

@@ -2179,14 +2179,14 @@ export component YapfastWindow inherits Window {
                         // The nameplate fills the card, a pixel beyond it above and below.
                         if AccountLook.nameplate-url != "": Nameplate {
                             x: 0px; y: -1px; width: parent.width + 1px; height: parent.height + 2px;
-                            radius: ClientStyle.enabled ? 8px : 0px; account: true; picture-url: AccountLook.nameplate-url; palette: AccountLook.nameplate-color;
+                            radius: ClientStyle.enabled ? 8px : 0px; account: true; animate: account-touch.has-hover; picture-url: AccountLook.nameplate-url; palette: AccountLook.nameplate-color;
                         }
                         if root.voice-visible: Rectangle { x: 12px; y: 0px; width: parent.width - 24px; height: 1px; background: Theme.line; }
                         HorizontalLayout {
                             padding-right: 8px; spacing: 2px;
                             Rectangle {
                                 width: ClientStyle.enabled ? 50px : 58px;
-                                Avatar { x: ClientStyle.enabled ? 8px : 19px; y: (parent.height - self.height) / 2; size: ClientStyle.enabled ? 40px : 34px; initial: root.account-initial; tint: root.account-tint; picture: root.account-picture; speaking: root.account-speaking; decoration-url: AccountLook.decoration-url; }
+                                Avatar { x: ClientStyle.enabled ? 8px : 19px; y: (parent.height - self.height) / 2; size: ClientStyle.enabled ? 40px : 34px; initial: root.account-initial; tint: root.account-tint; picture: root.account-picture; speaking: root.account-speaking; decoration-url: AccountLook.decoration-url; animate: account-touch.has-hover; }
                                 if root.account-presence != "": StatusDot {
                                     x: ClientStyle.enabled ? 34px : 40px; y: parent.height / 2 + 3px; presence: root.account-presence; ring: Theme.panel;
                                 }

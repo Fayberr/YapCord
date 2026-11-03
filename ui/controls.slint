@@ -235,6 +235,31 @@ export global PictureStore {
     in property <int> revision;
     pure callback picture(string, int) -> image;
     callback request(string);
+    /// The address of the animated version of a still collectible picture,
+    /// and the frames and delays of an animated picture once it has arrived.
+    pure callback animated(string) -> string;
+    pure callback frames(string, int) -> [image];
+    pure callback delays(string, int) -> [int];
+}
+
+// Whether animations play: only while Yapfast's window has the focus, as in
+// Discord, so GIFs on another screen hold still where they are.
+export global Motion {
+    in property <bool> playing: true;
+}
+
+// A picture, or an animation's frames in turn while it shows.
+export component Picture inherits Image {
+    in property <image> still;
+    in property <[image]> frames;
+    in property <[int]> delays;
+    property <int> frame;
+    source: root.frames.length > 1 ? root.frames[root.frame] : root.still;
+    Timer {
+        running: root.frames.length > 1 && Motion.playing;
+        interval: max(20, root.delays[root.frame]) * 1ms;
+        triggered => { root.frame = mod(root.frame + 1, root.frames.length); }
+    }
 }
 
 // The server tag someone wears by their name, as Discord's client draws it: a
@@ -305,14 +330,22 @@ export component Avatar inherits Rectangle {
     /// The address of the decoration around the avatar, which Discord draws
     /// a fifth larger than it, centred, over its edge.
     in property <string> decoration-url;
+    /// It plays while this is set: Discord's client animates a decoration
+    /// while the pointer is on the row, or always on messages.
+    in property <bool> animate;
     property <image> decoration: root.decoration-url != "" ? PictureStore.picture(root.decoration-url, PictureStore.revision) : @image-url("");
+    property <string> animated-url: root.animate && root.decoration-url != "" ? PictureStore.animated(root.decoration-url) : "";
     function request-decoration() {
         if root.decoration-url != "" && root.decoration.width == 0 {
             PictureStore.request(root.decoration-url);
         }
+        if root.animated-url != "" {
+            PictureStore.request(root.animated-url);
+        }
     }
     changed decoration-url => { root.request-decoration(); }
     changed decoration => { root.request-decoration(); }
+    changed animated-url => { root.request-decoration(); }
     width: root.size; height: root.size;
     border-radius: root.size / 2;
     background: root.shown-picture.width > 0 ? transparent : root.tint;
@@ -325,9 +358,11 @@ export component Avatar inherits Rectangle {
         border-radius: root.size / 2; clip: true;
         Image { source: root.shown-picture; width: root.size; height: root.size; image-fit: cover; }
     }
-    if root.decoration.width > 0: Image {
+    if root.decoration.width > 0: Picture {
         x: -root.size / 10; y: -root.size / 10; width: root.size * 1.2; height: root.size * 1.2;
-        source: root.decoration; image-fit: contain; accessible-role: none;
+        still: root.decoration; image-fit: contain; accessible-role: none;
+        frames: root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
+        delays: root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
     }
     if root.speaking: Rectangle {
         x: -3px; y: -3px; width: root.size + 6px; height: root.size + 6px;
@@ -346,19 +381,27 @@ export component Nameplate inherits Rectangle {
     in property <bool> account;
     in property <bool> hovered;
     in property <bool> selected;
+    /// The plate plays while the pointer is on its row or the row is
+    /// selected, as in Discord's client; otherwise its still picture shows.
+    in property <bool> animate;
     /// What lies under the plate, which the fade lets through.
     in property <color> ground;
     /// How wide the row's text is; the picture fades in after it.
     in property <length> content-width;
     property <image> picture: root.picture-url != "" ? PictureStore.picture(root.picture-url, PictureStore.revision) : @image-url("");
+    property <string> animated-url: root.animate && root.picture-url != "" ? PictureStore.animated(root.picture-url) : "";
     function request-picture() {
         if root.picture-url != "" && root.picture.width == 0 {
             PictureStore.request(root.picture-url);
+        }
+        if root.animated-url != "" {
+            PictureStore.request(root.animated-url);
         }
     }
     init => { root.request-picture(); }
     changed picture-url => { root.request-picture(); }
     changed picture => { root.request-picture(); }
+    changed animated-url => { root.request-picture(); }
     // Discord's opacities: .6 at rest, .9 selected, .4 on the account card.
     property <float> strength: root.account ? 0.4 : root.selected ? 0.9 : 0.6;
     property <length> fade-from: min(root.width, root.content-width + 10px);
@@ -367,11 +410,13 @@ export component Nameplate inherits Rectangle {
     in property <length> radius;
     clip: true;
     border-radius: root.radius;
-    if root.picture.width > 0: Image {
-        source: root.picture;
+    if root.picture.width > 0: Picture {
+        still: root.picture;
         height: root.height; width: self.height * root.picture.width / root.picture.height;
         x: root.width - self.width;
         image-fit: fill; opacity: root.strength; accessible-role: none;
+        frames: root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
+        delays: root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
     }
     // The fade under the text: the picture shows at .3 of its strength there,
     // and in full a little after it.
@@ -542,26 +587,6 @@ export component CallButton inherits VerticalLayout {
         text: root.label; font-size: 13px; horizontal-alignment: center;
         color: touch.has-hover ? Theme.text : Theme.secondary;
         accessible-role: none;
-    }
-}
-
-// Whether animations play: only while Yapfast's window has the focus, as in
-// Discord, so GIFs on another screen hold still where they are.
-export global Motion {
-    in property <bool> playing: true;
-}
-
-// A picture, or an animation's frames in turn while it shows.
-export component Picture inherits Image {
-    in property <image> still;
-    in property <[image]> frames;
-    in property <[int]> delays;
-    property <int> frame;
-    source: root.frames.length > 1 ? root.frames[root.frame] : root.still;
-    Timer {
-        running: root.frames.length > 1 && Motion.playing;
-        interval: max(20, root.delays[root.frame]) * 1ms;
-        triggered => { root.frame = mod(root.frame + 1, root.frames.length); }
     }
 }
 
