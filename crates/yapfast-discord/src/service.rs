@@ -1286,8 +1286,16 @@ impl Discord {
         }
         let value = self.api.profile(user, server(guild)).await?;
         self.write_names().learn_user(&value["user"]);
-        let profile = profile::parse(&value, server(guild))
+        let mut profile = profile::parse(&value, server(guild))
             .ok_or_else(|| anyhow!("could not understand Discord's answer"))?;
+        // The levels of its badges are a nicety: without them a tooltip
+        // shows the description alone.
+        if profile.badges.iter().any(|badge| badge.level_icon.is_some() || badge.link.is_some()) {
+            match self.api.badges(user).await {
+                Ok(levels) => profile.with_levels(&levels),
+                Err(error) => tracing::debug!(%error, user, "could not fetch badge levels"),
+            }
+        }
         {
             let mut profiles = self.lock_profiles();
             profiles.retain(|old| !same(&old));

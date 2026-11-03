@@ -548,6 +548,21 @@ pub(super) fn chat_profile(
             })
             .collect(),
         tag: discord::server_tag(profile.tag),
+        badges: profile
+            .badges
+            .into_iter()
+            .map(|badge| ProfileBadge {
+                description: badge.description,
+                icon: badge.icon,
+                link: badge.link,
+                level: badge.level.map(|level| ProfileBadgeLevel {
+                    kind: level.kind,
+                    title: level.title,
+                    progress: level.progress,
+                    picture: level.picture,
+                }),
+            })
+            .collect(),
         handle: profile.username,
         id: profile.user_id,
         // What the member list knows; the profile doesn't say.
