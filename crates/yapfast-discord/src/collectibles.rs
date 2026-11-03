@@ -73,7 +73,7 @@ fn palette(name: &str) -> Option<u8> {
 }
 
 /// A nameplate ready to show.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Nameplate {
     /// The address of its still picture: a strip that fills the row's right
     /// end, behind the name.
