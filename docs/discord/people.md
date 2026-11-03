@@ -271,6 +271,56 @@ once a second, and only while a profile with one shows. Matrix members and
 one-to-one Matrix DMs get the same card with their name, Matrix ID, avatar and
 room role.
 
+## Avatar decorations and nameplates
+
+What a person equips from Discord's shop shows as it does in Discord's client.
+Both come on user objects, wherever Discord sends one: READY, messages and
+their mentions, member lists, relationships, DM recipients and `GET
+/users/{id}/profile`. `Names` learns them with the person's avatar hash and
+keeps them with it, saved with the account and forgotten with the person; a
+partial user object that leaves them out changes nothing, and `null` or no
+nameplate among `collectibles` takes them off.
+
+- **Avatar decoration**, `avatar_decoration_data: {asset, sku_id, expires_at}`:
+  a picture 1.2 times the avatar's size, centred on it, as Discord's
+  `--decoration-to-avatar-ratio` has it. It shows around the avatar on
+  messages, in the member list and group DM member lists, on the profile card,
+  in the DM list for a one-to-one DM, and for this account on its card at the
+  bottom of the sidebar and in My account. Not on the small avatar in a reply's
+  quote or in a mention, where Discord shows none either. Where the status dot
+  sits on an avatar, the dot is drawn over the decoration; Discord cuts a hole
+  for it, which Slint can't, so the dot's ring takes the row's colour.
+- **Nameplate**, `collectibles.nameplate: {sku_id, asset, label, palette}`: a
+  strip behind a member's row and this account's card. The row fills with a
+  gradient in the palette's colour, `transparent` to 8% at 20% across, 8% to
+  50%, then 20% at the right edge (30% hovered, 50% selected), with the plate's
+  picture at the right end, the row's height tall, at 60% opacity (90%
+  selected). Under the row's text the picture shows at 30% of that, fading to
+  full 10 to 60 pixels after the text's end, where Discord masks the picture
+  with `mask-image`; Slint has no masks, so Yapfast draws the row's colour over
+  it in the same gradient. The account card's plate is a 10% to 40% gradient
+  under the picture at 40% opacity, with no fade, filling the card and a pixel
+  over its top and bottom. A row with a plate keeps 40 pixels free at its
+  right, and an offline member's is faded with the rest of the row. The twelve
+  palettes (`crimson`, `berry`, `sky`, `teal`, `forest`, `bubble_gum`,
+  `violet`, `cobalt`, `clover`, `lemon`, `white`, `black`) have the colours
+  of the client's own `darkBackground` (`collectibles.rs`); a palette it
+  doesn't know, such as `custom_palette`, shows no plate.
+
+Both pictures are served by `https://cdn.discordapp.com/media/v1/collectibles-shop/{sku_id}/static`,
+a PNG: 288 by 288 for a decoration, 448 by 84 or 672 by 126 for a plate. The
+client asks for `/animated`, an APNG, or `/video`, a WebM, while someone
+hovers a row or message, unless the system reduces motion; Yapfast shows the
+still picture only. The pictures are kept in the picture cache with avatars. A
+decoration decodes at up to 192 pixels and a plate whole, where other
+pictures take 128, and they stay while the screen shows their person
+(`pictures_on_screen`).
+
+Not shown, as nothing in Discord's client or the references covers where
+Yapfast would get them: profile effects, `profile_effect: {id}`, whose layers
+Discord's client reads from the shop (`GET /collectibles-products/{sku}`);
+display name styles; and a member's own server decoration or nameplate.
+
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My
@@ -326,8 +376,9 @@ to remove it. The client never sends the bio, pronouns or banner to
 The client's tab also has Profile Widgets, an avatar decoration, a
 nameplate, a profile effect, a frame, display name styles and, with
 Nitro, a profile theme of two colours in place of the banner colour, then
-the Server Tag and badges. Yapfast leaves them out, as it shows none of
-them. Changing the username, in My Account with the password, is left
+the Server Tag and badges. Yapfast leaves them out: it
+[shows](#avatar-decorations-and-nameplates) what someone equips, but
+doesn't change it. Changing the username, in My Account with the password, is left
 for later.
 
 ## Editing one's server profile
@@ -390,7 +441,8 @@ client never sends them there.
 
 Discord's editor also has a profile theme, an avatar decoration, display
 name styles, a nameplate, a profile effect and a frame, all Nitro and most
-bought from its shop. Yapfast leaves them out, as it shows none of them.
+bought from its shop. Yapfast leaves them out; it only
+[shows](#avatar-decorations-and-nameplates) what people equip.
 
 A member's server profile shows wherever Yapfast shows them in that server:
 their server avatar in the member list and on their messages, from their
