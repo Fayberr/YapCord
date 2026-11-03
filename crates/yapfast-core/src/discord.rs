@@ -66,6 +66,11 @@ const BANNER_SIZE: (u32, u32) = (600, 240);
 /// The size Discord serves them at; a larger one is shrunk to it.
 #[cfg(feature = "discord")]
 const PICTURE_SIZE: u32 = 128;
+/// Decorations and nameplates: a decoration is 288 pixels square, shrunk to
+/// show sharply at the card's largest; a nameplate, 448x84 or 672x126, keeps
+/// its size, the strip a row's height shows at twice the scale.
+#[cfg(feature = "discord")]
+const COLLECTIBLE_SIZE: (u32, u32) = (672, 192);
 /// Pictures downloading at once. They have turns of their own, apart from
 /// the previews' (see `Api::download`), so neither waits behind the other.
 #[cfg(feature = "discord")]
@@ -1103,6 +1108,8 @@ impl Pictures {
                 };
                 let (width, height) = if url.contains("/banners/") {
                     BANNER_SIZE
+                } else if url.contains("/collectibles-shop/") {
+                    COLLECTIBLE_SIZE
                 } else {
                     (PICTURE_SIZE, PICTURE_SIZE)
                 };
