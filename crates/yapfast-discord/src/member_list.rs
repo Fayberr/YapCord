@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::{
     activity::{Activities, activities},
-    collectibles::Nameplate,
+    collectibles::{Nameplate, Style},
     message::{self, CustomEmoji, Names, Tag},
     ready::Server,
 };
@@ -30,6 +30,8 @@ pub struct ListedMember {
     /// behind their row.
     pub decoration: Option<String>,
     pub nameplate: Option<Nameplate>,
+    /// How they draw their name, when they have a display name style.
+    pub style: Option<Style>,
     /// The heading they're listed under, with its size, such as `Mods — 2`.
     pub group: String,
     /// The server tag they wear by their name.
@@ -315,8 +317,9 @@ impl MemberList {
                             .to_owned(),
                         username: names.username(user).map(str::to_owned),
                         avatar: names.avatar(Some(&self.guild), user),
-                        decoration: names.decoration(user),
-                        nameplate: names.nameplate(user),
+                        decoration: names.decoration(Some(&self.guild), user),
+                        nameplate: names.nameplate(Some(&self.guild), user),
+                        style: names.style(Some(&self.guild), user),
                         group: group
                             .as_ref()
                             .map(|(_, heading)| heading.clone())

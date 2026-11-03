@@ -111,6 +111,9 @@ pub struct Conversation {
     /// The decoration the other person in a DM wears around their avatar.
     #[serde(default)]
     pub decoration: Option<String>,
+    /// The display name style of the other person in a DM.
+    #[serde(default)]
+    pub style: Option<crate::collectibles::Style>,
     pub group: bool,
     /// Everyone in it, this account included.
     pub people: usize,
@@ -2871,14 +2874,25 @@ impl Discord {
         self.read_names().server_tag(user).cloned()
     }
 
-    /// The address of the decoration a user wears around their avatar.
-    pub fn decoration(&self, user: &str) -> Option<String> {
-        self.read_names().decoration(user)
+    /// The address of the decoration a user wears around their avatar, in a
+    /// server or in DMs.
+    pub fn decoration(&self, guild: Option<&str>, user: &str) -> Option<String> {
+        self.read_names().decoration(guild.and_then(server), user)
     }
 
-    /// The nameplate a user equips.
-    pub fn nameplate(&self, user: &str) -> Option<crate::collectibles::Nameplate> {
-        self.read_names().nameplate(user)
+    /// The nameplate a user equips, in a server or in DMs.
+    pub fn nameplate(
+        &self,
+        guild: Option<&str>,
+        user: &str,
+    ) -> Option<crate::collectibles::Nameplate> {
+        self.read_names().nameplate(guild.and_then(server), user)
+    }
+
+    /// The display name style a user draws their name with, in a server or
+    /// in DMs.
+    pub fn style(&self, guild: Option<&str>, user: &str) -> Option<crate::collectibles::Style> {
+        self.read_names().style(guild.and_then(server), user)
     }
 
     /// A member's roles in a server by id, as far as they're known, shared
