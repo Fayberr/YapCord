@@ -201,6 +201,7 @@ pub(super) fn command(
                                 tracing::warn!(%error, "could not fetch a Discord profile effect");
                             }
                         }
+                    }
                     // The badges' levels come after the card is on screen.
                     if discord.badge_levels(&guild, &user, &mut profile).await {
                         let badges = chat_profile(&discord, &guild, profile).badges;
