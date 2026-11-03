@@ -497,7 +497,7 @@ export component ChannelRow inherits Rectangle {
                 if root.person: Middle {
                     Avatar {
                         size: 32px; initial: root.initial; tint: root.tint; picture: root.picture; picture-url: root.picture-url;
-                        decoration-url: root.decoration-url;
+                        decoration-url: root.decoration-url; animate: pointer.has-hover;
                         if root.discord: DiscordBadge {
                             x: -2px; y: -2px; size: 13px;
                             ring: root.selected ? Theme.active : pointer.has-hover ? Theme.hover : Theme.sidebar;
