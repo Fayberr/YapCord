@@ -11,7 +11,7 @@ own comparisons.
 
 The owner's November 2026 Windows references place the chat column at about
 376 logical pixels from the left: a 72px server rail and a 304px navigation
-list. They also show an approximately 60px composer with 8px surrounding space.
+list. They also show an 58px composer with 8px surrounding space.
 These are starting measurements for the supplied scale, not universal values
 for every display or Discord version. Saved sidebar widths and themes remain
 user choices. YapCord now embeds DM Sans, an open-licensed approximation rather
@@ -55,7 +55,7 @@ in YapCord mode. A divider after unread DMs remains, separating them from
 servers. Folder previews, badges and selection indicators follow those tile
 bounds; upstream mode keeps its 48px tiles. The rail remains 72px wide.
 
-The account dock is an inset 60px card with 8px side/bottom margins and a
+The account dock is an inset 58px card with 8px side/bottom margins and a
 40px avatar. The microphone, headphone, device menus and settings controls
 keep their existing callbacks. The account menu now uses the downstream popover described below.
 
@@ -64,7 +64,7 @@ label says what it actually searches: conversations. Friends and Requests stay
 available, followed by a Direct Messages heading with the existing new-message
 and add-friend actions. `ui/yapcord/dm-heading.slint` owns that heading. Only
 implemented destinations appear; there are no placeholder shop or Nitro links.
-DM rows use a 44px height and reduce the selected name's weight. The main
+DM rows use a 42px height and reduce the selected name's weight. The main
 composer relies on its existing Enter/Shift+Enter handling instead of a
 persistent send button in YapCord mode.
 
