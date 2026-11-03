@@ -51,15 +51,16 @@ export component MemberPanel inherits Rectangle {
                 padding-top: index == 0 ? 8px : 0px;
                 padding-bottom: index == root.rows.length - 1 ? 12px : 2px;
                 spacing: 2px;
+                // Discord's group heading: 14px medium in the channel grey, 20px above and 4px below.
                 if member.heading != "": HorizontalLayout {
-                    padding-left: 8px; height: 36px;
-                    Text { text: member.heading; color: Theme.muted; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; vertical-alignment: center; }
+                    padding-left: 8px; padding-top: 20px; padding-bottom: 4px; height: 42px;
+                    Text { text: member.heading; color: #81828a; font-size: 14px; font-weight: 500; vertical-alignment: center; }
                 }
                 Rectangle {
-                  height: 42px; border-radius: 6px;
-                  background: member.id == root.selected ? Theme.active : member-pointer.has-hover ? Theme.hover : transparent;
+                  height: 42px; border-radius: 8px;
+                  background: member.id == root.selected ? #97979f33 : member-pointer.has-hover ? #97979f1f : transparent;
                   if member.nameplate-url != "": Nameplate {
-                      radius: 6px; picture-url: member.nameplate-url; palette: member.nameplate-color;
+                      radius: 8px; picture-url: member.nameplate-url; palette: member.nameplate-color;
                       hovered: member-pointer.has-hover; selected: member.id == root.selected;
                       animate: member-pointer.has-hover || member.id == root.selected;
                       ground: member.id == root.selected ? Theme.active : member-pointer.has-hover ? Theme.hover : Theme.sidebar;
