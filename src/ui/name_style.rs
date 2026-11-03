@@ -151,7 +151,6 @@ pub(super) fn family(font: u8) -> &'static str {
         4 => "Jellybean",
         6 => "Modern",
         8 => "8Bit",
-        10 => "Vampyre",
         12 => "Tempo",
         13 => "Monkey Bars",
         14 => "Mainframe",

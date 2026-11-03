@@ -133,13 +133,6 @@ pub(super) fn avatar_animation(url: &str) -> (ModelRc<slint::Image>, ModelRc<i32
     source.map_or_else(Default::default, |source| animation(&source))
 }
 
-#[cfg(test)]
-pub(super) fn show_picture_for_test(url: &str, picture: &Arc<Picture>) {
-    AVATAR_SOURCES.with_borrow_mut(|sources| {
-        sources.insert(url.to_owned(), Arc::downgrade(picture));
-    });
-}
-
 thread_local! {
     static AVATAR_SOURCES: RefCell<HashMap<String, std::sync::Weak<Picture>>> = RefCell::default();
 }
