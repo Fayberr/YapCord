@@ -227,13 +227,19 @@ export global PictureStore {
 }
 
 // The server tag someone wears by their name, as Discord's client draws it: a
-// small chip with their server's badge, when it has one, before up to four
-// letters.
+// small dark chip with their server's badge, when it has one, before up to four
+// letters in white.
 export component ServerTagChip inherits Rectangle {
     in property <string> text;
     /// The address of the badge's picture, or empty for a tag without one.
     in property <string> badge;
     in property <length> font-size: 12px;
+    in property <int> font-weight: 700;
+    in property <length> chip-height: root.font-size * 1.45;
+    in property <length> badge-size: root.font-size + 2px;
+    in property <length> pad: 5px;
+    in property <length> radius: 5px;
+    in property <color> fill: #ffffff1a;
     property <image> badge-picture: root.badge != "" ? PictureStore.picture(root.badge, PictureStore.revision) : @image-url("");
     function request() {
         if root.badge != "" && root.badge-picture.width == 0 {
@@ -243,17 +249,17 @@ export component ServerTagChip inherits Rectangle {
     init => { root.request(); }
     changed badge => { root.request(); }
     changed badge-picture => { root.request(); }
-    width: tag-text.preferred-width + (root.badge-picture.width > 0 ? root.font-size + 3px : 0px) + 9px;
-    height: root.font-size + 6px; border-radius: 4px;
-    background: #ffffff1a;
+    width: tag-text.preferred-width + (root.badge-picture.width > 0 ? root.badge-size + 3px : 0px) + root.pad * 2;
+    height: root.chip-height; border-radius: root.radius;
+    background: root.fill;
     accessible-role: AccessibleRole.text; accessible-label: "Server tag " + root.text;
     HorizontalLayout {
-        padding-left: 4px; padding-right: 5px; spacing: 3px; alignment: center;
+        padding-left: root.pad; padding-right: root.pad; spacing: 3px; alignment: center;
         if root.badge-picture.width > 0: Middle {
-            Image { source: root.badge-picture; width: root.font-size; height: root.font-size; image-fit: contain; }
+            Image { source: root.badge-picture; width: root.badge-size; height: root.badge-size; image-fit: contain; }
         }
         tag-text := Text {
-            text: root.text; color: Theme.secondary; font-size: root.font-size; font-weight: 700;
+            text: root.text; color: Theme.text; font-size: root.font-size; font-weight: root.font-weight;
             vertical-alignment: center;
         }
     }
