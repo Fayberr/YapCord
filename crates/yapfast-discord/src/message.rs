@@ -1402,9 +1402,6 @@ impl Names {
         self.bots.retain(|user| seen.contains_key(user));
         self.avatars.retain(|user, _| seen.contains_key(user));
         self.tags.retain(|user, _| seen.contains_key(user));
-            }),
-        )?;
-        saved.serialize_field(
         self.decorations.retain(|user, _| seen.contains_key(user));
         self.nameplates.retain(|user, _| seen.contains_key(user));
         self.styles.retain(|user, _| seen.contains_key(user));
