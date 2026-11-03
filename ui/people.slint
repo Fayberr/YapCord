@@ -1,5 +1,5 @@
 import { ScrollView, ListView } from "scrollview.slint";
-import { Theme, Middle, Label } from "theme.slint";
+import { Theme, Middle, Label, Tip } from "theme.slint";
 import { ActionButton, IconButton, Avatar, StatusText, PictureStore, TextField } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
@@ -133,6 +133,10 @@ export global ActivityClock {
     in property <int> now;
 }
 
+/// One of someone's badges: the address of its picture, what it says on
+/// hover, and where a click goes, empty when nowhere.
+export struct ProfileBadgeRow { icon: string, description: string, link: string }
+
 export struct ProfileData {
     id: string, name: string, initial: string, tint: color, picture: image,
     /// A Discord username or Matrix ID, then pronouns when they give them.
@@ -143,6 +147,8 @@ export struct ProfileData {
     presence: string, activity: string, activity-emoji: string,
     /// What they're doing, in full: games, music, streams.
     activities: [ActivityRow],
+    /// The badges Discord shows beside the handle, in its order.
+    badges: [ProfileBadgeRow],
     bio: styled-text, has-bio: bool,
     role-rows: [ProfileRoleRow], role-rows-large: [ProfileRoleRow],
     /// Dates: on Discord since, and in this server since.
@@ -182,6 +188,40 @@ component ActivityPicture inherits Rectangle {
     accessible-role: image;
     accessible-label: root.label;
     Image { source: root.picture; width: root.size; height: root.size; image-fit: cover; }
+}
+
+// A badge on a profile: its picture, with its name on hover, opening its
+// page when Discord gives it one.
+component ProfileBadge inherits Rectangle {
+    in property <ProfileBadgeRow> badge;
+    callback open-link(string);
+    property <image> picture: root.badge.icon != "" ? PictureStore.picture(root.badge.icon, PictureStore.revision) : @image-url("");
+    function request() {
+        if root.badge.icon != "" && root.picture.width == 0 {
+            PictureStore.request(root.badge.icon);
+        }
+    }
+    init => { root.request(); }
+    changed badge => { root.request(); }
+    changed picture => { root.request(); }
+    width: 22px; height: 22px;
+    accessible-role: image;
+    accessible-label: root.badge.description;
+    Image { source: root.picture; width: parent.width; height: parent.height; image-fit: contain; }
+    badge-pointer := TouchArea {
+        mouse-cursor: root.badge.link != "" ? MouseCursor.pointer : MouseCursor.default;
+        clicked => { if root.badge.link != "" { root.open-link(root.badge.link); } }
+        changed has-hover => {
+            if self.has-hover {
+                Tip.text = root.badge.description;
+                Tip.side = 0;
+                Tip.x = self.absolute-position.x + self.width / 2;
+                Tip.y = self.absolute-position.y;
+            } else if Tip.text == root.badge.description {
+                Tip.text = "";
+            }
+        }
+    }
 }
 
 // One of someone's activities on their profile, as Discord's card shows it:
@@ -475,6 +515,13 @@ export component ProfileCard inherits Rectangle {
                         if root.data.activity != "" || root.data.activity-emoji != "": StatusText {
                             text: root.data.activity; emoji-url: root.data.activity-emoji;
                             color: Theme.secondary; font-size: 14px; wrap: word-wrap; max-height: 40px;
+                        }
+                    }
+                    if root.data.badges.length > 0: HorizontalLayout {
+                        alignment: start; spacing: 4px;
+                        for badge in root.data.badges: ProfileBadge {
+                            badge: badge;
+                            open-link(url) => { root.open-link(url); }
                         }
                     }
                     if root.data.friend > 0: HorizontalLayout {

@@ -547,6 +547,15 @@ pub(super) fn chat_profile(
                 avatar: Some(friend.avatar),
             })
             .collect(),
+        badges: profile
+            .badges
+            .into_iter()
+            .map(|badge| ProfileBadge {
+                description: badge.description,
+                icon: badge.icon,
+                link: badge.link,
+            })
+            .collect(),
         handle: profile.username,
         id: profile.user_id,
         // What the member list knows; the profile doesn't say.

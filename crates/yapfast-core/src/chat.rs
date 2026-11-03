@@ -631,6 +631,19 @@ pub struct Profile {
     /// The servers and friends this account shares with them.
     pub servers: Vec<ProfileServer>,
     pub friends: Vec<ProfileFriend>,
+    /// The badges their Discord profile shows, in Discord's order.
+    pub badges: Vec<ProfileBadge>,
+}
+
+/// A badge on a profile, such as HypeSquad Bravery.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProfileBadge {
+    /// What it says on hover.
+    pub description: String,
+    /// The address of its picture; see [`DiscordCommand::Pictures`].
+    pub icon: String,
+    /// Where a click on it goes, when it goes anywhere.
+    pub link: Option<String>,
 }
 
 /// A server a profile's person shares with this account.

@@ -2373,6 +2373,13 @@ async fn shows_profiles() {
     assert_eq!(in_server.mutual_servers[0].id, guild);
     assert_eq!(in_server.mutual_friends.len(), 1);
     assert_eq!(in_server.mutual_friends[0].name, "Carol");
+    let badges: Vec<_> = in_server
+        .badges
+        .iter()
+        .map(|badge| badge.description.as_str())
+        .collect();
+    assert_eq!(badges, ["HypeSquad Bravery", "Active Developer"]);
+    assert!(in_server.badges[0].link.is_some() && in_server.badges[1].link.is_none());
     let own = discord.profile(PRIVATE, &bob, |_| {}).await.unwrap();
     assert!(own.bio.is_some_and(|bio| bio.starts_with("Plays bass")));
     assert!(own.roles.is_empty() && own.joined.is_none());
