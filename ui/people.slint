@@ -204,7 +204,7 @@ component ProfileBadge inherits Rectangle {
     init => { root.request(); }
     changed badge => { root.request(); }
     changed picture => { root.request(); }
-    width: 22px; height: 22px;
+    width: 20px; height: 20px;
     accessible-role: image;
     accessible-label: root.badge.description;
     Image { source: root.picture; width: parent.width; height: parent.height; image-fit: contain; }
@@ -517,11 +517,19 @@ export component ProfileCard inherits Rectangle {
                             color: Theme.secondary; font-size: 14px; wrap: word-wrap; max-height: 40px;
                         }
                     }
+                    // Discord sets the badges in a small dark pill of their own.
                     if root.data.badges.length > 0: HorizontalLayout {
-                        alignment: start; spacing: 4px;
-                        for badge in root.data.badges: ProfileBadge {
-                            badge: badge;
-                            open-link(url) => { root.open-link(url); }
+                        alignment: start;
+                        Rectangle {
+                            width: root.data.badges.length * 24px + 4px; height: 28px;
+                            background: #ffffff10; border-radius: 8px;
+                            HorizontalLayout {
+                                padding: 4px; spacing: 4px;
+                                for badge in root.data.badges: ProfileBadge {
+                                    badge: badge;
+                                    open-link(url) => { root.open-link(url); }
+                                }
+                            }
                         }
                     }
                     if root.data.friend > 0: HorizontalLayout {
