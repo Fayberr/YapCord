@@ -300,9 +300,9 @@ and Quests) say little in the profile: their `description` is only the kind,
 "Spielzeit". Discord's tooltip for them shows more: a large picture of the
 level, the kind in grey, the level's name in capitals and how far along the
 person is ("1.816 Stunden gespielt"). That comes from `GET
-/users/{id}/badges`, which `Discord::profile` asks for after the profile
-whenever a badge has a `simple_icon_url` or a link, and which works for
-anyone. Each of its `badges` has a `name` (the kind), an `info_label` (the
+/users/{id}/badges`, which `Discord::profile` asks for together with the
+profile, so a card waits for one round trip, not two, and uses only when a
+badge has a `simple_icon_url` or a link. It works for anyone. Each of its `badges` has a `name` (the kind), an `info_label` (the
 progress), a `current_tier` naming one of its `tiers`, whose `name` is the
 level and `complex_icon_static_url` the large picture, an SVG. A badge
 without tiers, such as Quests, shows its own name as the title and its
