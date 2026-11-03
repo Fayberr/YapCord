@@ -503,6 +503,10 @@ pub struct AppState {
     /// network gives them; a Discord-only build shows Discord's.
     pub account_name: Option<String>,
     pub account_avatar: Option<String>,
+    /// The decoration around the account's avatar and its nameplate, which
+    /// the account card at the bottom of the sidebar shows; Discord's.
+    pub account_decoration: Option<String>,
+    pub account_nameplate: Option<crate::chat::Nameplate>,
     pub account_status: Option<String>,
     pub preview: bool,
     pub busy: bool,
@@ -899,6 +903,8 @@ impl AppState {
                 username: None,
                 role: Role::Member,
                 avatar: message.avatar.clone(),
+                decoration: None,
+                nameplate: None,
                 group: None,
                 presence: None,
                 color: message.color,
@@ -924,6 +930,8 @@ impl AppState {
                 username: None,
                 role: Role::Member,
                 avatar: person.avatar.clone(),
+                decoration: None,
+                nameplate: None,
                 group: None,
                 presence: None,
                 color: None,
@@ -949,6 +957,8 @@ impl AppState {
             username: None,
             role: Role::Member,
             avatar: None,
+            decoration: None,
+            nameplate: None,
             group: None,
             presence: None,
             color: None,

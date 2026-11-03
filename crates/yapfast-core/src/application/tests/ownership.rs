@@ -19,6 +19,8 @@ fn account(app: &mut Application, mfa: bool, email: bool) {
     snapshot.account = Some(yapfast_discord::service::Account {
         name: "Alice".into(),
         avatar: String::new(),
+        decoration: None,
+        nameplate: None,
         premium_type: 0,
         mfa_enabled: mfa,
         has_email: email,
