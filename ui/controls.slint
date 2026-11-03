@@ -233,13 +233,20 @@ export component ServerTagChip inherits Rectangle {
     in property <string> text;
     /// The address of the badge's picture, or empty for a tag without one.
     in property <string> badge;
+    // Discord's chip: 12px text on a 16px line, 4px sides, 4px corners, a 14px
+    // badge 2px before the text, a grey wash at 20%. Everything scales with the
+    // text so the chip can be set smaller in messages.
     in property <length> font-size: 12px;
     in property <int> font-weight: 600;
-    in property <length> chip-height: root.font-size * 1.45;
+    in property <length> chip-height: root.font-size * 1.3333;
     in property <length> badge-size: root.font-size + 2px;
-    in property <length> pad: 5px;
-    in property <length> radius: 5px;
-    in property <color> fill: #ffffff1a;
+    in property <length> pad: 4px;
+    in property <length> gap: 2px;
+    in property <length> radius: 4px;
+    in property <color> fill: #97979f33;
+    in property <color> outline: transparent;
+    in property <length> outline-width: 0px;
+    in property <color> text-color: #efeff1;
     property <image> badge-picture: root.badge != "" ? PictureStore.picture(root.badge, PictureStore.revision) : @image-url("");
     function request() {
         if root.badge != "" && root.badge-picture.width == 0 {
@@ -249,17 +256,18 @@ export component ServerTagChip inherits Rectangle {
     init => { root.request(); }
     changed badge => { root.request(); }
     changed badge-picture => { root.request(); }
-    width: tag-text.preferred-width + (root.badge-picture.width > 0 ? root.badge-size + 3px : 0px) + root.pad * 2;
+    width: tag-text.preferred-width + (root.badge-picture.width > 0 ? root.badge-size + root.gap : 0px) + root.pad * 2 + root.outline-width * 2;
     height: root.chip-height; border-radius: root.radius;
     background: root.fill;
+    border-width: root.outline-width; border-color: root.outline;
     accessible-role: AccessibleRole.text; accessible-label: "Server tag " + root.text;
     HorizontalLayout {
-        padding-left: root.pad; padding-right: root.pad; spacing: 3px; alignment: center;
+        padding-left: root.pad; padding-right: root.pad; spacing: root.gap; alignment: center;
         if root.badge-picture.width > 0: Middle {
             Image { source: root.badge-picture; width: root.badge-size; height: root.badge-size; image-fit: contain; }
         }
         tag-text := Text {
-            text: root.text; color: Theme.text; font-size: root.font-size; font-weight: root.font-weight;
+            text: root.text; color: root.text-color; font-size: root.font-size; font-weight: root.font-weight;
             vertical-alignment: center;
         }
     }

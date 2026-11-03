@@ -1772,7 +1772,7 @@ export component MessageContent inherits VerticalLayout {
                         }
                     }
                 }
-                if message.tag != "": Middle { ServerTagChip { text: message.tag; badge: message.tag-badge; font-size: root.message-font-size - 3px; } }
+                if message.tag != "": Middle { ServerTagChip { text: message.tag; badge: message.tag-badge; font-size: root.message-font-size * 0.72; } }
                 if message.bot: Middle { BotTag { } }
                 StyledText { text: message.time-styled; link-color: Theme.link; default-color: Theme.muted; default-font-size: root.message-font-size - 3px; max-lines: 1; vertical-alignment: center; }
                 Rectangle { horizontal-stretch: 1; }

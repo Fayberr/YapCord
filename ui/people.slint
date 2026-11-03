@@ -77,13 +77,13 @@ export component MemberPanel inherits Rectangle {
                     VerticalLayout {
                         alignment: center; horizontal-stretch: 1;
                         HorizontalLayout {
-                            alignment: start; spacing: 6px;
+                            alignment: start; spacing: 4px;
                             Text {
                                 text: member.name; color: member.has-color ? member.color : Theme.secondary; font-size: 16px; font-weight: 500; overflow: elide;
                                 opacity: member.presence == "offline" ? 0.5 : 1;
                             }
                             if member.tag != "": Middle {
-                                ServerTagChip { text: member.tag; badge: member.tag-badge; font-size: 12px; fill: #ffffff24; opacity: member.presence == "offline" ? 0.5 : 1; }
+                                ServerTagChip { text: member.tag; badge: member.tag-badge; opacity: member.presence == "offline" ? 0.5 : 1; }
                             }
                             if member.timed-out: Image {
                                 source: @image-url("icons/clock.svg"); width: 14px; image-fit: contain;
@@ -481,7 +481,7 @@ export component ProfileCard inherits Rectangle {
                         if root.data.handle != "" || root.data.tag != "": HorizontalLayout {
                             spacing: 6px; alignment: start;
                             if root.data.handle != "": Text { text: root.data.handle; color: Theme.secondary; font-size: 14px; font-weight: 500; overflow: elide; vertical-alignment: center; }
-                            if root.data.tag != "": Middle { ServerTagChip { text: root.data.tag; badge: root.data.tag-badge; font-size: 14px; font-weight: 600; chip-height: 24px; pad: 8px; radius: 7px; fill: #ffffff10; } }
+                            if root.data.tag != "": Middle { ServerTagChip { text: root.data.tag; badge: root.data.tag-badge; font-weight: 400; chip-height: 24px; pad: 8px; radius: 8px; fill: #97979f1f; outline: #97979f0a; outline-width: 1px; } }
                         }
                         if root.data.activity != "" || root.data.activity-emoji != "": StatusText {
                             text: root.data.activity; emoji-url: root.data.activity-emoji;
