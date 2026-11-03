@@ -1,7 +1,7 @@
 import { ClientStyle } from "yapcord/style.slint";
 import { ScrollView, ListView } from "scrollview.slint";
 import { Theme, Middle, Label } from "theme.slint";
-import { ActionButton, IconButton, Avatar, Nameplate, StatusText, StyledName, NameStyleRow, PictureStore, TextField } from "controls.slint";
+import { ActionButton, IconButton, Avatar, Nameplate, StatusText, StyledName, NameStyleRow, EffectLayer, ProfileEffect, PictureStore, TextField } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
 /// A member of the open room. A heading starts each role's group.
@@ -156,6 +156,10 @@ export struct ProfileData {
     /// The address of the decoration around their avatar, and how their name
     /// is drawn.
     decoration-url: string, name-style: NameStyleRow,
+    /// The profile effect over the card: its layers, the picture a persistent
+    /// one holds, when its last layer that doesn't loop ends in milliseconds,
+    /// and whether one loops.
+    effect-layers: [EffectLayer], effect-still: string, effect-persistent: bool, effect-end: int, effect-loops: bool,
     /// A Discord username or Matrix ID, then pronouns when they give them.
     handle: string,
     /// The banner picture, else its colour.
@@ -612,6 +616,13 @@ export component ProfileCard inherits Rectangle {
                     }
                 }
             }
+        }
+        // The profile effect plays over the card, in front of what it holds;
+        // clicks go through it.
+        if root.data.effect-layers.length > 0: ProfileEffect {
+            x: 0px; y: 0px; width: parent.width; height: parent.height;
+            layers: root.data.effect-layers; still-url: root.data.effect-still; persistent: root.data.effect-persistent;
+            end: root.data.effect-end; loops: root.data.effect-loops;
         }
     }
     if root.large: Rectangle {
