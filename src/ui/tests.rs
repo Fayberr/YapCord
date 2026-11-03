@@ -1862,6 +1862,10 @@ fn decorations_and_nameplates_reach_the_member_list_and_the_account_card() {
             ChatMember {
                 decoration: Some("ring.png".into()),
                 nameplate: Some(plate("strip.png")),
+                style: yapfast_discord::collectibles::Style::parse(&serde_json::json!(
+                    {"font_id": 14, "effect_id": 3, "colors": [65433]}
+                ))
+                .map(Into::into),
                 ..member("1", "Bob")
             },
             member("2", "Dave"),
@@ -1880,6 +1884,13 @@ fn decorations_and_nameplates_reach_the_member_list_and_the_account_card() {
         slint::Color::from_rgb_u8(0x73, 0x0b, 0xc8)
     );
     assert!(dave.decoration_url.is_empty() && dave.nameplate_url.is_empty());
+    // Bob's name is drawn neon in Mainframe; Dave's has no style.
+    assert_eq!(
+        (bob.name_style.effect, bob.name_style.family.as_str()),
+        (3, "Mainframe")
+    );
+    assert_eq!(bob.name_style.count, 1);
+    assert_eq!(dave.name_style.effect, 0);
     let look = window.global::<AccountLook>();
     assert_eq!(look.get_decoration_url(), "mine.png");
     assert_eq!(look.get_nameplate_url(), "mine-strip.png");
