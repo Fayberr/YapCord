@@ -7163,3 +7163,193 @@ fn yapcord_account_popover_copies_its_id_and_opens_settings_without_changing_sta
     assert_eq!(status_changes.get(), 0);
     window.hide().unwrap();
 }
+
+#[test]
+fn yapcord_server_rail_keeps_home_pinned_without_a_duplicate_separator() {
+    use slint::platform::{PointerEventButton, WindowEvent};
+    i_slint_backend_testing::init_no_event_loop();
+    let window = YapfastWindow::new().unwrap();
+    window.set_workspace(true);
+    let mut rows = vec![ServerRow {
+        divider: true,
+        ..Default::default()
+    }];
+    rows.extend((0..500).map(|index| ServerRow {
+        id: index.to_string().into(),
+        name: format!("Server {index}").into(),
+        initial: "S".into(),
+        ..Default::default()
+    }));
+    let model = Rc::new(VecModel::from(rows));
+    window.set_servers(model.clone().into());
+    let navigated = Rc::new(RefCell::new(Vec::new()));
+    let seen = navigated.clone();
+    window.on_navigate_server(move |id| seen.borrow_mut().push(id.to_string()));
+    let homes = Rc::new(Cell::new(0));
+    let seen = homes.clone();
+    window.on_navigate_dms(move || seen.set(seen.get() + 1));
+    window.show().unwrap();
+    window
+        .window()
+        .set_size(slint::LogicalSize::new(1120., 760.));
+    let click = |y| {
+        let position = slint::LogicalPosition::new(36., y);
+        window.window().dispatch_event(WindowEvent::PointerPressed {
+            position,
+            button: PointerEventButton::Left,
+        });
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerReleased {
+                position,
+                button: PointerEventButton::Left,
+            });
+    };
+    let scroll = |delta_y| {
+        window
+            .window()
+            .dispatch_event(WindowEvent::PointerScrolled {
+                position: slint::LogicalPosition::new(36., 200.),
+                delta_x: 0.,
+                delta_y,
+            });
+        i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(250));
+    };
+    // Home 40px, gap 8px, one 2px separator, gap 8px: server starts at 58px.
+    click(62.);
+    assert_eq!(*navigated.borrow(), ["0"]);
+    scroll(-240.);
+    click(20.);
+    assert_eq!(homes.get(), 1, "DM home stays pinned while servers scroll");
+    model.insert(
+        0,
+        ServerRow {
+            id: "dm".into(),
+            name: "Unread conversation".into(),
+            dm: true,
+            badge: "1".into(),
+            ..Default::default()
+        },
+    );
+    scroll(10000.);
+    navigated.borrow_mut().clear();
+    // Unread DM at 58px, then its 8px gap and a 10px divider row.
+    click(110.);
+    assert!(navigated.borrow().is_empty(), "keep the unread-DM boundary");
+    click(120.);
+    assert_eq!(*navigated.borrow(), ["0"]);
+    window.hide().unwrap();
+}
+
+#[test]
+fn yapcord_typography_is_compact_and_preserves_explicit_text_sizes() {
+    i_slint_backend_testing::init_no_event_loop();
+    let window = yapcord::window().unwrap();
+    assert_eq!(window.global::<ClientStyle>().get_font_family(), "DM Sans");
+    assert_eq!(window.get_message_font_size(), 15.);
+    window.set_text_size(0);
+    assert_eq!(window.get_message_font_size(), 14.);
+    window.set_text_size(2);
+    assert_eq!(window.get_message_font_size(), 18.);
+    window.set_text_size(1);
+    window.global::<ClientStyle>().set_enabled(false);
+    assert_eq!(window.get_message_font_size(), 16.);
+    assert_eq!(
+        window.global::<ClientStyle>().get_font_family(),
+        "Atkinson Hyperlegible Next"
+    );
+}
+
+/// CPU-side snapshot throughput, not the display's presented frame rate.
+/// Run with --features i-slint-backend-testing/renderer-skia, --ignored --nocapture.
+#[test]
+#[ignore = "manual renderer benchmark with the Skia testing feature"]
+fn yapcord_server_rail_scroll_snapshot_benchmark() {
+    use slint::platform::WindowEvent;
+    use std::time::Instant;
+    slint::platform::set_platform(Box::new(i_slint_backend_testing::TestingBackend::new(
+        i_slint_backend_testing::TestingBackendOptions {
+            mock_time: true,
+            threading: false,
+            renderer_name: Some("skia-software".into()),
+        },
+    )))
+    .unwrap();
+    let window = yapcord::window().unwrap();
+    Layout::default().apply_appearance(&window);
+    let directory = tempfile::tempdir().unwrap();
+    let adapter = Adapter::new(
+        Arc::new(BackgroundRuntime::new().unwrap()),
+        directory.path().into(),
+        &window,
+    )
+    .unwrap();
+    bind_callbacks(&window, &adapter);
+    adapter.borrow_mut().action(&window, Action::Preview);
+    window.set_workspace(true);
+    window.set_servers(ModelRc::new(VecModel::from(
+        (0..500)
+            .map(|index| {
+                let mut pixels = slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(64, 64);
+                for (offset, pixel) in pixels.make_mut_slice().iter_mut().enumerate() {
+                    *pixel = slint::Rgba8Pixel {
+                        r: ((index * 17 + offset) % 255) as u8,
+                        g: ((index * 31 + offset / 64) % 255) as u8,
+                        b: 150,
+                        a: 255,
+                    };
+                }
+                ServerRow {
+                    id: index.to_string().into(),
+                    name: format!("Server {index}").into(),
+                    picture: slint::Image::from_rgba8(pixels),
+                    unread: index % 3 == 0,
+                    badge: if index % 7 == 0 {
+                        "3".into()
+                    } else {
+                        "".into()
+                    },
+                    ..Default::default()
+                }
+            })
+            .collect::<Vec<_>>(),
+    )));
+    window.show().unwrap();
+    window
+        .window()
+        .set_size(slint::LogicalSize::new(2560., 1440.));
+    for _ in 0..10 {
+        window.window().take_snapshot().unwrap();
+    }
+    if let Some(path) = std::env::var_os("YAPCORD_REVIEW_SNAPSHOT") {
+        let frame = window.window().take_snapshot().unwrap();
+        image::save_buffer(
+            path,
+            frame.as_bytes(),
+            frame.width(),
+            frame.height(),
+            image::ColorType::Rgba8,
+        )
+        .unwrap();
+    }
+    let start = Instant::now();
+    for frame in 0..240 {
+        if frame % 6 == 0 {
+            window
+                .window()
+                .dispatch_event(WindowEvent::PointerScrolled {
+                    position: slint::LogicalPosition::new(36., 350.),
+                    delta_x: 0.,
+                    delta_y: -120.,
+                });
+        }
+        i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(16));
+        window.window().take_snapshot().unwrap();
+    }
+    println!(
+        "rail snapshot benchmark: 240 frames in {:?}, {:.2} ms/frame",
+        start.elapsed(),
+        start.elapsed().as_secs_f64() * 1000. / 240.
+    );
+    window.hide().unwrap();
+}

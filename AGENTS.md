@@ -39,8 +39,9 @@ replace the UI framework or refactor the protocol/backend for visual changes.
   them to this public repository or turn their content into test fixtures.
 - Use synthetic preview/fake Discord content for automated tests and public
   examples. Do not send messages or modify a real account for UI testing.
-- Build on Linux and deploy completed artifacts to Windows. Keep compilation
-  off WinPC. Its smoke/UI checks should be lightweight.
+- Keep source work in the canonical Linux checkout. Use an authorized build
+  host with a prepared toolchain and cache. Native Windows builds are allowed
+  when the owner permits them; keep smoke/UI checks lightweight.
 - Preserve tests and dependency pins. Use focused checks while iterating and
   run applicable final checks. Document host limitations and existing warnings.
 - Do not commit generated binaries, caches, runtime data or credentials.

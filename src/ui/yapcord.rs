@@ -10,8 +10,5 @@ pub(super) fn window() -> Result<YapfastWindow, slint::PlatformError> {
     let window = YapfastWindow::new()?;
     let style = window.global::<ClientStyle>();
     style.set_enabled(enabled());
-    if cfg!(windows) {
-        style.set_native_font("Segoe UI".into());
-    }
     Ok(window)
 }

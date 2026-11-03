@@ -2,9 +2,10 @@
 // Disabled for comparisons with the inherited interface.
 export global ClientStyle {
     in-out property <bool> enabled: true;
-    // Selected from installed fonts by the desktop adapter; no system font is bundled.
-    in-out property <string> native-font: "Atkinson Hyperlegible Next";
+    // An open-licensed, bundled face gives every platform the same text metrics.
+    in-out property <string> native-font: "DM Sans";
     out property <string> font-family: self.enabled ? self.native-font : "Atkinson Hyperlegible Next";
+    out property <length> text-size: self.enabled ? 15px : 16px;
     out property <length> sidebar-width: self.enabled ? 304px : 240px;
     out property <length> account-inset: self.enabled ? 8px : 0px;
     out property <length> account-height: self.enabled ? 60px : 56px;

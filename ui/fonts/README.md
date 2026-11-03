@@ -1,6 +1,18 @@
-YapCord uses installed Segoe UI on Windows. The fonts below remain bundled
-for upstream presentation mode and other platforms. No Segoe UI or proprietary
-Discord font files are distributed by this repository.
+# UI fonts
+
+YapCord uses DM Sans, selected by the project owner as an open-source
+alternative to Discord's custom gg sans. The unmodified variable TTF files
+`DMSans[opsz,wght].ttf` and `DMSans-Italic[opsz,wght].ttf` come from
+[Google Fonts](https://github.com/google/fonts/tree/5b35b7208dd4100571326fdf37f030b32a524232/ofl/dmsans)
+at commit `5b35b7208dd4100571326fdf37f030b32a524232`. They provide upright
+and italic faces with variable weights and optical sizes, and are embedded
+by Slint. The original copyright and license are preserved in
+[LICENSE-OFL-DMSans.txt](LICENSE-OFL-DMSans.txt), the SIL Open Font License 1.1.
+Binary packages include the license and this provenance note in `licenses/fonts/`.
+
+No proprietary Discord or Windows font files are bundled. Upstream presentation
+mode retains Atkinson Hyperlegible Next and its metrics. DM Sans is an
+alternative, not an exact reproduction of gg sans.
 
 Atkinson Hyperlegible Next by the Braille Institute, the UI's typeface: the
 static TTF styles Regular, Italic, Medium, Bold, Bold Italic and ExtraBold,

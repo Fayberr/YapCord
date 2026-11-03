@@ -44,7 +44,9 @@ not every UI component or interaction. Shared widget changes can still conflict.
 Introduce distinct visual components under `ui/yapcord/` as individual areas
 are redesigned, with small integration points in the inherited root. Reuse
 licensed assets and rendering infrastructure. Do not introduce Discord's
-proprietary artwork or fonts.
+proprietary artwork or fonts. The current downstream face is bundled DM Sans
+under OFL-1.1; upstream mode retains Atkinson Hyperlegible Next. See
+[font provenance](../ui/fonts/README.md).
 
 [`crates/yapfast-ui/build.rs`](../crates/yapfast-ui/build.rs) still compiles
 `../../ui/yapfast.slint`, including its `live-preview` path. No second root or

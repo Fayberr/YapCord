@@ -4,6 +4,8 @@ import { WindowBar } from "yapcord/window-bar.slint";
 import { Palette } from "std-widgets.slint";
 import { ListView, Autoscroll, AutoscrollMarker } from "scrollview.slint";
 // The UI's typeface, Atkinson Hyperlegible Next; ExtraBold serves weight 900.
+import "fonts/DMSans[opsz,wght].ttf";
+import "fonts/DMSans-Italic[opsz,wght].ttf";
 import "fonts/AtkinsonHyperlegibleNext-Regular.ttf";
 import "fonts/AtkinsonHyperlegibleNext-Italic.ttf";
 import "fonts/AtkinsonHyperlegibleNext-Medium.ttf";
@@ -88,7 +90,7 @@ export component YapfastWindow inherits Window {
     // default-font-family: "Satoshi";
     // Both faces' x-heights are about half their size, small, so text
     // defaults to 16px.
-    default-font-size: 16px;
+    default-font-size: ClientStyle.text-size;
     // The std-widgets (ComboBoxes) follow only the colour scheme,
     // so it follows the theme.
     property <bool> dark-theme: Theme.dark;
@@ -1113,7 +1115,7 @@ export component YapfastWindow inherits Window {
     callback cancel-theme();
     callback delete-theme();
     changed settings-section => { if root.theme-editor && root.settings-section != 7 { root.cancel-theme(); } }
-    out property <length> message-font-size: root.text-size == 0 ? 14px : root.text-size == 2 ? 18px : 16px;
+    out property <length> message-font-size: root.text-size == 0 ? 14px : root.text-size == 2 ? 18px : ClientStyle.text-size;
     // The sidebar keeps 180 to 380px. Dragging also leaves the conversation 420px;
     // the window width cannot enter this binding, because it depends on the layout.
     out property <length> sidebar-shown: max(180px, min(380px, root.sidebar-width));

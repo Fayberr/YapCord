@@ -1,6 +1,6 @@
 # YapCord interface development
 
-The current presentation pass targets the main window's proportions, system
+The current presentation pass targets the main window's proportions,
 typography, default palette, window chrome, navigation and composer spacing.
 It also adjusts message grouping and the docked profile's framing. It is an
 initial iteration, not a claim of pixel or interaction parity with Discord.
@@ -14,11 +14,15 @@ The owner's November 2026 Windows references place the chat column at about
 list. They also show an approximately 60px composer with 8px surrounding space.
 These are starting measurements for the supplied scale, not universal values
 for every display or Discord version. Saved sidebar widths and themes remain
-user choices. Windows uses its installed Segoe UI font. Other platforms retain
-the inherited typeface for now. Discord's proprietary font and artwork are not
-bundled. Font rendering will consequently differ. Inline custom emoji still
-use the inherited bitmap-font metrics; baseline alignment with the new typeface needs
-focused visual review before claiming typography parity.
+user choices. YapCord now embeds DM Sans, an open-licensed approximation rather
+than Discord's custom gg sans. Default message text and navigation labels use
+15px instead of 16px. Explicit small (14px) and large (18px) message choices
+remain available. Upstream mode retains Atkinson Hyperlegible Next at 16px.
+Font provenance and both licenses are recorded in [the font directory](../ui/fonts/README.md).
+No proprietary Discord font or artwork is bundled. Rasterization and glyph
+shapes still differ from Discord. Inline custom emoji retain the inherited
+bitmap-font metrics, so mixed-text baselines need further visual review.
+
 
 Reuse Yapfast's existing Bonfire palette. Keep its message, navigation, voice,
 settings and account actions connected to the existing adapter. The default
@@ -46,7 +50,9 @@ platforms retain their inherited frame policy. Closing still follows the
 existing tray/quit behavior. Native resizing uses the inherited edge handlers.
 
 The rail uses 40px rounded server tiles, 8px row gaps and a separator below
-DM home. Folder previews, badges and selection indicators follow those tile
+the pinned DM home. A leading divider from the inherited model is hidden
+in YapCord mode. A divider after unread DMs remains, separating them from
+servers. Folder previews, badges and selection indicators follow those tile
 bounds; upstream mode keeps its 48px tiles. The rail remains 72px wide.
 
 The account dock is an inset 60px card with 8px side/bottom margins and a
@@ -276,3 +282,50 @@ cross-target Clippy was attempted and remains blocked by the same three
 inherited unused-code errors in `src/notify.rs` and `src/paste.rs` listed above.
 Those files are unchanged, and the warning gate was not weakened. Formatting,
 documentation links, visual-tool tests, diff checks and vibe-check passed.
+
+
+## Font and rail follow-up
+
+The owner reported oversized, different typography, a duplicate rail separator
+and stutter when scrolling servers. The font and line changes above address
+the first two reports. The home button remains pinned by design. The rail is
+still virtualized and uses the inherited wheel animation; no separate input
+smoothing, backend changes or speculative renderer patches were added.
+
+The initial review found upstream at `b64b9a7`. The next-day check found
+`73a4316`, which adds camera and OBS virtual-camera Go Live sources. It was
+merged without conflicts before final validation; its backend and sharing-menu
+changes are inherited upstream work. [Font customization issue 7](https://github.com/yapfast/yapfast/issues/7)
+discusses future work but has no shipped implementation in that revision.
+The downstream default does not add a competing font-settings system.
+
+The installed development build used `fast`, which deliberately compiles
+`yapfast-ui` without optimization. A synthetic Skia software benchmark is
+available for checking the cost of that choice. Compile it on the build host:
+
+```bash
+cargo test --locked --profile fast --bin yapfast \
+  --features i-slint-backend-testing/renderer-skia --no-run
+```
+
+Run the resulting test executable with:
+
+```bash
+<test-executable> yapcord_server_rail_scroll_snapshot_benchmark \
+  --ignored --nocapture --test-threads=1
+```
+
+For a comparison that optimizes only the generated UI, add
+`--config 'profile.fast.package.yapfast-ui.opt-level=3'` to the compilation
+command. Use the same source, machine and benchmark fixture for both builds.
+The test draws 240 full-window snapshots at 2560x1440 while scrolling a
+500-server synthetic model and the existing fictional preview conversation.
+It measures CPU-side snapshot throughput, not
+compositor presentation or the owner's live-client frame rate. Normal
+`release` builds already optimize the UI. Keep `fast` for iteration and use
+an optimized artifact when judging interactive smoothness.
+
+A separate Windows title-bar artifact remains unresolved: resizing cleared a
+white strip in the owner's session. That observation suggests incomplete
+repainting, but does not establish its cause. This pass makes no native frame
+or renderer changes to address it.

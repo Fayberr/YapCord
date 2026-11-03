@@ -508,7 +508,7 @@ export component ChannelRow inherits Rectangle {
                 VerticalLayout {
                     alignment: center; spacing: 0px; horizontal-stretch: 1;
                     Text {
-                        text: root.text; color: root.ink; font-size: 16px; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
+                        text: root.text; color: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
                         vertical-alignment: center; overflow: elide;
                     }
                     // Their voice channel in full when nothing else is said here,
@@ -688,7 +688,7 @@ export component ServerHeader inherits Rectangle {
     HorizontalLayout {
         padding-left: 8px; padding-right: 8px; spacing: 6px; alignment: start;
         Text {
-            text: root.name; font-size: 16px; font-weight: 700; color: Theme.text;
+            text: root.name; font-size: ClientStyle.text-size; font-weight: 700; color: Theme.text;
             vertical-alignment: center; overflow: elide;
         }
         Image {
@@ -745,9 +745,11 @@ export component ServerRail inherits Rectangle {
         // matters on accounts in many servers. Unread DMs scroll with them.
         ListView {
             vertical-stretch: 1;
-            for server in root.servers: Rectangle {
-                height: server.divider ? 2px + 8px : ClientStyle.rail-tile + 8px;
-                if server.divider: Rectangle {
+            for server[index] in root.servers: Rectangle {
+                // Home already has a pinned separator. Keep the model's line
+                // only when it separates unread DMs from servers below them.
+                height: server.divider ? (ClientStyle.enabled && index == 0 ? 0px : 2px + 8px) : ClientStyle.rail-tile + 8px;
+                if server.divider && (!ClientStyle.enabled || index > 0): Rectangle {
                     x: (72px - self.width) / 2; y: 0px; width: 32px; height: 2px; border-radius: 1px; background: Theme.line;
                 }
                 // An open folder's servers sit on a strip of its colour,
