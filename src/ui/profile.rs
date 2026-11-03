@@ -242,6 +242,21 @@ pub(super) fn profile_data(
         activity: activity.into(),
         activity_emoji: activity_emoji.unwrap_or_default().into(),
         activities: activity_rows(&profile.activities),
+        badges: ModelRc::new(VecModel::from(
+            profile
+                .badges
+                .iter()
+                .map(|badge| ProfileBadgeRow {
+                    icon: badge.icon.as_str().into(),
+                    description: badge.description.as_str().into(),
+                    link: badge.link.as_deref().unwrap_or_default().into(),
+                    kind: badge.level.as_ref().and_then(|l| l.kind.as_deref()).unwrap_or_default().into(),
+                    title: badge.level.as_ref().map(|l| l.title.as_str()).unwrap_or_default().into(),
+                    progress: badge.level.as_ref().map(|l| l.progress.as_str()).unwrap_or_default().into(),
+                    picture: badge.level.as_ref().map(|l| l.picture.as_str()).unwrap_or_default().into(),
+                })
+                .collect::<Vec<_>>(),
+        )),
         bio: markdown(&profile.bio),
         has_bio: !profile.bio.trim().is_empty(),
         role_rows: role_rows(&profile.roles, PROFILE_CARD_WIDTH),
