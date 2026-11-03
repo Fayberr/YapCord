@@ -2378,8 +2378,15 @@ async fn shows_profiles() {
         .iter()
         .map(|badge| badge.description.as_str())
         .collect();
-    assert_eq!(badges, ["HypeSquad Bravery", "Active Developer"]);
+    assert_eq!(badges, ["HypeSquad Bravery", "Active Developer", "Spielzeit"]);
     assert!(in_server.badges[0].link.is_some() && in_server.badges[1].link.is_none());
+    // Only the badge that levels up has a level, taken from /users/{id}/badges.
+    assert!(in_server.badges[..2].iter().all(|badge| badge.level.is_none()));
+    let level = in_server.badges[2].level.as_ref().expect("playing time has a level");
+    assert_eq!(level.kind.as_deref(), Some("Spielzeit"));
+    assert_eq!(level.title, "Eisern");
+    assert_eq!(level.progress, "1.816 Stunden gespielt");
+    assert!(level.picture.ends_with("d7a2df844cda56877b016e667f2fecead85a65c68a1487d4b2f94300d9d20f71.svg"));
     let own = discord.profile(PRIVATE, &bob, |_| {}).await.unwrap();
     assert!(own.bio.is_some_and(|bio| bio.starts_with("Plays bass")));
     assert!(own.roles.is_empty() && own.joined.is_none());
