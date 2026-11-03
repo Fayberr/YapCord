@@ -1306,9 +1306,8 @@ impl Names {
                 .into_iter()
                 .filter_map(|(user, guild, text, badge)| {
                     Some((id(&user)?, Tag { guild, text, badge }))
-            }),
-        )?;
-        saved.serialize_field(
+                })
+                .collect(),
             decorations: saved
                 .decorations
                 .iter()
