@@ -224,6 +224,7 @@ pub(super) fn profile_data(
         initial: initial(&profile.name),
         tint: tint(&profile.name),
         picture: cached_picture(pictures, state, profile.avatar.as_deref()),
+        decoration_url: profile.decoration.as_deref().unwrap_or_default().into(),
         handle: handle.into(),
         tag: profile
             .tag

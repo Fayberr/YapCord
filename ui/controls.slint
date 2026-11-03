@@ -219,6 +219,17 @@ export component DeviceToggle inherits Rectangle {
     }
 }
 
+// What the account wears from Discord's shop, for the account card and its
+// settings page, which show it without passing it down through each.
+export global AccountLook {
+    /// The address of the decoration around its avatar.
+    in property <string> decoration-url;
+    /// The address of its nameplate's picture and the plate's palette colour;
+    /// empty for none.
+    in property <string> nameplate-url;
+    in property <color> nameplate-color;
+}
+
 // Virtualized components resolve pixels on demand and queue missing URLs.
 export global PictureStore {
     in property <int> revision;
@@ -286,11 +297,22 @@ export component Avatar inherits Rectangle {
             PictureStore.request(root.picture-url);
         }
     }
-    init => { root.request-picture(); }
+    init => { root.request-picture(); root.request-decoration(); }
     changed picture-url => { root.request-picture(); }
     changed shown-picture => { root.request-picture(); }
     in property <length> size: 40px;
     in property <bool> speaking;
+    /// The address of the decoration around the avatar, which Discord draws
+    /// a fifth larger than it, centred, over its edge.
+    in property <string> decoration-url;
+    property <image> decoration: root.decoration-url != "" ? PictureStore.picture(root.decoration-url, PictureStore.revision) : @image-url("");
+    function request-decoration() {
+        if root.decoration-url != "" && root.decoration.width == 0 {
+            PictureStore.request(root.decoration-url);
+        }
+    }
+    changed decoration-url => { root.request-decoration(); }
+    changed decoration => { root.request-decoration(); }
     width: root.size; height: root.size;
     border-radius: root.size / 2;
     background: root.shown-picture.width > 0 ? transparent : root.tint;
@@ -303,9 +325,64 @@ export component Avatar inherits Rectangle {
         border-radius: root.size / 2; clip: true;
         Image { source: root.shown-picture; width: root.size; height: root.size; image-fit: cover; }
     }
+    if root.decoration.width > 0: Image {
+        x: -root.size / 10; y: -root.size / 10; width: root.size * 1.2; height: root.size * 1.2;
+        source: root.decoration; image-fit: contain; accessible-role: none;
+    }
     if root.speaking: Rectangle {
         x: -3px; y: -3px; width: root.size + 6px; height: root.size + 6px;
         border-radius: self.width / 2; border-width: 2px; border-color: Theme.live;
+    }
+}
+
+// A nameplate behind a row, as Discord's client draws it: a gradient in its
+// palette's colour, and its picture at the row's right end, faded out under
+// the row's text. Fill the row with it, under the row's contents.
+export component Nameplate inherits Rectangle {
+    /// The address of the plate's picture, and its palette's colour.
+    in property <string> picture-url;
+    in property <color> palette;
+    /// The account card's plate, which is stronger and isn't faded.
+    in property <bool> account;
+    in property <bool> hovered;
+    in property <bool> selected;
+    /// What lies under the plate, which the fade lets through.
+    in property <color> ground;
+    /// How wide the row's text is; the picture fades in after it.
+    in property <length> content-width;
+    property <image> picture: root.picture-url != "" ? PictureStore.picture(root.picture-url, PictureStore.revision) : @image-url("");
+    function request-picture() {
+        if root.picture-url != "" && root.picture.width == 0 {
+            PictureStore.request(root.picture-url);
+        }
+    }
+    init => { root.request-picture(); }
+    changed picture-url => { root.request-picture(); }
+    changed picture => { root.request-picture(); }
+    // Discord's opacities: .6 at rest, .9 selected, .4 on the account card.
+    property <float> strength: root.account ? 0.4 : root.selected ? 0.9 : 0.6;
+    property <length> fade-from: min(root.width, root.content-width + 10px);
+    property <length> fade-to: min(root.width, root.content-width + 60px);
+    /// The corners of the row it fills.
+    in property <length> radius;
+    clip: true;
+    border-radius: root.radius;
+    if root.picture.width > 0: Image {
+        source: root.picture;
+        height: root.height; width: self.height * root.picture.width / root.picture.height;
+        x: root.width - self.width;
+        image-fit: fill; opacity: root.strength; accessible-role: none;
+    }
+    // The fade under the text: the picture shows at .3 of its strength there,
+    // and in full a little after it.
+    if !root.account && root.picture.width > 0: Rectangle {
+        background: @linear-gradient(90deg, root.ground.with-alpha(0.7) 0%, root.ground.with-alpha(0.7) root.fade-from / root.width * 100%, root.ground.with-alpha(0) root.fade-to / root.width * 100%, root.ground.with-alpha(0) 100%);
+    }
+    // The palette's tint, from nothing at the left edge.
+    Rectangle {
+        background: root.account
+            ? @linear-gradient(90deg, root.palette.with-alpha(0.1) 0%, root.palette.with-alpha(0.4) 100%)
+            : @linear-gradient(90deg, root.palette.with-alpha(0) 0%, root.palette.with-alpha(0.08) 20%, root.palette.with-alpha(0.08) 50%, root.palette.with-alpha(root.selected ? 0.5 : root.hovered ? 0.3 : 0.2) 100%);
     }
 }
 
