@@ -11,7 +11,7 @@ own comparisons.
 
 The owner's November 2026 Windows references place the chat column at about
 376 logical pixels from the left: a 72px server rail and a 304px navigation
-list. They also show an 58px composer with 8px surrounding space.
+list. They also show a 58px composer with 8px surrounding space.
 These are starting measurements for the supplied scale, not universal values
 for every display or Discord version. Saved sidebar widths and themes remain
 user choices. YapCord now embeds DM Sans, an open-licensed approximation rather
