@@ -15,6 +15,10 @@ use crate::chat::{
     NotificationChange, NotifyLevel, OAuthGuild, OAuthPreview, RelationshipChange,
 };
 
+/// Whether to fetch the layers of the profile effect a card names; off until
+/// the card draws them.
+const SHOW_PROFILE_EFFECTS: bool = false;
+
 /// Carries out a command about the account, or gives back any other.
 pub(super) fn command(
     command: Command,
@@ -190,7 +194,9 @@ pub(super) fn command(
                         user: user.clone(),
                         result: Ok(chat_profile(&discord, &guild, profile.clone())),
                     });
-                    if let Some(sku) = effect {
+                    // Off until the card draws the effect's layers (ProfileEffect in
+                    // ui/controls.slint is written, but not yet verified on screen).
+                    if let Some(sku) = effect.filter(|_| SHOW_PROFILE_EFFECTS) {
                         match discord.profile_effect(&sku).await {
                             Ok(Some(effect)) => {
                                 let _ =

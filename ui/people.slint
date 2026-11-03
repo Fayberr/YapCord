@@ -775,13 +775,6 @@ export component ProfileCard inherits Rectangle {
                 }
             }
         }
-        // The profile effect plays over the card, in front of what it holds;
-        // clicks go through it.
-        if root.data.effect-layers.length > 0: ProfileEffect {
-            x: 0px; y: 0px; width: parent.width; height: parent.height;
-            layers: root.data.effect-layers; still-url: root.data.effect-still; persistent: root.data.effect-persistent;
-            end: root.data.effect-end; loops: root.data.effect-loops;
-        }
     }
     if root.large: Rectangle {
         x: parent.width - 44px; y: 10px; width: 34px; height: 34px; border-radius: 17px; background: #00000080;
