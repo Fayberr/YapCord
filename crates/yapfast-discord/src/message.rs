@@ -1464,9 +1464,6 @@ impl Names {
             }
             Some(Value::Null) => learned |= changed(&mut self.tags, id, None),
             _ => {}
-            }),
-        )?;
-        saved.serialize_field(
         // Partial user objects leave both out; null, or nothing equipped,
         // removes them.
         if let Some(data) = user.get("avatar_decoration_data") {
