@@ -1069,14 +1069,33 @@ async fn shows_decorations_and_nameplates() {
     assert!(person("Bob").decoration.is_some() && person("Bob").nameplate.is_none());
     assert!(person("Carol").decoration.is_none());
     assert_eq!(person("Carol").nameplate.as_ref().unwrap().color, 0x730bc8);
-    assert!(person("Dave").decoration.is_none() && person("Dave").nameplate.is_none());
+    // Dave has none of his own, but wears a decoration and a nameplate for
+    // this server alone, which member objects carry; Bob's name takes a
+    // style there, and Carol's everywhere.
+    assert!(
+        person("Dave")
+            .decoration
+            .as_deref()
+            .is_some_and(|url| url.ends_with("/collectibles-shop/1500000000000000005/static"))
+    );
+    assert_eq!(person("Dave").nameplate.as_ref().unwrap().color, 0x086460);
+    let bob_style = person("Bob").style.unwrap();
+    assert_eq!((bob_style.font, bob_style.effect), (14, 3));
+    assert_eq!(bob_style.colors(), [0x00ff99]);
+    let carol_style = person("Carol").style.unwrap();
+    assert_eq!((carol_style.font, carol_style.effect), (3, 2));
+    assert_eq!(carol_style.colors(), [0xff7eb3, 0x7a5cff]);
+    assert!(person("Alice").style.is_none());
 
     // What messages learn of an author is the same as the list's.
     discord
         .history(&guild, &general, Span::Latest)
         .await
         .unwrap();
-    assert_eq!(discord.decoration(&bob), person("Bob").decoration);
+    assert_eq!(
+        discord.decoration(Some(&guild), &bob),
+        person("Bob").decoration
+    );
 
     // Both pictures are on the CDN, as PNGs, at the address Discord's client
     // asks for.

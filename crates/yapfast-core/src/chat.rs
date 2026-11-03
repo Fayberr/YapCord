@@ -93,8 +93,9 @@ pub struct ChatRoom {
     /// the group's icon. See [`DiscordCommand::Pictures`].
     pub avatar: Option<String>,
     /// The address of the decoration the other person in a one-to-one DM
-    /// wears around their avatar.
+    /// wears around their avatar, and how they draw their name.
     pub decoration: Option<String>,
+    pub style: Option<NameStyle>,
     /// The largest file a message here may carry, in bytes.
     pub upload_limit: u64,
     /// A one-to-one Discord DM's other person: whether they're around, when
@@ -614,6 +615,38 @@ pub struct Nameplate {
     pub color: u32,
 }
 
+/// A Discord display name style: how someone's name is drawn, with up to
+/// five colours. See `yapfast_discord::collectibles::Style` for the ids.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct NameStyle {
+    pub font: u8,
+    pub effect: u8,
+    len: u8,
+    colors: [u32; 5],
+}
+
+impl NameStyle {
+    /// The RGB colours it asks for.
+    pub fn colors(&self) -> &[u32] {
+        &self.colors[..usize::from(self.len)]
+    }
+}
+
+#[cfg(feature = "discord")]
+impl From<yapfast_discord::collectibles::Style> for NameStyle {
+    fn from(style: yapfast_discord::collectibles::Style) -> Self {
+        let mut colors = [0; 5];
+        let given = style.colors();
+        colors[..given.len()].copy_from_slice(given);
+        Self {
+            font: style.font,
+            effect: style.effect,
+            len: given.len() as u8,
+            colors,
+        }
+    }
+}
+
 #[cfg(feature = "discord")]
 impl From<yapfast_discord::collectibles::Nameplate> for Nameplate {
     fn from(plate: yapfast_discord::collectibles::Nameplate) -> Self {
@@ -637,6 +670,8 @@ pub struct Profile {
     pub avatar: Option<String>,
     /// The address of the decoration they wear around it.
     pub decoration: Option<String>,
+    /// How they draw their name.
+    pub style: Option<NameStyle>,
     /// The address of their banner, and its colour when there's no picture.
     pub banner: Option<String>,
     pub accent: Option<u32>,
@@ -705,6 +740,8 @@ pub struct ChatMember {
     /// nameplate, which a member list draws behind their row.
     pub decoration: Option<String>,
     pub nameplate: Option<Nameplate>,
+    /// How they draw their name.
+    pub style: Option<NameStyle>,
     /// The heading Discord lists them under, with its size, such as
     /// `Online — 12`. Matrix members are grouped by `role` instead.
     pub group: Option<String>,
@@ -1401,8 +1438,10 @@ pub struct ChatMessage {
     pub spoilers: bool,
     /// The address of the author's avatar; see [`DiscordCommand::Pictures`].
     pub avatar: Option<String>,
-    /// The address of the decoration the author wears around it.
+    /// The address of the decoration the author wears around it, and how
+    /// they draw their name.
     pub decoration: Option<String>,
+    pub style: Option<NameStyle>,
     /// The RGB colour of the author's name, from their highest coloured
     /// Discord role.
     pub color: Option<u32>,

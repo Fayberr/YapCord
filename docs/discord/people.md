@@ -316,10 +316,12 @@ decoration decodes at up to 192 pixels and a plate whole, where other
 pictures take 128, and they stay while the screen shows their person
 (`pictures_on_screen`).
 
-Not shown, as nothing in Discord's client or the references covers where
-Yapfast would get them: profile effects, `profile_effect: {id}`, whose layers
-Discord's client reads from the shop (`GET /collectibles-products/{sku}`);
-display name styles; and a member's own server decoration or nameplate.
+What a member sets for one server alone, `avatar_decoration_data`,
+`collectibles` and `display_name_styles` on a member object (member lists,
+GUILD_MEMBER_UPDATE, messages' `member`), wins in that server, as in Discord's
+client (`lw({userValue, guildValue})`); everywhere else their own show. A
+member object that leaves a key out says nothing, and `null` takes the
+server's off. `Names` keeps these beside the user's own, by server and user.
 
 ## Editing one's main profile
 
