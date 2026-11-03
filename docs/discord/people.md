@@ -275,7 +275,7 @@ Someone's server tag shows as a small chip, as in Discord: the badge of the
 server they represent, then up to four letters. It comes from the
 `primary_guild` of their user object, which has the `tag`, the
 `identity_guild_id`, a `badge` hash that Yapfast fetches from
-`/guild-tag-badges/{guild}/{badge}.png`, and `identity_enabled`, false once
+`/clan-badges/{guild}/{badge}.png`, and `identity_enabled`, false once
 they stop wearing it; one without a tag, or turned off, shows nothing. The
 chip sits after the name on each message that starts a group, after the name
 in the member list, and beside the handle on a profile card. A tag without a
