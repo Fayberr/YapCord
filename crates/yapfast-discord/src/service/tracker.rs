@@ -1105,6 +1105,7 @@ impl Tracker {
                     username: names.username(user).map(str::to_owned),
                     avatar: names.avatar(None, user),
                     group: heading.clone(),
+                    tag: names.server_tag(user).cloned(),
                     presence: known.presence,
                     color: None,
                     activity: known.activity,

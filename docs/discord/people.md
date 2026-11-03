@@ -271,6 +271,20 @@ once a second, and only while a profile with one shows. Matrix members and
 one-to-one Matrix DMs get the same card with their name, Matrix ID, avatar and
 room role.
 
+Someone's server tag shows as a small chip, as in Discord: the badge of the
+server they represent, then up to four letters. It comes from the
+`primary_guild` of their user object, which has the `tag`, the
+`identity_guild_id`, a `badge` hash that Yapfast fetches from
+`/guild-tag-badges/{guild}/{badge}.png`, and `identity_enabled`, false once
+they stop wearing it; one without a tag, or turned off, shows nothing. The
+chip sits after the name on each message that starts a group, after the name
+in the member list, and beside the handle on a profile card. A tag without a
+badge shows its letters alone. Yapfast learns tags from every user object it
+sees, with the names and avatars, so a tag changes on screen as soon as a
+message, a member list row or a profile carries the new one; a user object
+without `primary_guild`, as a partial one is, changes nothing, and `null`
+takes it away. They are kept with the names across restarts.
+
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My
@@ -327,7 +341,8 @@ The client's tab also has Profile Widgets, an avatar decoration, a
 nameplate, a profile effect, a frame, display name styles and, with
 Nitro, a profile theme of two colours in place of the banner colour, then
 the Server Tag and badges. Yapfast leaves them out, as it shows none of
-them. Changing the username, in My Account with the password, is left
+them; it does show others' server tags, but choosing one's own is left for
+later. Changing the username, in My Account with the password, is left
 for later.
 
 ## Editing one's server profile

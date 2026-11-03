@@ -1,6 +1,6 @@
 import { ScrollView, ListView } from "scrollview.slint";
 import { Theme, Middle, Label } from "theme.slint";
-import { ActionButton, IconButton, Avatar, StatusText, PictureStore, TextField } from "controls.slint";
+import { ActionButton, IconButton, Avatar, StatusText, PictureStore, TextField, ServerTagChip } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
 /// A member of the open room. A heading starts each role's group.
@@ -17,6 +17,8 @@ export struct MemberRow {
     picture-url: string,
     /// Timed out in their Discord server, marked with a clock by the name.
     timed-out: bool,
+    /// The server tag they wear by their name, and its badge's address.
+    tag: string, tag-badge: string,
 }
 
 // The open room's members, grouped by role under the conversation header.
@@ -80,6 +82,9 @@ export component MemberPanel inherits Rectangle {
                                 text: member.name; color: member.has-color ? member.color : Theme.secondary; font-size: 16px; font-weight: 500; overflow: elide;
                                 opacity: member.presence == "offline" ? 0.5 : 1;
                             }
+                            if member.tag != "": Middle {
+                                ServerTagChip { text: member.tag; badge: member.tag-badge; font-size: 12px; opacity: member.presence == "offline" ? 0.5 : 1; }
+                            }
                             if member.timed-out: Image {
                                 source: @image-url("icons/clock.svg"); width: 14px; image-fit: contain;
                                 colorize: Theme.danger;
@@ -137,6 +142,8 @@ export struct ProfileData {
     id: string, name: string, initial: string, tint: color, picture: image,
     /// A Discord username or Matrix ID, then pronouns when they give them.
     handle: string,
+    /// The server tag they wear by their name, and its badge's address.
+    tag: string, tag-badge: string,
     /// The banner picture, else its colour.
     banner: image, accent: color, has-accent: bool,
     /// As in MemberRow.
@@ -471,7 +478,11 @@ export component ProfileCard inherits Rectangle {
                             overflow: elide;
                             if !root.large && !root.preview: TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                         }
-                        if root.data.handle != "": Text { text: root.data.handle; color: Theme.secondary; font-size: 14px; font-weight: 500; overflow: elide; }
+                        if root.data.handle != "" || root.data.tag != "": HorizontalLayout {
+                            spacing: 6px; alignment: start;
+                            if root.data.handle != "": Text { text: root.data.handle; color: Theme.secondary; font-size: 14px; font-weight: 500; overflow: elide; vertical-alignment: center; }
+                            if root.data.tag != "": Middle { ServerTagChip { text: root.data.tag; badge: root.data.tag-badge; font-size: 12px; } }
+                        }
                         if root.data.activity != "" || root.data.activity-emoji != "": StatusText {
                             text: root.data.activity; emoji-url: root.data.activity-emoji;
                             color: Theme.secondary; font-size: 14px; wrap: word-wrap; max-height: 40px;

@@ -187,6 +187,16 @@ fn in_voice(snapshot: &Snapshot, channel: &str) -> Vec<VoicePerson> {
 }
 
 #[cfg(feature = "discord")]
+/// A server tag as Yapfast's chat shows it.
+pub fn server_tag(tag: Option<yapfast_discord::message::Tag>) -> Option<chat::ServerTag> {
+    let tag = tag?;
+    Some(chat::ServerTag {
+        badge: tag.badge_url(),
+        text: tag.text,
+    })
+}
+
+#[cfg(feature = "discord")]
 /// Discord's presence as Yapfast's chat names it.
 pub fn presence(presence: yapfast_discord::member_list::Presence) -> chat::Presence {
     use yapfast_discord::member_list::Presence as Discord;

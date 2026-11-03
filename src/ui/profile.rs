@@ -225,6 +225,16 @@ pub(super) fn profile_data(
         tint: tint(&profile.name),
         picture: cached_picture(pictures, state, profile.avatar.as_deref()),
         handle: handle.into(),
+        tag: profile
+            .tag
+            .as_ref()
+            .map_or_else(Default::default, |tag| tag.text.as_str().into()),
+        tag_badge: profile
+            .tag
+            .as_ref()
+            .and_then(|tag| tag.badge.as_deref())
+            .unwrap_or_default()
+            .into(),
         banner: cached_picture(pictures, state, profile.banner.as_deref()),
         accent: role_color(profile.accent),
         has_accent: profile.accent.is_some(),

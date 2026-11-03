@@ -1417,6 +1417,11 @@ pub fn custom_emoji(id: &str, animated: bool, size: u32) -> String {
     format!("{}/emojis/{id}.{format}?size={size}", cdn())
 }
 
+/// The badge of a server's tag, which people wearing it show by their name.
+pub fn guild_tag_badge(guild: &str, hash: &str) -> String {
+    format!("{}/guild-tag-badges/{guild}/{hash}.png?size=64", cdn())
+}
+
 pub fn server_icon(guild: &str, hash: &str) -> String {
     format!("{}/icons/{guild}/{hash}.png?size={PICTURE_SIZE}", cdn())
 }
