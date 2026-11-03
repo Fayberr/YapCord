@@ -274,6 +274,8 @@ fn members_belong_to_the_selected_text_room() {
         username: None,
         role: Role::Member,
         avatar: None,
+        decoration: None,
+        nameplate: None,
         group: None,
         presence: None,
         color: None,
@@ -2943,6 +2945,8 @@ fn member(id: &str, name: &str) -> ChatMember {
         username: None,
         role: Role::Member,
         avatar: None,
+        decoration: None,
+        nameplate: None,
         group: None,
         presence: None,
         color: None,
@@ -3140,6 +3144,8 @@ fn discord_mentions_search_the_server_and_name_roles() {
         account: Some(Account {
             name: "Alice".into(),
             avatar: String::new(),
+            decoration: None,
+            nameplate: None,
             premium_type: 2,
             mfa_enabled: false,
             has_email: true,
@@ -3840,6 +3846,8 @@ fn matrix_profiles_show_what_the_member_list_knows() {
             username: None,
             role: Role::Moderator,
             avatar: Some("bob.png".into()),
+            decoration: None,
+            nameplate: None,
             group: None,
             presence: None,
             color: None,
@@ -3878,6 +3886,54 @@ fn matrix_profiles_show_what_the_member_list_knows() {
     assert!(app.state.profile.is_none());
     app.dispatch(Action::ShowDmProfile("general".into()));
     assert!(app.state.profile.is_none(), "a room has no one person");
+}
+
+#[test]
+#[cfg(feature = "discord")]
+fn decorations_and_nameplates_reach_profiles_and_the_account() {
+    use yapfast_discord::{
+        collectibles::Nameplate,
+        service::{Account, Conversation, Snapshot, Status},
+    };
+    let mut app = Application::default();
+    app.apply(discord_event(Snapshot {
+        status: Status::Online,
+        conversations: vec![Arc::new(Conversation {
+            id: "30".into(),
+            name: "Ann".into(),
+            decoration: Some("ring.png".into()),
+            person: Some("7".into()),
+            people: 2,
+            ..Default::default()
+        })],
+        account: Some(Account {
+            name: "Me".into(),
+            avatar: "me.png".into(),
+            decoration: Some("mine.png".into()),
+            nameplate: Some(Nameplate {
+                picture: "plate.png".into(),
+                color: 0x730bc8,
+            }),
+            premium_type: 0,
+            mfa_enabled: false,
+            has_email: true,
+        }),
+        ..Default::default()
+    }));
+    // The DM's card shows their decoration before Discord's profile
+    // arrives.
+    app.dispatch(Action::ShowDmProfile("discord:@me:30".into()));
+    let view = app.state.profile.as_ref().unwrap();
+    assert_eq!(view.profile.decoration.as_deref(), Some("ring.png"));
+    // Without Matrix the account is Discord's, and its card has both.
+    if cfg!(not(feature = "matrix")) {
+        assert_eq!(app.state.account_decoration.as_deref(), Some("mine.png"));
+        let plate = app.state.account_nameplate.as_ref().unwrap();
+        assert_eq!(
+            (plate.picture.as_str(), plate.color),
+            ("plate.png", 0x730bc8)
+        );
+    }
 }
 
 #[test]
@@ -7474,6 +7530,8 @@ fn a_server_profile_is_edited_as_discords_per_server_profile_editor_does() {
     snapshot.account = Some(yapfast_discord::service::Account {
         name: "Alice".into(),
         avatar: "alice.png".into(),
+        decoration: None,
+        nameplate: None,
         premium_type: 2,
         mfa_enabled: false,
         has_email: true,
@@ -7699,6 +7757,8 @@ fn the_main_profile_is_edited_as_discords_profile_editor_does() {
     snapshot.account = Some(yapfast_discord::service::Account {
         name: "Alice".into(),
         avatar: "alice.png".into(),
+        decoration: None,
+        nameplate: None,
         premium_type: 2,
         mfa_enabled: false,
         has_email: true,

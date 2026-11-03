@@ -108,6 +108,9 @@ pub struct Conversation {
     pub name: String,
     /// The other person's avatar in a DM, or a group DM's icon.
     pub avatar: Option<String>,
+    /// The decoration the other person in a DM wears around their avatar.
+    #[serde(default)]
+    pub decoration: Option<String>,
     pub group: bool,
     /// Everyone in it, this account included.
     pub people: usize,
