@@ -918,12 +918,12 @@ export component MenuItem inherits Rectangle {
         if !root.plain || root.current || root.icon.width > 0: Image {
             source: root.current ? @image-url("icons/check.svg") : root.icon;
             width: 16px; image-fit: contain;
-            colorize: root.current ? Theme.accent : root.danger ? (root.highlighted ? Theme.on-danger : Theme.danger) : root.highlighted ? Theme.text : Theme.secondary;
+            colorize: root.current ? Theme.accent : root.danger ? (root.highlighted ? Theme.on-danger : Theme.danger-text) : root.highlighted ? Theme.text : Theme.secondary;
         }
         VerticalLayout {
             alignment: center; horizontal-stretch: 1;
             Text {
-                text: root.text; color: root.danger ? (root.highlighted ? Theme.on-danger : Theme.danger) : Theme.text;
+                text: root.text; color: root.danger ? (root.highlighted ? Theme.on-danger : Theme.danger-text) : Theme.text;
                 font-size: 14px; font-weight: root.current ? 700 : 500;
                 overflow: elide;
             }
