@@ -675,8 +675,6 @@ pub struct Profile {
     /// The servers and friends this account shares with them.
     pub servers: Vec<ProfileServer>,
     pub friends: Vec<ProfileFriend>,
-    /// The badges their Discord profile shows, in Discord's order.
-    pub badges: Vec<ProfileBadge>,
     /// The custom emoji in their bio, which show as their pictures once
     /// those arrive; the bio names each as `:name:`.
     pub bio_emoji: Vec<CustomEmoji>,
@@ -697,17 +695,6 @@ pub struct ProfileConnection {
     pub url: Option<String>,
     /// When the account was made, as a date, when the service says.
     pub since: Option<String>,
-}
-
-/// A badge on a profile, such as HypeSquad Bravery.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ProfileBadge {
-    /// What it says on hover.
-    pub description: String,
-    /// The address of its picture; see [`DiscordCommand::Pictures`].
-    pub icon: String,
-    /// Where a click on it goes, when it goes anywhere.
-    pub link: Option<String>,
 }
 
 /// A server a profile's person shares with this account.

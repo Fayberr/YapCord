@@ -1,6 +1,6 @@
 import { ClientStyle } from "yapfast/style.slint";
 import { ScrollView, ListView } from "scrollview.slint";
-import { Theme, Middle, Label, Tip, Strings } from "theme.slint";
+import { Theme, Middle, Label, Strings } from "theme.slint";
 import { ActionButton, IconButton, Avatar, StatusText, PictureStore, TextField } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
@@ -184,10 +184,6 @@ export global ActivityClock {
     in property <int> now;
 }
 
-/// One of someone's badges: the address of its picture, what it says on
-/// hover, and where a click goes, empty when nowhere.
-export struct ProfileBadgeRow { icon: string, description: string, link: string }
-
 /// An account on another service on a profile, such as Steam: the service,
 /// its name for the account, where it opens ("" when it doesn't), when the
 /// account was made ("" when unknown), and whether the service verified it.
@@ -206,8 +202,6 @@ export struct ProfileData {
     presence: string, activity: string, activity-emoji: string,
     /// What they're doing, in full: games, music, streams.
     activities: [ActivityRow],
-    /// The badges Discord shows beside the handle, in its order.
-    badges: [ProfileBadgeRow],
     bio: styled-text, has-bio: bool,
     role-rows: [ProfileRoleRow], role-rows-large: [ProfileRoleRow],
     /// Dates: on Discord since, and in this server since.
@@ -240,40 +234,6 @@ export component ProfileTitle inherits Text {
 
 export component ProfileHeading inherits Text {
     color: Theme.muted; font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
-}
-
-// A badge on a profile: its picture, with its name on hover, opening its
-// page when Discord gives it one.
-component ProfileBadge inherits Rectangle {
-    in property <ProfileBadgeRow> badge;
-    callback open-link(string);
-    property <image> picture: root.badge.icon != "" ? PictureStore.picture(root.badge.icon, PictureStore.revision) : @image-url("");
-    function request() {
-        if root.badge.icon != "" && root.picture.width == 0 {
-            PictureStore.request(root.badge.icon);
-        }
-    }
-    init => { root.request(); }
-    changed badge => { root.request(); }
-    changed picture => { root.request(); }
-    width: 20px; height: 20px;
-    accessible-role: image;
-    accessible-label: root.badge.description;
-    Image { source: root.picture; width: parent.width; height: parent.height; image-fit: contain; }
-    badge-pointer := TouchArea {
-        mouse-cursor: root.badge.link != "" ? MouseCursor.pointer : MouseCursor.default;
-        clicked => { if root.badge.link != "" { root.open-link(root.badge.link); } }
-        changed has-hover => {
-            if self.has-hover {
-                Tip.text = root.badge.description;
-                Tip.side = 0;
-                Tip.x = self.absolute-position.x + self.width / 2;
-                Tip.y = self.absolute-position.y;
-            } else if Tip.text == root.badge.description {
-                Tip.text = "";
-            }
-        }
-    }
 }
 
 // One of someone's activities on their profile, as Discord's card shows it:
@@ -643,31 +603,6 @@ export component ProfileCard inherits Rectangle {
                             accessible-action-default => { root.more(self.absolute-position.x, self.absolute-position.y + self.height); }
                             Image { source: @image-url("icons/ellipsis.svg"); width: 18px; height: 18px; x: 7px; y: 7px; colorize: Theme.text; }
                             action-more := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.more(self.absolute-position.x, self.absolute-position.y + self.height); } }
-                        }
-                    }
-                    // Discord sets the badges in a pill of their own: 20px icons 2px
-                    // apart, 3px by 1px inside a 1px border, 8px corners, a grey wash
-                    // that brightens when the pointer is over it.
-                    if root.data.badges.length > 0: HorizontalLayout {
-                        alignment: start;
-                        Rectangle {
-                            width: min(root.data.badges.length, 6) * 22px + (root.data.badges.length > 6 ? 26px : 0px) + 6px; height: 24px;
-                            background: pill-hover.has-hover ? #97979f33 : #97979f1f;
-                            border-radius: 8px; border-width: 1px; border-color: #97979f0a;
-                            pill-hover := TouchArea { mouse-cursor: MouseCursor.default; }
-                            Rectangle {
-                                x: 3px; y: 1px; width: parent.width - 6px; height: 20px;
-                                for badge[index] in root.data.badges: ProfileBadge {
-                                    x: index * 22px; width: 20px; height: 20px; visible: index < 6;
-                                    badge: badge;
-                                    open-link(url) => { root.open-link(url); }
-                                }
-                                if root.data.badges.length > 6: Text {
-                                    x: 6 * 22px; width: 24px; height: 20px;
-                                    text: "+" + (root.data.badges.length - 6); color: Theme.secondary;
-                                    font-size: 12px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center;
-                                }
-                            }
                         }
                     }
                     for activity in root.data.activities: ActivityCard {

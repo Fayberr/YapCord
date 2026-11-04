@@ -33,9 +33,6 @@ pub struct Profile {
     pub mutual_servers: Vec<MutualServer>,
     /// The friends this account shares with them.
     pub mutual_friends: Vec<MutualFriend>,
-    /// The badges their profile shows, in Discord's order.
-    #[serde(default)]
-    pub badges: Vec<Badge>,
     /// The two colours of their profile's theme, a Nitro setting: the card's
     /// gradient runs from the first to the second.
     #[serde(default)]
@@ -74,19 +71,6 @@ fn connection_url(kind: &str, id: &str, name: &str) -> Option<String> {
         "bluesky" => format!("https://bsky.app/profile/{name}"),
         _ => return None,
     })
-}
-
-/// One of the badges a profile shows: HypeSquad, Active Developer, a
-/// subscriber's Nitro tier and the like.
-#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct Badge {
-    pub id: String,
-    /// What it says on hover, such as "HypeSquad Bravery".
-    pub description: String,
-    /// The address of its picture.
-    pub icon: String,
-    /// Where Discord's client sends a click on it, when it does.
-    pub link: Option<String>,
 }
 
 /// A server this account shares with someone.
@@ -266,19 +250,6 @@ pub fn parse(value: &Value, guild: Option<&str>) -> Option<Profile> {
             })
             .collect(),
         theme: theme_colors(&server["theme_colors"]).or_else(|| theme_colors(&own["theme_colors"])),
-        badges: value["badges"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter_map(|badge| {
-                Some(Badge {
-                    id: text(&badge["id"])?.to_owned(),
-                    description: text(&badge["description"])?.to_owned(),
-                    icon: ready::badge_icon(text(&badge["icon"])?),
-                    link: text(&badge["link"]).map(str::to_owned),
-                })
-            })
-            .collect(),
         connections: value["connected_accounts"]
             .as_array()
             .into_iter()
@@ -413,44 +384,6 @@ mod tests {
                 .ends_with("/banners/1400000000000000200/def.png?size=600")
         );
         assert_eq!(profile.accent, Some(16_711_680));
-    }
-
-    #[test]
-    fn a_profile_lists_its_badges_in_discords_order() {
-        let answer = json!({
-            "user": {"id": "1400000000000000200", "username": "ann"},
-            "badges": [
-                {"id": "hypesquad_house_1", "description": "HypeSquad Bravery",
-                 "icon": "8a88d63823d8a71cd5e390baa45efa02",
-                 "link": "https://support.discord.com/hc/en-us/articles/360035962891"},
-                {"id": "active_developer", "description": "Active Developer",
-                 "icon": "6bdc42827a38498929a4920da12695d9"},
-                {"id": "broken", "description": "", "icon": "abc"},
-                {"id": "no_icon", "description": "No icon"},
-            ],
-        });
-        let profile = parse(&answer, None).unwrap();
-        let ids: Vec<_> = profile
-            .badges
-            .iter()
-            .map(|badge| badge.id.as_str())
-            .collect();
-        assert_eq!(
-            ids,
-            ["hypesquad_house_1", "active_developer"],
-            "one without a description or a picture is left out"
-        );
-        assert_eq!(profile.badges[0].description, "HypeSquad Bravery");
-        assert!(
-            profile.badges[0]
-                .icon
-                .ends_with("/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png")
-        );
-        assert!(profile.badges[0].link.is_some());
-        assert_eq!(profile.badges[1].link, None);
-
-        let none = json!({"user": {"id": "1", "username": "bob"}, "badges": null});
-        assert!(parse(&none, None).unwrap().badges.is_empty());
     }
 
     #[test]

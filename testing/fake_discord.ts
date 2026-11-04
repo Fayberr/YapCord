@@ -122,7 +122,7 @@
 // Discord's do, with MESSAGE_POLL_VOTE_ADD and _REMOVE, and once a poll ends,
 // a MESSAGE_UPDATE and a "poll closed" notice (type 46).
 // GET /users/{id}/profile answers for everyone: Bob has a bio, pronouns, a
-// banner, a server bio and two badges, Carol a banner colour, and the rest
+// banner, a server bio, Carol a banner colour, and the rest
 // nothing more.
 // POST /_control/components makes Discord's own account write Alice a
 // notice made of components (IS_COMPONENTS_V2), as it writes its notices:
@@ -800,17 +800,6 @@ function wireProfile(user: User, guild: string | null) {
       : {}),
     mutual_guilds: inServer ? [{ id: GUILD, nick: null }] : [],
     mutual_friends: bob ? [wireUser(users.carol)] : [],
-    badges: bob
-      ? [
-          {
-            id: "hypesquad_house_1",
-            description: "HypeSquad Bravery",
-            icon: "8a88d63823d8a71cd5e390baa45efa02",
-            link: "https://support.discord.com/hc/en-us/articles/360035962891",
-          },
-          { id: "active_developer", description: "Active Developer", icon: "6bdc42827a38498929a4920da12695d9" },
-        ]
-      : [],
     premium_type: null,
   };
 }
@@ -7480,7 +7469,6 @@ function envProfile(world: World, user: User, guild: string | null) {
           .filter((server) => server.members.has(user.id))
           .map((server) => ({ id: server.id, nick: server.members.get(user.id)!.nick })),
     mutual_friends: [],
-    badges: [],
     premium_type: null,
   };
 }

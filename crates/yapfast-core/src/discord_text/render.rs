@@ -564,15 +564,6 @@ pub(super) fn chat_profile(
                 avatar: Some(friend.avatar),
             })
             .collect(),
-        badges: profile
-            .badges
-            .into_iter()
-            .map(|badge| ProfileBadge {
-                description: badge.description,
-                icon: badge.icon,
-                link: badge.link,
-            })
-            .collect(),
         bio_emoji,
         // The note comes with its own request; see `fill_profile`.
         note: String::new(),

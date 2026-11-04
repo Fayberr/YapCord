@@ -271,16 +271,6 @@ once a second, and only while a profile with one shows. Matrix members and
 one-to-one Matrix DMs get the same card with their name, Matrix ID, avatar and
 room role.
 
-The card shows the person's badges, as Discord's does, in a row of pictures
-under the name and handle: HypeSquad, Active Developer, a Nitro subscriber's
-and the like, in the order the profile lists them. They come from the
-`badges` of `GET /users/{id}/profile`: each has an `id`, a `description`, an
-`icon` hash that Yapfast fetches from `/badge-icons/{icon}.png`, and
-sometimes a `link`. Pointing at one shows its description; clicking one that
-has a link opens it. A badge missing its description or icon is left out, and
-a profile with none shows no row. Badges show on profile cards only, not
-beside names in messages or the member list.
-
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My
@@ -336,8 +326,7 @@ to remove it. The client never sends the bio, pronouns or banner to
 The client's tab also has Profile Widgets, an avatar decoration, a
 nameplate, a profile effect, a frame, display name styles and, with
 Nitro, a profile theme of two colours in place of the banner colour, then
-the Server Tag. Yapfast leaves them out, as it shows none of them; it does show
-others' badges, but Discord gives no way to edit them here. Changing the username, in My Account
+the Server Tag. Yapfast leaves them out, as it shows none of them. Changing the username, in My Account
 with the password, is left
 for later.
 

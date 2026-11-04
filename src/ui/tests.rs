@@ -4425,6 +4425,7 @@ fn channel_menus_and_their_dialog_make_change_and_delete_channels() {
     assert_eq!(
         texts(rows.clone()),
         [
+            "Mark as read",
             "Join voice",
             "Open chat",
             "Pin channel to top",
@@ -4436,7 +4437,7 @@ fn channel_menus_and_their_dialog_make_change_and_delete_channels() {
             "Copy ID"
         ]
     );
-    let delete = rows.row_data(7).unwrap();
+    let delete = rows.row_data(8).unwrap();
     assert!(delete.danger && delete.separated);
     window.invoke_prepare_menu("discord:10:4".into(), false);
     assert_eq!(
