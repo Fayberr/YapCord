@@ -349,6 +349,16 @@ an error.
   current from RELATIONSHIP_ADD and RELATIONSHIP_REMOVE.
 - A reply's quoted line jumps to the original and highlights it for a
   moment, as described under [jumping to a message](#jumping-to-a-message).
+  In Discord's style the quote reads "@Name" in the author's role colour
+  (`Reply.color`, from the member's roles when the original is known), in
+  regular weight, before 13px text in the secondary colour.
+- A picture in a message sits straight on the message background: a
+  transparent PNG or GIF shows no backdrop, as in Discord. Only the
+  loading skeleton draws a fill.
+- The context menus (channel, server, member and message) use Discord's
+  shades (`Theme.menu`, `Theme.menu-line`, `Theme.danger-text`), a 255px
+  minimum width, icons only on the rows Discord gives them, and a greyed
+  "Mark as read" first row when there is nothing to read.
 - Desktop notifications follow the person's Discord settings: each channel's,
   category's or server's level (every message, mentions only or nothing),
   falling back to the server's default, with mutes leaving only mentions. DMs
