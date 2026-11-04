@@ -127,6 +127,13 @@ pub struct ChatRoom {
     /// Which icon the channel list draws for it, one of [`symbol`], by its
     /// kind: a rules channel, an announcement channel, a stage and so on.
     pub symbol: u8,
+    /// The server tag the other person in a one-to-one DM wears by their
+    /// name, as the DM list shows it.
+    pub tag: Option<ServerTag>,
+    /// The other person is Discord's official account, which the DM list marks.
+    pub official: bool,
+    /// A one-to-one DM with no messages yet, where the DM list offers to wave.
+    pub empty: bool,
     /// A Discord message request's latest message, when it's known.
     pub preview: Option<Box<RequestPreview>>,
 }

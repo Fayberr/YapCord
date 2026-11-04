@@ -1,8 +1,8 @@
 import { DmHeading } from "yapfast/dm-heading.slint";
 import { ClientStyle } from "yapfast/style.slint";
 import { ListView } from "scrollview.slint";
-import { Theme, Tip, Middle, Label } from "theme.slint";
-import { Avatar, PictureStore, StatusText, StyledName, NameStyleRow, VoiceSpot } from "controls.slint";
+import { Theme, Tip, Middle, Label, Strings } from "theme.slint";
+import { Avatar, PictureStore, StatusText, StyledName, NameStyleRow, VoiceSpot, ServerTagChip } from "controls.slint";
 import { DiscordBadge } from "discord.slint";
 import { PersonRow, LivePill } from "voice.slint";
 
@@ -53,6 +53,13 @@ export struct RoomRow {
     people: [PersonRow],
     /// A DM with a call going on.
     call: bool,
+    /// The server tag a one-to-one DM's person wears, and its badge's address.
+    tag: string, tag-badge: string,
+    /// Discord's own account, marked OFFICIAL.
+    official: bool,
+    /// The person's id when no one has written in this one-to-one DM yet, so a
+    /// Wave button is offered; empty otherwise.
+    wave: string,
     /// A one-to-one Discord DM's other person: "online", "mobile", "idle",
     /// "dnd" or "offline", empty when unknown; and their custom status or what
     /// they're doing, or a group DM's size, and the address of the picture of
@@ -395,6 +402,13 @@ export component ChannelRow inherits Rectangle {
     in property <bool> locked;
     /// A DM with a call going on.
     in property <bool> call;
+    /// Their person's server tag, as RoomRow has it, whether they are Discord's
+    /// own account, and a Wave button for an empty DM (the person's id).
+    in property <string> tag;
+    in property <string> tag-badge;
+    in property <bool> official;
+    in property <string> wave;
+    callback waved;
     /// A DM pinned to the top of the list.
     in property <bool> pinned;
     /// A DM or channel whose notifications are muted: drawn faint until it's selected or pointed at.
@@ -435,6 +449,7 @@ export component ChannelRow inherits Rectangle {
     callback context-menu(length, length);
     property <bool> in-voice: root.voice-channel != "";
     property <bool> has-detail: root.detail != "" || root.detail-emoji != "";
+    property <bool> offers-wave: root.wave != "" && (pointer.has-hover || root.selected || wave-touch.has-hover);
     height: root.person ? ClientStyle.dm-row-height : ClientStyle.channel-row-height;
     border-radius: 6px;
     background: root.selected ? Theme.active : pointer.has-hover ? Theme.hover : transparent;
@@ -514,12 +529,31 @@ export component ChannelRow inherits Rectangle {
                 if !root.person && !root.thread: Image { source: root.icon; width: 20px; image-fit: contain; colorize: root.danger ? Theme.danger : root.selected || root.unread ? Theme.secondary : Theme.faint; }
                 VerticalLayout {
                     alignment: center; spacing: 0px; horizontal-stretch: 1;
-                    if root.name-style.effect == 0: Text {
-                        text: root.text; color: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
-                        vertical-alignment: center; overflow: elide;
+                    HorizontalLayout {
+                        spacing: 4px;
+                        if root.name-style.effect == 0: Text {
+                            text: root.text; color: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
+                            vertical-alignment: center; overflow: elide; horizontal-stretch: 0;
+                        }
+                        if root.name-style.effect > 0: StyledName {
+                            text: root.text; style: root.name-style; ink: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
+                        }
+                        if root.tag != "": Middle { ServerTagChip { text: root.tag; badge: root.tag-badge; } }
+                        if root.official: Middle {
+                            Rectangle {
+                                // Discord's verified-style badge: blurple, 16px, a check and OFFICIAL.
+                                height: 16px; width: official-text.preferred-width + 24px; border-radius: 4px; background: Theme.accent;
+                                accessible-role: AccessibleRole.text; accessible-label: Strings.official-badge;
+                                HorizontalLayout {
+                                    padding-left: 4px; padding-right: 4px; spacing: 2px; alignment: center;
+                                    Middle { Image { source: @image-url("icons/check.svg"); width: 12px; height: 12px; colorize: Theme.on-accent; accessible-role: none; } }
+                                    official-text := Text { text: Strings.official-badge; color: Theme.on-accent; font-size: 10px; font-weight: 700; vertical-alignment: center; }
+                                }
+                            }
+                        }
                     }
-                    if root.name-style.effect > 0: StyledName {
-                        text: root.text; style: root.name-style; ink: root.ink; font-size: ClientStyle.text-size; font-weight: root.unread ? 700 : root.selected && !ClientStyle.enabled ? 700 : 500;
+                    if root.official && !root.has-detail && !root.in-voice: Text {
+                        text: Strings.official-message; color: Theme.muted; font-size: 12px; overflow: elide;
                     }
                     // Their voice channel in full when nothing else is said here,
                     // else a speaker before what is, as the friends list has it.
@@ -537,6 +571,24 @@ export component ChannelRow inherits Rectangle {
                             clicked => { root.open-voice(); }
                         }
                         StatusText { text: root.detail; emoji-url: root.detail-emoji; font-size: 12px; }
+                    }
+                }
+                // Discord offers to wave at someone in a DM nobody has written in yet.
+                if root.offers-wave: Middle {
+                    Rectangle {
+                        height: 24px; width: wave-label.preferred-width + 40px; border-radius: 4px;
+                        background: wave-touch.has-hover ? Theme.accent-hover : Theme.accent;
+                        accessible-role: button; accessible-label: Strings.wave;
+                        accessible-action-default => { root.waved(); }
+                        HorizontalLayout {
+                            padding-left: 8px; padding-right: 8px; spacing: 4px; alignment: center;
+                            Middle { Image { source: @image-url("icons/hand.svg"); width: 14px; height: 14px; colorize: Theme.on-accent; accessible-role: none; } }
+                            wave-label := Text { text: Strings.wave; color: Theme.on-accent; font-size: 12px; font-weight: 500; vertical-alignment: center; }
+                        }
+                        wave-touch := TouchArea {
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => { root.waved(); }
+                        }
                     }
                 }
                 if root.call: Image {
@@ -902,6 +954,8 @@ export component RoomList inherits Rectangle {
     callback select-room(string);
     /// A DM person's voice channel was clicked: its room id.
     callback open-voice(string);
+    /// Wave at a DM's person (their id), by the button an empty DM offers.
+    callback wave(string);
     /// A voice channel's chat button was clicked: its room id.
     callback open-chat(string);
     callback open-add-friend;
@@ -1112,6 +1166,8 @@ export component RoomList inherits Rectangle {
                     open-chat => { root.open-chat(room.id); }
                     picture: room.picture; picture-url: room.picture-url; discord: room.discord;
                     decoration-url: room.decoration-url; name-style: room.name-style;
+                    tag: room.tag; tag-badge: room.tag-badge; official: room.official; wave: room.wave;
+                    waved => { root.wave(room.wave); }
                     selected: room.selected; unread: room.unread; badge: room.badge; locked: room.locked;
                     call: room.call; presence: room.presence; detail: room.detail; detail-emoji: room.detail-emoji;
                     voice-channel: room.voice-channel; voice-server: room.voice-server;

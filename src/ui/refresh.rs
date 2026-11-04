@@ -731,6 +731,22 @@ impl Adapter {
                     discord: room.direct && room.network == Network::Discord,
                     locked: room.locked || room.join_locked,
                     person: room.person.is_some(),
+                    tag: room
+                        .tag
+                        .as_ref()
+                        .map_or_else(Default::default, |tag| tag.text.as_str().into()),
+                    tag_badge: room
+                        .tag
+                        .as_ref()
+                        .and_then(|tag| tag.badge.as_deref())
+                        .unwrap_or_default()
+                        .into(),
+                    official: room.official,
+                    wave: if room.empty && !room.request {
+                        room.person.as_deref().unwrap_or_default().into()
+                    } else {
+                        Default::default()
+                    },
                     pinned: if room.direct {
                         state.pinned.contains(&room.id)
                     } else {

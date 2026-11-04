@@ -81,6 +81,9 @@ pub fn mutual_servers(count: usize) -> String {
 }
 
 pub(crate) const KEYS: &[&str] = &[
+    "official_badge",
+    "official_message",
+    "wave",
     "inbox",
     "help",
     "download_apps",
@@ -166,6 +169,9 @@ fn english(key: &str) -> Option<&'static str> {
         "inbox_empty" => "Nothing here right now.",
         "inbox_friend_request" => "sent you a friend request",
         "inbox_mentioned" => "mentions waiting",
+        "official_badge" => "OFFICIAL",
+        "official_message" => "Official Discord Message",
+        "wave" => "Wave",
         "message_hint" => "Message @{name}",
         "view_full_bio" => "View full bio",
         "member_since" => "Member since",
@@ -222,6 +228,9 @@ fn german(key: &str) -> Option<&'static str> {
         "inbox_empty" => "Gerade nichts zu sehen.",
         "inbox_friend_request" => "hat dir eine Freundschaftsanfrage gesendet",
         "inbox_mentioned" => "Erwähnungen warten",
+        "official_badge" => "OFFIZIELL",
+        "official_message" => "Offizielle Discord-Nachricht",
+        "wave" => "Winken",
         "message_hint" => "Nachricht an @{name}",
         "view_full_bio" => "Vollständige Bio anzeigen",
         "member_since" => "Mitglied seit",

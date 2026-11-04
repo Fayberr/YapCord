@@ -1506,9 +1506,17 @@ impl Tracker {
                 self.presences.get(user),
             )
                 .hash(&mut hasher);
+            (
+                names
+                    .server_tag(user)
+                    .map(|tag| (&tag.guild, &tag.text, &tag.badge)),
+                names.is_official(user),
+            )
+                .hash(&mut hasher);
         }
         let ringing = self.calls.get(&private.id);
         ringing.is_some().hash(&mut hasher);
+        (self.unreads.last_message(&private.id) == 0).hash(&mut hasher);
         for user in ringing.into_iter().flatten() {
             (user, names.user_name(user), names.avatar_hash(user)).hash(&mut hasher);
         }
@@ -1580,6 +1588,18 @@ impl Tracker {
                 .then(|| private.recipients.first())
                 .flatten()
                 .and_then(|user| names.style(None, user)),
+            tag: (!private.group)
+                .then(|| private.recipients.first())
+                .flatten()
+                .and_then(|user| names.server_tag(user).cloned()),
+            official: !private.group
+                && private
+                    .recipients
+                    .first()
+                    .is_some_and(|user| names.is_official(user)),
+            empty: !private.group
+                && !private.request
+                && self.unreads.last_message(&private.id) == 0,
             group: private.group,
             people: private.recipients.len() + 1,
             request: private.request,
@@ -2442,6 +2462,28 @@ mod tests {
                 .moved(&Event::StreamServerUpdate, &server_update)
                 .is_none()
         );
+    }
+
+    #[test]
+    fn a_dm_nobody_wrote_in_offers_a_wave_and_marks_discords_own_account() {
+        let ready = json!({
+            "user": {"id": "1", "username": "me"},
+            "users": [
+                {"id": "2", "username": "ann"},
+                {"id": "3", "username": "discord", "system": true},
+            ],
+            "private_channels": [
+                {"id": "20", "type": 1, "recipient_ids": ["2"]},
+                {"id": "21", "type": 1, "recipient_ids": ["3"], "last_message_id": "500"},
+                {"id": "22", "type": 3, "recipient_ids": ["2", "3"]},
+            ],
+        });
+        let mut tracker = Tracker::from_ready("1".into(), &ready, Default::default());
+        let snapshot = tracker.snapshot();
+        let dm = |id: &str| snapshot.conversations.iter().find(|dm| dm.id == id).unwrap();
+        assert!(dm("20").empty && !dm("20").official);
+        assert!(!dm("21").empty && dm("21").official);
+        assert!(!dm("22").empty, "a group DM is never offered a wave");
     }
 
     #[test]

@@ -1126,6 +1126,9 @@ enum Animate {
 fn set_strings(window: &YapfastWindow) {
     use i18n::tr;
     let strings = window.global::<Strings>();
+    strings.set_official_badge(tr("official_badge").into());
+    strings.set_official_message(tr("official_message").into());
+    strings.set_wave(tr("wave").into());
     strings.set_inbox(tr("inbox").into());
     strings.set_help(tr("help").into());
     strings.set_download_apps(tr("download_apps").into());

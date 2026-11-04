@@ -956,6 +956,15 @@ fn author_name(message: &Value) -> &str {
         .unwrap_or("Discord user")
 }
 
+/// Whether a user object is one of Discord's own accounts: the `system` user,
+/// or one with the SYSTEM public flag (1 << 12).
+pub fn is_official(user: &Value) -> bool {
+    user["system"].as_bool() == Some(true)
+        || user["public_flags"]
+            .as_u64()
+            .is_some_and(|flags| flags & (1 << 12) != 0)
+}
+
 /// The server tag someone wears beside their name, as Discord's `primary_guild`
 /// gives it: up to four characters from a server they chose to represent,
 /// with that server's badge.
@@ -1215,6 +1224,9 @@ pub struct Names {
     avatars: HashMap<Id, String>,
     /// The server tags of those who wear one, by user id.
     tags: HashMap<Id, Tag>,
+    /// Discord's own accounts, such as the one that sends its official
+    /// messages, which a DM list marks.
+    officials: HashSet<Id>,
     /// Server avatar hashes by server and user id.
     member_avatars: HashMap<(Id, Id), String>,
     /// The SKUs of the avatar decorations people equip, by user id.
@@ -1401,6 +1413,7 @@ impl Names {
         self.users.retain(|user, _| seen.contains_key(user));
         self.usernames.retain(|user, _| seen.contains_key(user));
         self.bots.retain(|user| seen.contains_key(user));
+        self.officials.retain(|user| seen.contains_key(user));
         self.avatars.retain(|user, _| seen.contains_key(user));
         self.tags.retain(|user, _| seen.contains_key(user));
         self.decorations.retain(|user, _| seen.contains_key(user));
@@ -1438,6 +1451,14 @@ impl Names {
         }
         if let Some(username) = user["username"].as_str() {
             self.usernames.insert(id, username.to_owned());
+        }
+        // Partial user objects leave both out.
+        if user.get("system").is_some() || user.get("public_flags").is_some() {
+            if is_official(user) {
+                self.officials.insert(id);
+            } else {
+                self.officials.remove(&id);
+            }
         }
         // Partial user objects leave it out.
         match user["bot"].as_bool() {
@@ -1690,6 +1711,11 @@ impl Names {
         }
         let hash = user_id.and_then(|user| self.avatars.get(&user));
         ready::avatar(user, hash.map(String::as_str))
+    }
+
+    /// Whether a user is one of Discord's own accounts.
+    pub fn is_official(&self, user: &str) -> bool {
+        id(user).is_some_and(|user| self.officials.contains(&user))
     }
 
     /// The server tag a user wears beside their name, if they do.
@@ -2801,5 +2827,20 @@ mod tests {
         assert!(!own.mentions_me(me, Some(&server)));
         // A DM has no server: @everyone means nothing there.
         assert!(!message(json!({"mention_everyone": true})).mentions_me(me, None));
+    }
+    #[test]
+    fn discords_own_account_is_official_until_a_user_says_otherwise() {
+        assert!(is_official(&json!({"id": "1", "system": true})));
+        assert!(is_official(&json!({"id": "1", "public_flags": 1 << 12})));
+        assert!(!is_official(&json!({"id": "1", "public_flags": 64})));
+        let mut names = Names::default();
+        names.learn_user(&json!({"id": "1", "username": "Discord", "system": true}));
+        assert!(names.is_official("1"));
+        // A partial user object says nothing of it.
+        names.learn_user(&json!({"id": "1"}));
+        assert!(names.is_official("1"));
+        names.learn_user(&json!({"id": "1", "public_flags": 0}));
+        assert!(!names.is_official("1"));
+        assert!(!names.is_official("2"));
     }
 }

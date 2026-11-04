@@ -120,6 +120,16 @@ pub struct Conversation {
     #[serde(default)]
     pub style: Option<crate::collectibles::Style>,
     pub group: bool,
+    /// The server tag the other person in a DM wears by their name.
+    #[serde(default)]
+    pub tag: Option<crate::message::Tag>,
+    /// The other person is Discord's own account, which is marked as official.
+    #[serde(default)]
+    pub official: bool,
+    /// A one-to-one DM nobody has written in yet, where the DM list offers to
+    /// wave.
+    #[serde(default)]
+    pub empty: bool,
     /// Everyone in it, this account included.
     pub people: usize,
     /// A message request, waiting to be accepted or ignored. Requests count

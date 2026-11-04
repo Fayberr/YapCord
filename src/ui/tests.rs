@@ -3543,6 +3543,9 @@ fn friends_in_a_servers_voice_channel_show_where() {
         parent: None,
         forum: false,
         unlisted: false,
+        tag: None,
+        official: false,
+        empty: false,
         symbol: 0,
         preview: None,
     };
@@ -6224,6 +6227,9 @@ fn requests_list_someone_once_with_their_message() {
         parent: None,
         forum: false,
         unlisted: false,
+        tag: None,
+        official: false,
+        empty: false,
         symbol: 0,
         preview: Some(Box::new(RequestPreview {
             text: format!("Hi from {person}"),
