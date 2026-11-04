@@ -488,6 +488,18 @@ export component YapfastWindow inherits Window {
     in property <int> unread-index: -1;
     in property <string> unread-label;
     in property <string> composer-hint;
+    /// The welcome block that opens a channel's history in Discord: its kind
+    /// ("server", "channel" or empty) and its texts.
+    in property <string> intro-kind;
+    in property <string> intro-welcome;
+    in property <string> intro-title;
+    in property <string> intro-text;
+    /// This account may not write here: Discord swaps the composer for one
+    /// disabled bar with `composer-locked-text` in it.
+    in property <bool> composer-locked;
+    in property <string> composer-locked-text;
+    /// The composer's hint for the open conversation: "Message @sam", "Message #general".
+    in property <string> composer-placeholder;
     // Who else is typing in the open conversation; it takes the hint's place.
     in property <string> typing;
     // Who the `@` word being typed may mention; the chosen one is highlighted.
@@ -2901,7 +2913,7 @@ export component YapfastWindow inherits Window {
                                                     if message.day != "" || message.unread-start: HorizontalLayout {
                                                         padding-left: 16px; padding-right: 16px; padding-bottom: 6px; spacing: 10px; height: 26px;
                                                         Rectangle { horizontal-stretch: 1; Rectangle { height: 1px; background: message.unread-start ? Theme.accent : Theme.line; } }
-                                                        if message.day != "": Text { text: message.day; color: Theme.muted; font-size: 13px; font-weight: 700; vertical-alignment: center; }
+                                                        if message.day != "": Text { text: message.day; color: Theme.muted; font-size: ClientStyle.enabled ? 12px : 13px; font-weight: ClientStyle.enabled ? 600 : 700; vertical-alignment: center; }
                                                         if message.day != "" && message.unread-start: Text { text: "·"; color: Theme.muted; font-size: 13px; font-weight: 700; vertical-alignment: center; }
                                                         if message.unread-start: Rectangle {
                                                             width: new-text.preferred-width + 10px;
@@ -3175,7 +3187,7 @@ export component YapfastWindow inherits Window {
                                         composer := Composer {
                                             pad: ClientStyle.composer-padding; min-height: ClientStyle.composer-height;
                                             text <=> root.draft; enabled: root.composer-enabled; label: "Message";
-                                            placeholder: root.is-editing ? "Edit your message" : root.compose-label != "" ? "Write a reply" : root.room-selected && !root.room-direct && root.room-parent == "" ? "Message #" + root.room-name : root.room-selected ? "Message " + root.room-name : "Write a message";
+                                            placeholder: root.is-editing ? "Edit your message" : root.compose-label != "" ? "Write a reply" : root.room-selected ? root.composer-placeholder : "Write a message";
                                             edited(text) => { root.draft-edited(text); }
                                             accepted => { root.send(); }
                                             suggesting: root.mentions.length > 0 || root.emoji-suggestions.length > 0;
