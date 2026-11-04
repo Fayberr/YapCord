@@ -1324,6 +1324,10 @@ impl Discord {
             guild_effect = %value["guild_member_profile"]["profile_effect"],
             top_effect = %value["profile_effect"],
             user_effect = %value["user"]["profile_effect"],
+            user_profile_collectibles = %profile_effect::shape(&value["user_profile"]["collectibles"]),
+            guild_collectibles = %profile_effect::shape(&value["guild_member_profile"]["collectibles"]),
+            user_collectibles = %profile_effect::shape(&value["user"]["collectibles"]),
+            top_collectibles = %profile_effect::shape(&value["collectibles"]),
             "what a profile says of its effect"
         );
         self.write_names().learn_user(&value["user"]);
