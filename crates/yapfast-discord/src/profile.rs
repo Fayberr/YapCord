@@ -43,6 +43,10 @@ pub struct Profile {
     /// [`crate::service::Discord::profile_effect`] describes.
     #[serde(default)]
     pub effect: Option<String>,
+    /// The two colours of their profile's theme, a Nitro setting: the card's
+    /// gradient runs from the first to the second.
+    #[serde(default)]
+    pub theme: Option<[u32; 2]>,
 }
 
 /// One of the badges a profile shows: HypeSquad, Active Developer, a
@@ -222,6 +226,12 @@ fn color(value: &Value) -> Option<u32> {
     value.as_u64().and_then(|color| u32::try_from(color).ok())
 }
 
+/// A profile's theme: `theme_colors`, two colours as numbers.
+fn theme_colors(value: &Value) -> Option<[u32; 2]> {
+    let colors = value.as_array()?;
+    Some([color(colors.first()?)?, color(colors.get(1)?)?])
+}
+
 /// A text field that may be missing, null or empty.
 fn text(value: &Value) -> Option<&str> {
     value.as_str().filter(|text| !text.trim().is_empty())
@@ -300,6 +310,7 @@ pub fn parse(value: &Value, guild: Option<&str>) -> Option<Profile> {
             .collect(),
         tag: Tag::parse(&user["primary_guild"]),
         effect: profile_effect::sku(value, guild.is_some()),
+        theme: theme_colors(&server["theme_colors"]).or_else(|| theme_colors(&own["theme_colors"])),
         badges: value["badges"]
             .as_array()
             .into_iter()
@@ -512,5 +523,21 @@ mod tests {
         assert_eq!(quests.picture, "https://cdn.example/quest.svg");
         // Nitro isn't in the answer, so it keeps its description alone.
         assert_eq!(profile.badges[2].level, None);
+    }
+
+    #[test]
+    fn reads_the_theme_the_server_or_the_person_set() {
+        let answer = json!({
+            "user": {"id": "1400000000000000200", "username": "ann"},
+            "user_profile": {"theme_colors": [1052945, 6631526]},
+            "guild_member_profile": {"guild_id": "10", "theme_colors": null},
+        });
+        assert_eq!(
+            parse(&answer, Some("10")).unwrap().theme,
+            Some([1052945, 6631526])
+        );
+        let own = json!({"user": {"id": "1"}, "user_profile": {"theme_colors": [1]}});
+        assert_eq!(parse(&own, None).unwrap().theme, None, "needs both");
+        assert_eq!(parse(&json!({"user": {"id": "1"}}), None).unwrap().theme, None);
     }
 }

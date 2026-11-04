@@ -333,8 +333,11 @@ export component Avatar inherits Rectangle {
     /// It plays while this is set: Discord's client animates a decoration
     /// while the pointer is on the row, or always on messages.
     in property <bool> animate;
+    /// Ask for the animated decoration before it plays, so it starts at once
+    /// when `animate` is set, as a member row's does under the pointer.
+    in property <bool> prefetch;
     property <image> decoration: root.decoration-url != "" ? PictureStore.picture(root.decoration-url, PictureStore.revision) : @image-url("");
-    property <string> animated-url: root.animate && root.decoration-url != "" ? PictureStore.animated(root.decoration-url) : "";
+    property <string> animated-url: (root.animate || (root.prefetch && root.decoration.width > 0)) && root.decoration-url != "" ? PictureStore.animated(root.decoration-url) : "";
     function request-decoration() {
         if root.decoration-url != "" && root.decoration.width == 0 {
             PictureStore.request(root.decoration-url);
@@ -361,8 +364,8 @@ export component Avatar inherits Rectangle {
     if root.decoration.width > 0: Picture {
         x: -root.size / 10; y: -root.size / 10; width: root.size * 1.2; height: root.size * 1.2;
         still: root.decoration; image-fit: contain; accessible-role: none;
-        frames: root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
-        delays: root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
+        frames: root.animate && root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
+        delays: root.animate && root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
     }
     if root.speaking: Rectangle {
         x: -3px; y: -3px; width: root.size + 6px; height: root.size + 6px;
@@ -389,7 +392,10 @@ export component Nameplate inherits Rectangle {
     /// How wide the row's text is; the picture fades in after it.
     in property <length> content-width;
     property <image> picture: root.picture-url != "" ? PictureStore.picture(root.picture-url, PictureStore.revision) : @image-url("");
-    property <string> animated-url: root.animate && root.picture-url != "" ? PictureStore.animated(root.picture-url) : "";
+    // The animated picture is asked for once the still is in, not when the
+    // pointer arrives, so it plays at once on hover instead of after its
+    // download.
+    property <string> animated-url: root.picture.width > 0 ? PictureStore.animated(root.picture-url) : "";
     function request-picture() {
         if root.picture-url != "" && root.picture.width == 0 {
             PictureStore.request(root.picture-url);
@@ -402,8 +408,9 @@ export component Nameplate inherits Rectangle {
     changed picture-url => { root.request-picture(); }
     changed picture => { root.request-picture(); }
     changed animated-url => { root.request-picture(); }
-    // Discord's opacities: .6 at rest, .9 selected, .4 on the account card.
-    property <float> strength: root.account ? 0.4 : root.selected ? 0.9 : 0.6;
+    // Discord's opacities: .6 at rest, .9 selected or hovered; the account
+    // card's .4 rises to .6 under the pointer.
+    property <float> strength: root.account ? (root.hovered ? 0.6 : 0.4) : (root.selected || root.hovered) ? 0.9 : 0.6;
     property <length> fade-from: min(root.width, root.content-width + 10px);
     property <length> fade-to: min(root.width, root.content-width + 60px);
     /// The corners of the row it fills.
@@ -415,8 +422,8 @@ export component Nameplate inherits Rectangle {
         height: root.height; width: self.height * root.picture.width / root.picture.height;
         x: root.width - self.width;
         image-fit: fill; opacity: root.strength; accessible-role: none;
-        frames: root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
-        delays: root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
+        frames: root.animate && root.animated-url != "" ? PictureStore.frames(root.animated-url, PictureStore.revision) : [];
+        delays: root.animate && root.animated-url != "" ? PictureStore.delays(root.animated-url, PictureStore.revision) : [];
     }
     // The fade under the text: the picture shows at .3 of its strength there,
     // and in full a little after it.

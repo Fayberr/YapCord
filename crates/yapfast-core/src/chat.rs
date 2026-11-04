@@ -752,6 +752,8 @@ pub struct Profile {
     /// The SKU of the profile effect they equip, which
     /// [`Event::ProfileEffect`] describes.
     pub effect: Option<String>,
+    /// The two colours of their profile's theme, when they set one.
+    pub theme: Option<[u32; 2]>,
     /// The address of their banner, and its colour when there's no picture.
     pub banner: Option<String>,
     pub accent: Option<u32>,

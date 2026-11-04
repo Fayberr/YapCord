@@ -5229,6 +5229,7 @@ fn profile_effects_are_kept_a_few_at_a_time_and_their_pictures_stay_with_the_car
         profile: Profile {
             id: "1".into(),
             effect: Some("9".into()),
+            theme: None,
             ..Default::default()
         },
         large: false,

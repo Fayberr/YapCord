@@ -80,12 +80,12 @@ export component MemberPanel inherits Rectangle {
                     }
                   }
                   HorizontalLayout {
-                    padding-left: 8px; padding-right: member.nameplate-url != "" ? 40px : 8px; spacing: 12px;
+                    padding-left: 8px; padding-right: member.nameplate-url != "" ? 12px : 8px; spacing: 12px;
                     // Offline Discord members are faded, as in Discord.
                     Middle {
                         Rectangle {
                             width: 32px; height: 32px;
-                            Avatar { size: 32px; initial: member.initial; tint: member.tint; picture: member.picture; picture-url: member.picture-url; decoration-url: member.decoration-url; animate: member-pointer.has-hover; opacity: member.presence == "offline" ? 0.4 : 1; }
+                            Avatar { size: 32px; initial: member.initial; tint: member.tint; picture: member.picture; picture-url: member.picture-url; decoration-url: member.decoration-url; animate: member-pointer.has-hover; prefetch: true; opacity: member.presence == "offline" ? 0.4 : 1; }
                             if member.presence != "" && member.presence != "offline": StatusDot { x: 20px; y: 20px; presence: member.presence; ring: Theme.sidebar; }
                         }
                     }
@@ -172,6 +172,9 @@ export struct ProfileData {
     /// one holds, when its last layer that doesn't loop ends in milliseconds,
     /// and whether one loops.
     effect-layers: [EffectLayer], effect-still: string, effect-persistent: bool, effect-end: int, effect-loops: bool,
+    /// The colours of the profile's theme, a Nitro setting, which tint the
+    /// card's gradient and border; the card is plain without them.
+    theme-primary: color, theme-secondary: color, has-theme: bool,
     /// A Discord username or Matrix ID, then pronouns when they give them.
     handle: string,
     /// The server tag they wear by their name, and its badge's address.
@@ -569,6 +572,9 @@ export component ProfileCard inherits Rectangle {
     callback close;
     callback open-link(string);
     callback befriend;
+    /// The card's "..." was clicked, at this place in the window: it opens
+    /// the person's menu.
+    callback more(length, length);
     /// A mutual server or friend was clicked, with where its row is in the window.
     callback open-server(ProfileServerRow, length, length, length, length);
     callback open-friend(string, length, length, length, length);
@@ -577,16 +583,31 @@ export component ProfileCard inherits Rectangle {
     property <length> banner-height: root.large ? 210px : root.docked ? (ClientStyle.enabled ? 105px : 120px) : 105px;
     property <length> avatar-size: root.large ? 120px : 80px;
     property <length> pad: root.large ? 24px : 16px;
+    // A profile theme, as Discord draws it: the card's gradient runs from
+    // the first colour to the second under a 60% black wash, flat down to the
+    // banner's end, inside a 1px border that is the same two colours,
+    // washed out into the card's own ground.
+    property <bool> themed: root.data.has-theme;
+    property <color> plain-ground: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
+    property <color> theme-start: root.data.theme-primary.mix(#000000, 0.4);
+    property <color> theme-end: root.data.theme-secondary.mix(#000000, 0.4);
+    /// What lies behind the avatar's ring, where the banner ends.
+    property <color> ground: root.themed ? root.theme-start : root.plain-ground;
     height: min(body.preferred-height, root.limit);
-    background: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
-    border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; border-width: root.docked ? 0px : 1px; border-color: Theme.edge;
+    background: root.themed ? @linear-gradient(180deg, root.data.theme-primary.mix(root.plain-ground, 0.2) 0%, root.data.theme-secondary.mix(root.plain-ground, 0.6) 100%) : root.plain-ground;
+    border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; border-width: root.docked || root.themed ? 0px : 1px; border-color: Theme.edge;
     drop-shadow-blur: root.docked ? 0px : 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: root.docked ? 0px : 8px;
     accessible-role: groupbox;
     accessible-label: root.data.name + "'s profile";
     // Clicks on the card stay on it, instead of closing it.
     TouchArea { }
     Rectangle {
-        border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; clip: true;
+        x: root.themed ? 1px : 0px; y: root.themed ? 1px : 0px;
+        width: parent.width - (root.themed ? 2px : 0px); height: parent.height - (root.themed ? 2px : 0px);
+        border-radius: (root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px) - (root.themed ? 1px : 0px); clip: true;
+        if root.themed: Rectangle {
+            background: @linear-gradient(180deg, root.theme-start 0%, root.theme-start root.banner-height / parent.height * 100%, root.theme-end 100%);
+        }
         // Sized by what the card wants rather than the least it can take, so a
         // long one scrolls to its end.
         ScrollView {
@@ -599,7 +620,7 @@ export component ProfileCard inherits Rectangle {
                     height: root.banner-height + root.avatar-size / 2 + 8px;
                     Rectangle {
                         y: 0px; height: root.banner-height;
-                        background: root.data.has-accent ? root.data.accent : Theme.raised;
+                        background: root.data.has-accent ? root.data.accent : root.themed ? root.data.theme-primary : Theme.raised;
                         if root.data.banner.width > 0: Image {
                             width: parent.width; height: parent.height; source: root.data.banner; image-fit: cover;
                         }
@@ -607,11 +628,11 @@ export component ProfileCard inherits Rectangle {
                     Rectangle {
                         x: root.pad - 6px; y: root.banner-height - root.avatar-size / 2 - 6px;
                         width: root.avatar-size + 12px; height: self.width; border-radius: self.width / 2;
-                        background: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
+                        background: root.ground;
                         Avatar { size: root.avatar-size; initial: root.data.initial; tint: root.data.tint; picture: root.data.picture; decoration-url: root.data.decoration-url; animate: true; }
                         if root.data.presence != "" && root.data.presence != "offline": StatusDot {
                             x: parent.width - self.width - (root.large ? 14px : 10px); y: parent.height - self.height - (root.large ? 14px : 10px);
-                            presence: root.data.presence; ring: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
+                            presence: root.data.presence; ring: root.ground;
                         }
                         // The picture opens the full profile.
                         if !root.large && !root.preview: TouchArea {
@@ -636,7 +657,6 @@ export component ProfileCard inherits Rectangle {
                             text: root.data.name; style: root.data.name-style; ink: Theme.text; font-size: root.large ? 26px : 20px; font-weight: 700;
                             if !root.large && !root.preview: TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                         }
-                        if root.data.handle != "": Text { text: root.data.handle; color: Theme.secondary; font-size: 14px; font-weight: 500; overflow: elide; }
                         if root.data.handle != "" || root.data.tag != "": HorizontalLayout {
                             spacing: 6px; alignment: start;
                             if root.data.handle != "": Text { text: root.data.handle; color: Theme.secondary; font-size: 14px; font-weight: 500; overflow: elide; vertical-alignment: center; }
@@ -666,17 +686,50 @@ export component ProfileCard inherits Rectangle {
                             }
                         }
                     }
-                    if root.data.friend > 0: HorizontalLayout {
-                        alignment: start;
-                        ActionButton {
-                            small: true; primary: root.data.friend != 2; enabled: root.data.friend != 2;
-                            text: root.data.friend == 1 ? "Send friend request" : root.data.friend == 2 ? "Friend request sent" : "Accept friend request";
-                            clicked => { root.befriend(); }
-                        }
-                    }
                     for activity in root.data.activities: ActivityCard {
                         activity: activity;
                         open-link(url) => { root.open-link(url); }
+                    }
+                    // The card names what is shared, with a few of the faces; the
+                    // full profile lists it.
+                    if !root.full && (root.data.friends.length > 0 || root.data.servers.length > 0): Rectangle {
+                        height: 24px;
+                        accessible-role: button;
+                        accessible-label: "Show mutual friends and servers in the full profile";
+                        accessible-action-default => { root.enlarge(); }
+                        HorizontalLayout {
+                            spacing: 8px; alignment: start;
+                            if root.data.friends.length > 0: HorizontalLayout {
+                                spacing: 6px;
+                                Middle {
+                                    Rectangle {
+                                        width: min(3, root.data.friends.length) * 12px + 6px; height: 18px;
+                                        for friend[index] in root.data.friends: Rectangle {
+                                            x: index * 12px; width: 18px; height: 18px; visible: index < 3;
+                                            Rectangle { width: 18px; height: 18px; border-radius: 9px; background: root.ground; }
+                                            Avatar { x: 1px; y: 1px; size: 16px; initial: friend.initial; tint: friend.tint; picture: friend.picture; }
+                                        }
+                                    }
+                                }
+                                Text { text: root.data.friends.length + (root.data.friends.length == 1 ? " mutual friend" : " mutual friends"); color: Theme.secondary; font-size: 12px; font-weight: 500; vertical-alignment: center; }
+                            }
+                            if root.data.friends.length > 0 && root.data.servers.length > 0: Text { text: "\u{b7}"; color: Theme.muted; font-size: 12px; vertical-alignment: center; }
+                            if root.data.servers.length > 0: HorizontalLayout {
+                                spacing: 6px;
+                                Middle {
+                                    Rectangle {
+                                        width: min(3, root.data.servers.length) * 12px + 6px; height: 18px;
+                                        for server[index] in root.data.servers: Rectangle {
+                                            x: index * 12px; width: 18px; height: 18px; visible: index < 3;
+                                            Rectangle { width: 18px; height: 18px; border-radius: 9px; background: root.ground; }
+                                            Avatar { x: 1px; y: 1px; size: 16px; initial: server.initial; picture: server.picture; }
+                                        }
+                                    }
+                                }
+                                Text { text: root.data.servers.length + (root.data.servers.length == 1 ? " mutual server" : " mutual servers"); color: Theme.secondary; font-size: 12px; font-weight: 500; vertical-alignment: center; }
+                            }
+                        }
+                        TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                     }
                     if root.data.has-bio: VerticalLayout {
                         spacing: 6px;
@@ -692,6 +745,14 @@ export component ProfileCard inherits Rectangle {
                                     link-clicked(link) => { root.open-link(link); }
                                 }
                             }
+                        }
+                        // Only where the card cut the text short; its height, not
+                        // its presence, follows that, so the layout's width does not.
+                        Text {
+                            property <bool> cut: !root.full && !root.preview && bio-text.preferred-height > 110px;
+                            height: self.cut ? 20px : 0px; visible: self.cut;
+                            text: "View full bio"; color: Theme.link; font-size: 14px; font-weight: 500;
+                            TouchArea { enabled: parent.cut; mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                         }
                     }
                     // The card leaves the dates to the full profile.
@@ -754,7 +815,7 @@ export component ProfileCard inherits Rectangle {
                     }
                     if root.data.note != "": Text { text: root.data.note; color: Theme.muted; font-size: 13px; wrap: word-wrap; }
                     // Escape in the box closes the card, as it does elsewhere.
-                    if !root.full && !root.preview && root.data.message-hint != "": FocusScope {
+                    if !root.large && !root.preview && root.data.message-hint != "": FocusScope {
                         // It empties for someone else's profile.
                         property <string> person: root.data.id;
                         changed person => { message-field.text = ""; }
@@ -764,7 +825,7 @@ export component ProfileCard inherits Rectangle {
                         }
                         message-field := TextField {
                             placeholder: root.data.message-hint; label: root.data.message-hint;
-                            text-size: 14px;
+                            text-size: 14px; border-radius: 8px; fill: root.themed ? #0000004d : Theme.sunken;
                             accepted => {
                                 if self.text != "" {
                                     root.send-message(self.text);
@@ -773,6 +834,37 @@ export component ProfileCard inherits Rectangle {
                             }
                         }
                     }
+                }
+            }
+        }
+        // The friend request and the person's menu sit over the banner's
+        // top right corner, as in Discord.
+        if !root.preview && (root.data.friend > 0 || root.data.id != ""): HorizontalLayout {
+            x: parent.width - self.preferred-width - (root.large ? 54px : 10px); y: 10px;
+            height: 32px; spacing: 8px;
+            if root.data.friend > 0: Rectangle {
+                width: 32px; height: 32px; border-radius: 16px;
+                background: friend-touch.has-hover && root.data.friend != 2 ? #000000b3 : #00000080;
+                accessible-role: button;
+                accessible-enabled: root.data.friend != 2;
+                accessible-label: root.data.friend == 1 ? "Send friend request" : root.data.friend == 2 ? "Friend request sent" : "Accept friend request";
+                accessible-action-default => { root.befriend(); }
+                Image { source: @image-url("icons/user-plus.svg"); width: 18px; height: 18px; x: 7px; y: 7px; colorize: #ffffff; opacity: root.data.friend == 2 ? 0.5 : 1; }
+                friend-touch := TouchArea {
+                    enabled: root.data.friend != 2; mouse-cursor: MouseCursor.pointer;
+                    clicked => { root.befriend(); }
+                }
+            }
+            if root.data.id != "": Rectangle {
+                width: 32px; height: 32px; border-radius: 16px;
+                background: more-touch.has-hover ? #000000b3 : #00000080;
+                accessible-role: button;
+                accessible-label: "More actions";
+                accessible-action-default => { root.more(self.absolute-position.x, self.absolute-position.y + self.height); }
+                Image { source: @image-url("icons/ellipsis.svg"); width: 18px; height: 18px; x: 7px; y: 7px; colorize: #ffffff; }
+                more-touch := TouchArea {
+                    mouse-cursor: MouseCursor.pointer;
+                    clicked => { root.more(self.absolute-position.x, self.absolute-position.y + self.height); }
                 }
             }
         }

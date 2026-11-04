@@ -260,6 +260,9 @@ pub(super) fn profile_data(
                 .map_or(0, |end| i32::try_from(end).unwrap_or(i32::MAX))
         }),
         effect_loops: effect.is_some_and(|effect| effect.layers.iter().any(|layer| layer.looped)),
+        theme_primary: role_color(profile.theme.map(|theme| theme[0])),
+        theme_secondary: role_color(profile.theme.map(|theme| theme[1])),
+        has_theme: profile.theme.is_some(),
         id: profile.id.clone().into(),
         name: profile.name.clone().into(),
         initial: initial(&profile.name),
