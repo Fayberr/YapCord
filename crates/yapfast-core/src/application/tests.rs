@@ -278,7 +278,6 @@ fn members_belong_to_the_selected_text_room() {
         avatar: None,
         decoration: None,
         nameplate: None,
-        style: None,
         group: None,
         presence: None,
         color: None,
@@ -2953,7 +2952,6 @@ fn member(id: &str, name: &str) -> ChatMember {
         avatar: None,
         decoration: None,
         nameplate: None,
-        style: None,
         group: None,
         presence: None,
         color: None,
@@ -3859,7 +3857,6 @@ fn matrix_profiles_show_what_the_member_list_knows() {
             avatar: Some("bob.png".into()),
             decoration: None,
             nameplate: None,
-            style: None,
             group: None,
             presence: None,
             color: None,
@@ -3907,7 +3904,7 @@ fn matrix_profiles_show_what_the_member_list_knows() {
 #[cfg(feature = "discord")]
 fn decorations_and_nameplates_reach_profiles_and_the_account() {
     use yapfast_discord::{
-        collectibles::{Nameplate, Style},
+        collectibles::Nameplate,
         service::{Account, Conversation, Snapshot, Status},
     };
     let mut app = Application::default();
@@ -3917,9 +3914,6 @@ fn decorations_and_nameplates_reach_profiles_and_the_account() {
             id: "30".into(),
             name: "Ann".into(),
             decoration: Some("ring.png".into()),
-            style: Style::parse(&serde_json::json!(
-                {"font_id": 4, "effect_id": 3, "colors": [65280]}
-            )),
             person: Some("7".into()),
             people: 2,
             ..Default::default()
@@ -3944,11 +3938,6 @@ fn decorations_and_nameplates_reach_profiles_and_the_account() {
     app.dispatch(Action::ShowDmProfile("discord:@me:30".into()));
     let view = app.state.profile.as_ref().unwrap();
     assert_eq!(view.profile.decoration.as_deref(), Some("ring.png"));
-    let style = view.profile.style.unwrap();
-    assert_eq!(
-        (style.font, style.effect, style.colors()),
-        (4, 3, &[0x00ff00][..])
-    );
     // Without Matrix the account is Discord's, and its card has both.
     if cfg!(not(feature = "matrix")) {
         assert_eq!(app.state.account_decoration.as_deref(), Some("mine.png"));

@@ -72,49 +72,6 @@ fn palette(name: &str) -> Option<u8> {
         .and_then(|index| u8::try_from(index).ok())
 }
 
-/// Display name styles Discord's client draws a name with: a font, an effect
-/// and up to five colours. Most people have none, so [`crate::message::Names`]
-/// keeps them in a map of those who do, at 24 bytes each.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct Style {
-    /// Discord's `font_id`: 11 is the usual font, the rest are Sakura (3),
-    /// Jellybean (4), Modern (6), Medieval (7), 8Bit (8), Vampyre (10),
-    /// Tempo (12), Monkey Bars (13), Mainframe (14), Headbang (15) and
-    /// Journal (16).
-    pub font: u8,
-    /// Discord's `effect_id`: solid 1, gradient 2, neon 3, toon 4, pop 5, glow
-    /// 6, prism 7, gummy 8.
-    pub effect: u8,
-    len: u8,
-    colors: [u32; 5],
-}
-
-impl Style {
-    /// Reads `display_name_styles`: `{font_id, effect_id, colors}`, the
-    /// colours as integers.
-    pub fn parse(style: &Value) -> Option<Self> {
-        let font = u8::try_from(style["font_id"].as_u64()?).ok()?;
-        let effect = u8::try_from(style["effect_id"].as_u64()?).ok()?;
-        let mut colors = [0; 5];
-        let mut len = 0;
-        for color in style["colors"].as_array()?.iter().take(5) {
-            colors[len] = u32::try_from(color.as_u64()?).ok()? & 0xff_ff_ff;
-            len += 1;
-        }
-        Some(Self {
-            font,
-            effect,
-            len: u8::try_from(len).ok()?,
-            colors,
-        })
-    }
-
-    /// The colours it asks for, as RGB.
-    pub fn colors(&self) -> &[u32] {
-        &self.colors[..usize::from(self.len)]
-    }
-}
-
 /// A nameplate ready to show.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Nameplate {

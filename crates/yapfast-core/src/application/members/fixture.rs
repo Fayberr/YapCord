@@ -142,7 +142,6 @@ pub fn member_server(alice: &[&str]) -> Application {
         avatar: None,
         decoration: None,
         nameplate: None,
-        style: None,
         group: None,
         presence: None,
         color: None,
