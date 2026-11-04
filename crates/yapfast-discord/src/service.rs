@@ -1852,33 +1852,10 @@ impl Discord {
         if let Some(kept) = lock().iter().find(|effect| effect.sku == sku) {
             return Ok(Some(kept.clone()));
         }
-        // The client's own list of effects names the layers; the shop's
-        // product is the fallback for one the list doesn't have.
-        let asked = Instant::now();
-        let listed = match self.api.user_profile_effects().await {
-            Ok(configs) => profile_effect::find(sku, &configs),
-            Err(error) => {
-                tracing::warn!(%error, sku, "could not list the profile effects");
-                None
-            }
-        };
-        let found = match listed {
-            Some(effect) => Some(effect),
-            None => {
-                let product = self.api.collectibles_product(sku).await?;
-                profile_effect::parse(sku, &product)
-            }
-        };
-        let Some(effect) = found else {
-            tracing::info!(sku, "the shop has no profile effect with this SKU");
+        let product = self.api.collectibles_product(sku).await?;
+        let Some(effect) = profile_effect::parse(sku, &product) else {
             return Ok(None);
         };
-        tracing::info!(
-            sku,
-            layers = effect.layers.len(),
-            ms = asked.elapsed().as_millis() as u64,
-            "fetched a profile effect"
-        );
         let effect = Arc::new(effect);
         let mut kept = lock();
         kept.retain(|old| old.sku != sku);

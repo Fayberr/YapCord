@@ -189,31 +189,11 @@ pub(super) fn command(
                         });
                         return;
                     };
-                    // The effect over the card is the shop's to describe, and
-                    // comes after the card does.
-                    let effect = profile.effect.clone();
                     let _ = events.send(Event::Profile {
                         user: user.clone(),
                         result: Ok(chat_profile(&discord, &guild, profile.clone())),
                     });
-                    tracing::info!(effect, "fetched a profile that names an effect");
-                    // The effect and the badges' levels come after the card is
-                    // on screen, and together, as neither waits for the other.
-                    let effect_events = events.clone();
-                    let effect_discord = discord.clone();
-                    let effect_task = async move {
-                        let Some(sku) = effect else { return };
-                        match effect_discord.profile_effect(&sku).await {
-                            Ok(Some(effect)) => {
-                                let _ = effect_events
-                                    .send(Event::ProfileEffect(Arc::new((&*effect).into())));
-                            }
-                            Ok(None) => {}
-                            Err(error) => {
-                                tracing::warn!(%error, "could not fetch a Discord profile effect");
-                            }
-                        }
-                    };
+                    // The badges' levels come after the card is on screen.
                     let badges_task = async {
                         if discord.badge_levels(&guild, &user, &mut profile, Some(early)).await {
                             let badges = chat_profile(&discord, &guild, profile).badges;
@@ -232,7 +212,7 @@ pub(super) fn command(
                             });
                         }
                     };
-                    tokio::join!(effect_task, badges_task, note_task);
+                    tokio::join!(badges_task, note_task);
                 });
             }
             (discord, _) => {
