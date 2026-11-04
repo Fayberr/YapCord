@@ -4159,9 +4159,9 @@ fn discord_categories_head_their_channels_and_open_their_menus() {
     assert_eq!(
         shown,
         [
-            ("TALK", "discord:10:4".into(), false),
+            ("Talk", "discord:10:4".into(), false),
             ("", "discord:10:4".into(), false),
-            ("LATER", "discord:10:5".into(), true),
+            ("Later", "discord:10:5".into(), true),
         ],
         "an empty category shows its heading alone, named by the category; \
          Staff is hidden from her"
@@ -4206,12 +4206,12 @@ fn categories_of_the_same_name_head_and_fold_their_own_channels() {
     let row = |heading: &str, name: &str, collapsed| (heading.into(), name.into(), collapsed);
     assert_eq!(
         shown(),
-        [row("TALK", "general", false), row("TALK", "Lounge", false)]
+        [row("Talk", "general", false), row("Talk", "Lounge", false)]
     );
     window.invoke_toggle_category("discord:10:5".into());
     assert_eq!(
         shown(),
-        [row("TALK", "general", false), row("TALK", "", true)],
+        [row("Talk", "general", false), row("Talk", "", true)],
         "only the second folds"
     );
 }
@@ -4258,8 +4258,8 @@ fn pinned_channels_leave_their_categories_for_the_top() {
         shown,
         [
             ("PINNED CHANNELS", "general", true, false),
-            ("TALK", "Lounge", false, false),
-            ("LATER", "", false, false),
+            ("Talk", "Lounge", false, false),
+            ("Later", "", false, false),
         ]
     );
     window.invoke_prepare_menu("discord:10:11".into(), false);
@@ -4305,7 +4305,7 @@ fn a_community_server_lists_the_channels_followed_and_offers_following() {
         .collect();
     assert_eq!(
         shown,
-        [("TALK", "Lounge"), ("LATER", "")],
+        [("Talk", "Lounge"), ("Later", "")],
         "#general isn't followed"
     );
     let texts = |id: &str| -> Vec<(String, bool)> {

@@ -691,7 +691,7 @@ impl Adapter {
                     let this = (room.category_id.as_deref(), room.category.as_str());
                     if category.replace(this) != Some(this) {
                         folds_by = room.category_id.as_deref();
-                        room.category.to_uppercase()
+                        room.category.clone()
                     } else {
                         String::new()
                     }
@@ -4315,7 +4315,7 @@ pub(super) fn with_empty_categories(
     // Its id names the category, for the heading's menu.
     let heading = |category: &ListedCategory| RoomRow {
         id: category.id.as_str().into(),
-        heading: category.name.to_uppercase().into(),
+        heading: category.name.as_str().into(),
         category: category.id.as_str().into(),
         hidden: true,
         ..Default::default()
