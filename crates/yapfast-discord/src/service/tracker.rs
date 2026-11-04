@@ -1772,6 +1772,7 @@ impl Tracker {
             user_id: Some(self.me.clone()),
             account: names.user_name(&self.me).map(|name| Account {
                 name: name.to_owned(),
+                username: names.username(&self.me).unwrap_or_default().to_owned(),
                 avatar: names.avatar(None, &self.me),
                 decoration: names.decoration(None, &self.me),
                 nameplate: names.nameplate(None, &self.me),

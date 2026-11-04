@@ -874,6 +874,7 @@ mod tests {
             status: Status::Online,
             user_id: Some("1".into()),
             account: Some(Account {
+                username: String::new(),
                 name: "Alice".into(),
                 avatar: "a.png".into(),
                 decoration: None,

@@ -81,6 +81,10 @@ pub struct VoiceMember {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Account {
     pub name: String,
+    /// Its username, such as `derfayberr`, which the account card shows
+    /// under the pointer; empty while unknown.
+    #[serde(default)]
+    pub username: String,
     /// The address of its avatar.
     pub avatar: String,
     /// The decoration it wears around its avatar, and its nameplate.

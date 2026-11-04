@@ -297,6 +297,8 @@ export component YapfastWindow inherits Window {
     in property <[MessageRow]> messages;
     in property <string> account;
     in property <string> account-name;
+    /// The account's username, which the account card shows while the pointer is on its name.
+    in property <string> account-username;
     in property <string> account-user-id;
     in property <string> account-initial;
     /// The Discord-only build's own status for the account's dot, as
@@ -2197,7 +2199,7 @@ export component YapfastWindow inherits Window {
                 VerticalLayout {
                     padding: ClientStyle.account-inset; padding-top: 0px;
                     account-panel := Rectangle {
-                        // Anywhere on the card lights it, and its nameplate with it.
+                        // Anywhere on the card brightens its nameplate; each part lights only itself.
                         property <bool> hot: account-touch.has-hover || avatar-touch.has-hover || mic.hovered || ear.hovered || cog.hovered;
                         height: ClientStyle.account-height; background: Theme.panel;
                         border-radius: ClientStyle.enabled ? 8px : 0px;
@@ -2230,7 +2232,9 @@ export component YapfastWindow inherits Window {
                             // With Discord linked, the avatar and name open the status menu.
                             Rectangle {
                                 horizontal-stretch: 1; y: 6px; height: parent.height - 12px; border-radius: 6px;
-                                background: account-panel.hot ? Theme.hover : transparent;
+                                // Discord's light, see-through fill, so the nameplate shows through.
+                                background: account-touch.has-hover || avatar-touch.has-hover ? Theme.overlay.with-alpha(account-touch.pressed || avatar-touch.pressed ? 0.12 : 0.08) : transparent;
+                                animate background { duration: Theme.quick; }
                                 accessible-role: button;
                                 accessible-enabled: root.discord-linked;
                                 accessible-label: root.account-name + ", " + root.account-status + (root.discord-linked ? ". Set your status" : "");
@@ -2238,7 +2242,11 @@ export component YapfastWindow inherits Window {
                                 VerticalLayout {
                                     alignment: center; padding-left: 6px; padding-right: 6px;
                                     Text { text: root.account-name; color: Theme.text; font-size: 15px; font-weight: 700; overflow: elide; }
-                                    StatusText { text: root.account-status; emoji-url: root.account-status-emoji; }
+                                    // Under the pointer the status gives way to the username, as Discord's does.
+                                    if (account-touch.has-hover || avatar-touch.has-hover) && root.account-username != "": Text {
+                                        text: root.account-username; color: Theme.muted; font-size: 13px; overflow: elide;
+                                    }
+                                    if !((account-touch.has-hover || avatar-touch.has-hover) && root.account-username != ""): StatusText { text: root.account-status; emoji-url: root.account-status-emoji; }
                                 }
                                 account-touch := TouchArea {
                                     enabled: root.discord-linked; mouse-cursor: MouseCursor.pointer;
@@ -2277,6 +2285,11 @@ export component YapfastWindow inherits Window {
                                 icon: @image-url("icons/settings.svg"); label: "Settings";
                                 clicked => { root.settings-open = true; root.refresh-devices(); }
                             }
+                        }
+                        // Discord's thin outline around the card.
+                        if ClientStyle.enabled: Rectangle {
+                            width: parent.width; height: parent.height; border-radius: 8px;
+                            border-width: 1px; border-color: Theme.line; background: transparent;
                         }
                     }
                 }

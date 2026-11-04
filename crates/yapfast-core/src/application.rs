@@ -502,6 +502,9 @@ pub struct AppState {
     /// The account's name, avatar address and connection status, where the
     /// network gives them; a Discord-only build shows Discord's.
     pub account_name: Option<String>,
+    /// The account's Discord username, shown in place of its status while
+    /// the pointer is on the account card.
+    pub account_username: Option<String>,
     pub account_avatar: Option<String>,
     /// The decoration around the account's avatar and its nameplate, which
     /// the account card at the bottom of the sidebar shows; Discord's.

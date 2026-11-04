@@ -168,7 +168,8 @@ export component DeviceToggle inherits Rectangle {
     Rectangle {
         y: (parent.height - self.height) / 2; height: 32px;
         border-radius: 6px;
-        background: root.open || toggle.hovered || caret.has-hover ? Theme.hover : transparent;
+        // Only the open pair keeps a fill; each half lights itself when hovered.
+        background: root.open ? Theme.overlay.with-alpha(0.12) : transparent;
         animate background { duration: Theme.quick; }
     }
     HorizontalLayout {
@@ -183,7 +184,7 @@ export component DeviceToggle inherits Rectangle {
             accessible-action-default => { root.menu(); }
             Rectangle {
                 y: (parent.height - self.height) / 2; width: 20px; height: 32px; border-radius: 6px;
-                background: caret.has-hover ? Theme.overlay.with-alpha(0.08) : transparent;
+                background: caret.has-hover ? Theme.overlay.with-alpha(0.1) : transparent;
                 animate background { duration: Theme.quick; }
                 border-width: caret-focus.has-focus ? 2px : 0px;
                 border-color: Theme.accent;

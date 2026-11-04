@@ -3146,6 +3146,7 @@ fn discord_mentions_search_the_server_and_name_roles() {
         user_id: Some("1".into()),
         // Nitro, for the animated emoji.
         account: Some(Account {
+            username: String::new(),
             name: "Alice".into(),
             avatar: String::new(),
             decoration: None,
@@ -3916,6 +3917,7 @@ fn decorations_and_nameplates_reach_profiles_and_the_account() {
             ..Default::default()
         })],
         account: Some(Account {
+            username: String::new(),
             name: "Me".into(),
             avatar: "me.png".into(),
             decoration: Some("mine.png".into()),
@@ -7647,6 +7649,7 @@ fn a_server_profile_is_edited_as_discords_per_server_profile_editor_does() {
     });
     let mut snapshot = yapfast_discord::service::Snapshot::clone(app.discord.as_ref().unwrap());
     snapshot.account = Some(yapfast_discord::service::Account {
+        username: String::new(),
         name: "Alice".into(),
         avatar: "alice.png".into(),
         decoration: None,
@@ -7874,6 +7877,7 @@ fn the_main_profile_is_edited_as_discords_profile_editor_does() {
     // which Discord shows only without.
     let mut snapshot = yapfast_discord::service::Snapshot::clone(app.discord.as_ref().unwrap());
     snapshot.account = Some(yapfast_discord::service::Account {
+        username: String::new(),
         name: "Alice".into(),
         avatar: "alice.png".into(),
         decoration: None,
