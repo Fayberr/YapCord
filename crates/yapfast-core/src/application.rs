@@ -500,12 +500,6 @@ pub struct AppState {
     pub pending_watch: Option<(String, String)>,
     /// A video call's room: the camera goes on once its call connects.
     pub pending_camera: Option<String>,
-    /// The conversations visited before this one, newest last, and those
-    /// stepped back from, for the title bar's back and forward arrows.
-    pub nav_back: Vec<String>,
-    pub nav_forward: Vec<String>,
-    /// A step through that history is under way: it records no visit.
-    pub nav_walking: bool,
     pub account: Option<String>,
     /// The account's name, avatar address and connection status, where the
     /// network gives them; a Discord-only build shows Discord's.
@@ -805,35 +799,6 @@ impl AppState {
             || self.add_people.is_some()
             || self.switch_voice.is_some()
             || self.viewer.is_some()
-    }
-
-    /// The most conversations the back arrow remembers.
-    const HISTORY: usize = 50;
-
-    /// Notes that the conversation on screen gives way to `next`, which
-    /// forgets what going back would have gone forward to.
-    pub(crate) fn record_visit(&mut self, next: &str) {
-        let Some(previous) = self.selected.as_deref().filter(|previous| *previous != next) else {
-            return;
-        };
-        if self.nav_back.last().map(String::as_str) != Some(previous) {
-            let previous = previous.to_owned();
-            self.nav_back.push(previous);
-            if self.nav_back.len() > Self::HISTORY {
-                self.nav_back.remove(0);
-            }
-        }
-        self.nav_forward.clear();
-    }
-
-    /// Whether the title bar's back arrow has somewhere to go.
-    pub fn can_go_back(&self) -> bool {
-        self.nav_back.iter().any(|id| self.rooms.iter().any(|room| &room.id == id))
-    }
-
-    /// Whether the title bar's forward arrow has somewhere to go.
-    pub fn can_go_forward(&self) -> bool {
-        self.nav_forward.iter().any(|id| self.rooms.iter().any(|room| &room.id == id))
     }
 
     pub fn in_scope(&self, room: &ChatRoom) -> bool {
@@ -1498,11 +1463,6 @@ pub enum Action {
     RequestJoinVoice(String),
     /// Join a room's call with the camera on, as Discord's video call button does.
     StartVideoCall(String),
-    /// Go back to the conversation visited before this one, as Discord's
-    /// title bar arrow and Alt+Left do.
-    NavigateBack,
-    /// Go forward again after going back.
-    NavigateForward,
     /// Answer a Discord DM call ringing this account: open the conversation
     /// and join, leaving any other call, or decline it.
     AcceptCall(String),
@@ -2791,8 +2751,6 @@ impl Application {
             Action::Preview => self.start_preview(),
             Action::RequestJoinVoice(id) => self.request_join_voice(id),
             Action::StartVideoCall(id) => self.request_video_call(id),
-            Action::NavigateBack => self.walk_history(true),
-            Action::NavigateForward => self.walk_history(false),
             Action::AcceptCall(id) => self.accept_call(id),
             Action::DeclineCall(room) => vec![Effect::Backend(Command::Discord(
                 DiscordCommand::DeclineCall { room },

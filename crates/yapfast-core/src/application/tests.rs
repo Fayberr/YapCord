@@ -10024,35 +10024,3 @@ fn a_video_call_joins_then_turns_the_camera_on_once_connected_and_forgets_a_fail
     }));
     assert!(app.state.pending_camera.is_none());
 }
-
-#[test]
-fn back_and_forward_walk_the_conversations_visited_without_recording_the_walk() {
-    let mut app = connected();
-    app.state.selected = None;
-    app.dispatch(Action::Open("general".into()));
-    app.state.nav_back.clear();
-    assert!(!app.state.can_go_back() && !app.state.can_go_forward());
-    app.dispatch(Action::Open("games".into()));
-    app.dispatch(Action::Open("dm".into()));
-    assert_eq!(app.state.selected.as_deref(), Some("dm"));
-    assert!(app.state.can_go_back() && !app.state.can_go_forward());
-
-    app.dispatch(Action::NavigateBack);
-    assert_eq!(app.state.selected.as_deref(), Some("games"));
-    app.dispatch(Action::NavigateBack);
-    assert_eq!(app.state.selected.as_deref(), Some("general"));
-    assert!(!app.state.can_go_back() && app.state.can_go_forward());
-    // Nowhere further back.
-    assert!(app.dispatch(Action::NavigateBack).is_empty());
-    assert_eq!(app.state.selected.as_deref(), Some("general"));
-
-    app.dispatch(Action::NavigateForward);
-    assert_eq!(app.state.selected.as_deref(), Some("games"));
-    // Opening something new drops what was forward, as a browser does.
-    app.dispatch(Action::Open("lounge".into()));
-    assert!(!app.state.can_go_forward());
-    app.dispatch(Action::NavigateBack);
-    assert_eq!(app.state.selected.as_deref(), Some("games"));
-    app.dispatch(Action::NavigateBack);
-    assert_eq!(app.state.selected.as_deref(), Some("general"));
-}
