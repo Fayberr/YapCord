@@ -2940,7 +2940,7 @@ export component YapfastWindow inherits Window {
                                                     if message.day != "" || message.unread-start: HorizontalLayout {
                                                         padding-left: 16px; padding-right: 16px; padding-bottom: 6px; spacing: 10px; height: 26px;
                                                         Rectangle { horizontal-stretch: 1; Rectangle { height: 1px; background: message.unread-start ? Theme.accent : Theme.line; } }
-                                                        if message.day != "": Text { text: message.day; color: Theme.muted; font-size: ClientStyle.enabled ? 12px : 13px; font-weight: ClientStyle.enabled ? 600 : 700; vertical-alignment: center; }
+                                                        if message.day != "": Text { text: message.day; color: Theme.muted; font-size: 13px; font-weight: 700; vertical-alignment: center; }
                                                         if message.day != "" && message.unread-start: Text { text: "·"; color: Theme.muted; font-size: 13px; font-weight: 700; vertical-alignment: center; }
                                                         if message.unread-start: Rectangle {
                                                             width: new-text.preferred-width + 10px;
