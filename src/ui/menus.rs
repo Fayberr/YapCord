@@ -289,7 +289,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     // greyed when there is nothing to read.
     let listed = !person
         && plain
-        && !adapter.app.preview
+        && !adapter.app.state.preview
         && !id_is_header
         && (server || state.rooms.iter().any(|found| found.id == id));
     if listed && !rows.iter().any(|row| row.id == choice_id(MenuChoice::MarkRead)) {
