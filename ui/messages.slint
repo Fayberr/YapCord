@@ -801,10 +801,12 @@ export component MessageMenu inherits Rectangle {
     drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
     menu-content := VerticalLayout {
         padding: 6px; spacing: 2px;
+        // Discord's quick reactions: 44px tiles, spread across the menu.
         if root.menu-can-react: HorizontalLayout {
-            spacing: 4px; padding-bottom: 4px;
+            spacing: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px;
+            alignment: space-between;
             for cell in root.menu-reactions: EmojiButton {
-                emoji: cell; font: root.emoji-font; size: 50px; height: 40px; glyph: 22px; fill: Theme.field;
+                emoji: cell; font: root.emoji-font; size: 44px; height: 44px; glyph: 24px; fill: Theme.field;
                 clicked => { root.react(root.menu-message.item, cell.key); }
             }
         }
