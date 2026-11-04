@@ -283,7 +283,6 @@ fn members_belong_to_the_selected_text_room() {
         activities: Default::default(),
         roles: Default::default(),
         timed_out_until: None,
-        tag: None,
         group_icon: None,
         role_icon: None,
     };
@@ -2955,7 +2954,6 @@ fn member(id: &str, name: &str) -> ChatMember {
         activities: Default::default(),
         roles: Default::default(),
         timed_out_until: None,
-        tag: None,
         group_icon: None,
         role_icon: None,
     }
@@ -3856,7 +3854,6 @@ fn matrix_profiles_show_what_the_member_list_knows() {
             activities: Default::default(),
             roles: Default::default(),
             timed_out_until: None,
-            tag: None,
             group_icon: None,
             role_icon: None,
         }]),

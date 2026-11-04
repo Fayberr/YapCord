@@ -637,16 +637,6 @@ pub(super) fn message_row(message: &ChatMessage, revealed: &HashSet<String>) -> 
         id: message.id.clone().into(),
         item: message.item.clone().into(),
         author: message.author.clone().into(),
-        tag: message
-            .tag
-            .as_ref()
-            .map_or_else(Default::default, |tag| tag.text.as_str().into()),
-        tag_badge: message
-            .tag
-            .as_ref()
-            .and_then(|tag| tag.badge.as_deref())
-            .unwrap_or_default()
-            .into(),
         sender: discord::sender_user(&message.sender)
             .unwrap_or(&message.sender)
             .into(),
