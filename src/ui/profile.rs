@@ -207,7 +207,6 @@ pub(super) fn changed_profile(shown: &ProfileData, mut data: ProfileData) -> Opt
     data.servers = same_list(&shown.servers, data.servers);
     data.friends = same_list(&shown.friends, data.friends);
     data.activities = same_list(&shown.activities, data.activities);
-    data.effect_layers = same_list(&shown.effect_layers, data.effect_layers);
     data.badges = same_list(&shown.badges, data.badges);
     data.connections = same_list(&shown.connections, data.connections);
     data.role_rows = same_role_rows(&shown.role_rows, data.role_rows);
