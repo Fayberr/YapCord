@@ -665,8 +665,8 @@ component CategoryHeading inherits Rectangle {
     property <bool> refused;
     callback toggled;
     callback context-menu(length, length);
-    // Discord keeps 16px above a category, then 24px for its line.
-    height: 40px;
+    // Discord keeps 17px above a category's name, then 21px for its line.
+    height: 38px;
     accessible-role: button;
     accessible-label: root.text + (root.collapsed ? ", collapsed" : ", expanded");
     accessible-action-default => { root.toggled(); }
@@ -677,7 +677,7 @@ component CategoryHeading inherits Rectangle {
     callback create;
     property <color> ink: touch.has-hover ? Theme.secondary : Theme.muted;
     HorizontalLayout {
-        padding-left: 16px; padding-right: 8px; padding-top: 16px; spacing: 4px;
+        padding-left: 16px; padding-right: 8px; padding-top: 17px; spacing: 4px;
         Text {
             text: root.text; color: root.ink; font-size: 14px; font-weight: 600; letter-spacing: 0px;
             vertical-alignment: center; overflow: elide; horizontal-stretch: 0;
