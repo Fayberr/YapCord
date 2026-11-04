@@ -2563,6 +2563,7 @@ export component YapfastWindow inherits Window {
                             IconButton {
                                 icon: @image-url("icons/user.svg"); label: root.profile-panel ? "Hide profile" : "Show profile";
                                 size: 32px; glyph: 20px; tip-side: 2;
+                                tint: root.profile-panel ? Theme.text : Theme.secondary;
                                 clicked => { root.toggle-profile-panel(); }
                             }
                         }
