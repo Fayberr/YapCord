@@ -7242,6 +7242,10 @@ fn discord_channels_and_categories_are_made_changed_and_deleted_from_their_menus
         .is_empty()
     );
     assert!(app.state.channel_dialog.is_none());
+    assert!(
+        !app.may_create_channel("discord:10:4"),
+        "the \"+\" on a category heading needs Manage Channels"
+    );
     change_server(&mut app, |server| {
         let bits =
             permission::VIEW_CHANNEL | permission::SEND_MESSAGES | permission::MANAGE_CHANNELS;
@@ -7250,6 +7254,9 @@ fn discord_channels_and_categories_are_made_changed_and_deleted_from_their_menus
                                             "permissions": bits.to_string()}),
         );
     });
+    assert!(app.may_create_channel("discord:10:4"));
+    assert!(!app.may_create_channel("discord:10:11"), "a channel is no category");
+    assert!(!app.may_create_channel(""));
     assert_eq!(
         app.menu_choices("discord:10")[6..],
         [CreateChannel, CreateCategory, LeaveServer, CopyLink, CopyId]
