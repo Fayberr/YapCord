@@ -2753,7 +2753,7 @@ export component YapfastWindow inherits Window {
                                             if message.highlighted: Rectangle {
                                                 y: parent.top + (parent.head > 0 ? col.padding-top + parent.head : 0px);
                                                 height: parent.height - self.y - parent.tail;
-                                                background: Theme.accent.transparentize(0.9);
+                                                background: row-pointer.has-hover ? Theme.mentioned-hover : Theme.mentioned;
                                                 Rectangle { x: 0px; width: 2px; background: Theme.accent; }
                                             }
                                             // The keyboard's message has a marigold edge.
