@@ -2256,7 +2256,7 @@ export component YapfastWindow inherits Window {
                 VerticalLayout {
                     padding: ClientStyle.account-inset; padding-top: 0px;
                     account-panel := Rectangle {
-                        // Anywhere on the card brightens its nameplate; each part lights only itself.
+                        // Each part of the card lights only itself.
                         property <bool> hot: account-touch.has-hover || avatar-touch.has-hover || mic.hovered || ear.hovered || cog.hovered;
                         height: ClientStyle.account-height; background: Theme.panel;
                         border-radius: ClientStyle.enabled ? 8px : 0px;
@@ -2285,7 +2285,7 @@ export component YapfastWindow inherits Window {
                             // With Discord linked, the avatar and name open the status menu.
                             Rectangle {
                                 horizontal-stretch: 1; y: 6px; height: parent.height - 12px; border-radius: 6px;
-                                // Discord's light, see-through fill, so the nameplate shows through.
+                                // Discord's light, see-through fill.
                                 background: account-touch.has-hover || avatar-touch.has-hover ? Theme.overlay.with-alpha(account-touch.pressed || avatar-touch.pressed ? 0.12 : 0.08) : transparent;
                                 animate background { duration: Theme.quick; }
                                 accessible-role: button;

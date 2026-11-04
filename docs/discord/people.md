@@ -320,14 +320,6 @@ card is `BadgeTipCard` in `ui/people.slint`, set by `BadgeTip` in
 Discord's own values: 200px wide, 8px corners, the picture 64px high, the
 kind and progress in 14px medium and the level in 16px black.
 
-## Display name styles
-
-A name can carry a style, `display_name_styles: {font_id, effect_id, colors}`,
-on a user object or a member object (which wins in its server, as the
-decorations do): a font, an effect and up to five colours. Yapfast reads it
-into `NameStyle` (`chat.rs`) and keeps it with the person; drawing it is a
-separate step.
-
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My
