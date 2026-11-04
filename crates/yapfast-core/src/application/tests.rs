@@ -2964,8 +2964,6 @@ fn member(id: &str, name: &str) -> ChatMember {
         roles: Default::default(),
         timed_out_until: None,
         tag: None,
-          group_icon: None,
-          role_icon: None,
         group_icon: None,
         role_icon: None,
     }
