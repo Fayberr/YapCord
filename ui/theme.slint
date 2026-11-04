@@ -43,6 +43,9 @@ export global Theme {
     in-out property <color> danger: #f0545e;
     in-out property <color> danger-hover: #f46f77;
     /// A destructive menu row's text and icon, Discord's lighter red on a dark theme.
+    /// Discord's composer: a hair lighter than a plain field, with a dimmer placeholder.
+    out property <color> composer: self.dark ? self.field.mix(#ffffff, 0.99) : self.field;
+    out property <color> placeholder: self.dark ? self.muted.mix(self.field, 0.66) : self.muted;
     out property <color> danger-text: self.dark ? #fa777c : self.danger;
     /// Text and icons on a danger fill: badges, the LIVE pill, leaving a call.
     in-out property <color> on-danger: #ffffff;

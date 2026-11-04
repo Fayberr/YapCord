@@ -3157,7 +3157,7 @@ export component YapfastWindow inherits Window {
                             composer-box := Rectangle {
                                 visible: !root.room-request && !root.composer-locked;
                                 min-height: root.room-request || root.composer-locked ? 0px : ClientStyle.composer-height; max-height: root.room-request || root.composer-locked ? 0px : 100000px;
-                                background: Theme.field;
+                                background: ClientStyle.enabled ? Theme.composer : Theme.field;
                                 // Discord's outline: faint, and a notch lighter with the keys.
                                 border-width: 1px;
                                 border-color: composer.focused ? Theme.muted.with-alpha(0.55) : ClientStyle.enabled ? Theme.outline-field : Theme.line;
@@ -3188,9 +3188,10 @@ export component YapfastWindow inherits Window {
                                             // Where threads can start, it opens Discord's menu
                                             // of uploading a file or starting a thread.
                                             IconButton {
-                                                icon: @image-url("icons/circle-plus.svg");
+                                                // Discord's is a plain 18px plus, not a circled one.
+                                                icon: ClientStyle.enabled ? @image-url("icons/plus.svg") : @image-url("icons/circle-plus.svg");
                                                 label: root.can-start-threads || root.can-create-polls ? "More options" : "Attach files";
-                                                glyph: 22px;
+                                                glyph: ClientStyle.enabled ? 27px : 22px;
                                                 enabled: root.can-attach || root.can-start-threads || root.can-create-polls;
                                                 clicked => {
                                                     if root.can-start-threads || root.can-create-polls {

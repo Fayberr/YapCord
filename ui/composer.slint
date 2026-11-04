@@ -105,7 +105,7 @@ export component Composer inherits Rectangle {
     Text {
         x: 6px; y: root.pad; width: root.width - 12px; height: root.line;
         visible: root.text == "";
-        text: root.placeholder; color: root.enabled ? Theme.muted : Theme.faint; font-size: root.text-size;
+        text: root.placeholder; color: root.enabled ? Theme.placeholder : Theme.faint; font-size: root.text-size;
         vertical-alignment: center; overflow: elide;
     }
     FocusScope {
