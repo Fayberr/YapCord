@@ -457,7 +457,6 @@ pub(super) fn bind_callbacks(window: &YapfastWindow, adapter: &Rc<RefCell<Adapte
         on_show_profile,
         (|user| Action::ShowProfile { user, large: false })
     );
-    bind_item!(on_prefetch_profile, Action::PrefetchProfile);
     bind_item!(on_edit, Action::Edit);
     {
         let adapter = adapter.clone();

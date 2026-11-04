@@ -636,8 +636,6 @@ export component YapfastWindow inherits Window {
     /// The member whose card is beside the list, highlighted in it.
     in property <string> profile-member;
     callback show-profile(string);
-    /// The pointer rested on someone: fetch their profile ahead of a click.
-    callback prefetch-profile(string);
     /// A server's, conversation's or person's menu: what it offers, filled in
     /// when it's asked for, and the choice made. Each names its server,
     /// conversation or person by id, and whether it's a person.
@@ -3334,7 +3332,7 @@ export component YapfastWindow inherits Window {
                     }
                     if root.members-docked: MemberPanel {
                         width: ClientStyle.members-width; rows: root.roster; note: root.roster-note; selected: root.profile-member;
-                        hover-profile(id) => { root.prefetch-profile(id); }
+                        width: 240px; rows: root.roster; note: root.roster-note; selected: root.profile-member;
                         open-profile(id, y) => { root.profile-y = y; root.profile-at-pointer = false; root.show-profile(id); }
                         open-member-menu(id, x, y) => { root.open-context-menu(id, true, x, y); }
                     }

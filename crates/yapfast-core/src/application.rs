@@ -1923,9 +1923,6 @@ pub enum Action {
         user: String,
         large: bool,
     },
-    /// Fetch a member's profile ahead of it being opened, so it opens at once.
-    /// The pointer rested on them; nothing shows.
-    PrefetchProfile(String),
     /// Show the profile of the other person in a one-to-one DM, large.
     ShowDmProfile(String),
     /// Show the profile of a friend a profile lists as mutual, by Discord
@@ -3226,7 +3223,6 @@ impl Application {
                 vec![]
             }
             Action::ShowProfile { user, large } => self.show_profile(user, large),
-            Action::PrefetchProfile(user) => self.prefetch_profile(user),
             Action::ShowDmProfile(id) => self.show_dm_profile(id),
             Action::ShowFriendProfile { user, large } => self.show_friend_profile(user, large),
             Action::EnlargeProfile => {

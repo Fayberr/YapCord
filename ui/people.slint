@@ -79,9 +79,6 @@ export component MemberPanel inherits Rectangle {
     in property <string> selected;
     /// A member was clicked: their id, and where their row is in the window.
     callback open-profile(string, length);
-    /// The pointer rested on a member's row: their id, so their profile can be
-    /// fetched before it is asked for.
-    callback hover-profile(string);
     /// A member was right-clicked: their id, and where in the window.
     callback open-member-menu(string, length, length);
     // Discord's member list sits on the conversation's ground, a faint line on its left.
@@ -119,12 +116,6 @@ export component MemberPanel inherits Rectangle {
                   accessible-role: button;
                   accessible-label: member.name + ", " + member.id + ", show profile";
                   accessible-action-default => { root.open-profile(member.id, self.absolute-position.y); }
-                  // A short rest on a row warms their profile, which opens quicker for it.
-                  property <string> warmed;
-                  Timer {
-                      interval: 100ms; running: member-pointer.has-hover && parent.warmed != member.id;
-                      triggered => { parent.warmed = member.id; root.hover-profile(member.id); }
-                  }
                   member-pointer := TouchArea {
                     mouse-cursor: MouseCursor.pointer;
                     clicked => { root.open-profile(member.id, self.absolute-position.y); }
