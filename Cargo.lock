@@ -11615,7 +11615,6 @@ dependencies = [
  "pulldown-cmark",
  "rand 0.9.5",
  "realfft",
- "resvg",
  "rustls",
  "serde",
  "serde_json",
