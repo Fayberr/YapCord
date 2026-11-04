@@ -498,6 +498,14 @@ pub struct AppState {
     /// it, as clicking them in the channel list asks: the voice channel and
     /// their user id. Discord drops a watch made before.
     pub pending_watch: Option<(String, String)>,
+    /// A video call's room: the camera goes on once its call connects.
+    pub pending_camera: Option<String>,
+    /// The conversations visited before this one, newest last, and those
+    /// stepped back from, for the title bar's back and forward arrows.
+    pub nav_back: Vec<String>,
+    pub nav_forward: Vec<String>,
+    /// A step through that history is under way: it records no visit.
+    pub nav_walking: bool,
     pub account: Option<String>,
     /// The account's name, avatar address and connection status, where the
     /// network gives them; a Discord-only build shows Discord's.
@@ -799,6 +807,35 @@ impl AppState {
             || self.viewer.is_some()
     }
 
+    /// The most conversations the back arrow remembers.
+    const HISTORY: usize = 50;
+
+    /// Notes that the conversation on screen gives way to `next`, which
+    /// forgets what going back would have gone forward to.
+    pub(crate) fn record_visit(&mut self, next: &str) {
+        let Some(previous) = self.selected.as_deref().filter(|previous| *previous != next) else {
+            return;
+        };
+        if self.nav_back.last().map(String::as_str) != Some(previous) {
+            let previous = previous.to_owned();
+            self.nav_back.push(previous);
+            if self.nav_back.len() > Self::HISTORY {
+                self.nav_back.remove(0);
+            }
+        }
+        self.nav_forward.clear();
+    }
+
+    /// Whether the title bar's back arrow has somewhere to go.
+    pub fn can_go_back(&self) -> bool {
+        self.nav_back.iter().any(|id| self.rooms.iter().any(|room| &room.id == id))
+    }
+
+    /// Whether the title bar's forward arrow has somewhere to go.
+    pub fn can_go_forward(&self) -> bool {
+        self.nav_forward.iter().any(|id| self.rooms.iter().any(|room| &room.id == id))
+    }
+
     pub fn in_scope(&self, room: &ChatRoom) -> bool {
         match &self.navigation {
             Navigation::DirectMessages => room.direct,
@@ -904,6 +941,7 @@ impl AppState {
         };
         if let Some(message) = self.messages.iter().rev().find(sender) {
             return Some(ChatMember {
+                bot: false,
                 id: user.to_owned(),
                 name: message.author.clone(),
                 username: None,
@@ -934,6 +972,7 @@ impl AppState {
             .find(|person| person.id == user)
         {
             return Some(ChatMember {
+                bot: false,
                 id: user.to_owned(),
                 name: person.name.clone(),
                 username: None,
@@ -964,6 +1003,7 @@ impl AppState {
         // Matrix links name no one; their id does.
         let name = mentioned.or_else(|| user.starts_with('@').then(|| user.to_owned()))?;
         Some(ChatMember {
+            bot: false,
             id: user.to_owned(),
             name,
             username: None,
@@ -1456,6 +1496,13 @@ pub enum Action {
     Logout,
     Preview,
     RequestJoinVoice(String),
+    /// Join a room's call with the camera on, as Discord's video call button does.
+    StartVideoCall(String),
+    /// Go back to the conversation visited before this one, as Discord's
+    /// title bar arrow and Alt+Left do.
+    NavigateBack,
+    /// Go forward again after going back.
+    NavigateForward,
     /// Answer a Discord DM call ringing this account: open the conversation
     /// and join, leaving any other call, or decline it.
     AcceptCall(String),
@@ -1923,6 +1970,9 @@ pub enum Action {
         user: String,
         large: bool,
     },
+    /// Fetch a member's profile ahead of it being opened, so it opens at once.
+    /// The pointer rested on them; nothing shows.
+    PrefetchProfile(String),
     /// Show the profile of the other person in a one-to-one DM, large.
     ShowDmProfile(String),
     /// Show the profile of a friend a profile lists as mutual, by Discord
@@ -2740,6 +2790,9 @@ impl Application {
             Action::Logout => self.logout(),
             Action::Preview => self.start_preview(),
             Action::RequestJoinVoice(id) => self.request_join_voice(id),
+            Action::StartVideoCall(id) => self.request_video_call(id),
+            Action::NavigateBack => self.walk_history(true),
+            Action::NavigateForward => self.walk_history(false),
             Action::AcceptCall(id) => self.accept_call(id),
             Action::DeclineCall(room) => vec![Effect::Backend(Command::Discord(
                 DiscordCommand::DeclineCall { room },
@@ -3171,6 +3224,7 @@ impl Application {
             Action::CancelVoiceSwitch => {
                 self.state.switch_voice = None;
                 self.state.pending_watch = None;
+                self.state.pending_camera = None;
                 vec![]
             }
             Action::ShowVoicePerson { room, user } => self.show_voice_person(room, user),
@@ -3223,6 +3277,7 @@ impl Application {
                 vec![]
             }
             Action::ShowProfile { user, large } => self.show_profile(user, large),
+            Action::PrefetchProfile(user) => self.prefetch_profile(user),
             Action::ShowDmProfile(id) => self.show_dm_profile(id),
             Action::ShowFriendProfile { user, large } => self.show_friend_profile(user, large),
             Action::EnlargeProfile => {
@@ -3322,9 +3377,17 @@ impl Application {
                 {
                     self.state.pending_watch = None;
                 }
+                // The same for a video call's camera.
+                if let Some(room) = &self.state.pending_camera
+                    && self.state.voice.room.as_ref() == Some(room)
+                    && state.room.as_ref() != Some(room)
+                {
+                    self.state.pending_camera = None;
+                }
                 self.state.voice = state;
                 let mut effects = sounds;
                 effects.extend(self.watch_when_connected());
+                effects.extend(self.film_when_connected());
                 return effects;
             }
             Event::Connected {

@@ -291,14 +291,14 @@ impl Application {
         }
     }
 
-    /// Whether this account may make, change and delete channels in a
-    /// Discord server, category or channel, while Discord takes it.
     /// Whether this account may create a channel in a category, for the "+" on
     /// its heading.
     pub fn may_create_channel(&self, category: &str) -> bool {
         !category.is_empty() && !self.state.preview && self.state.is_category(category) && self.manages(category)
     }
 
+    /// Whether this account may make, change and delete channels in a
+    /// Discord server, category or channel, while Discord takes it.
     fn manages(&self, place: &str) -> bool {
         self.state.discord_online && self.may(place, Permission::ManageChannels)
     }
