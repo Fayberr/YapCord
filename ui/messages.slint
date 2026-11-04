@@ -1786,10 +1786,16 @@ export component MessageContent inherits VerticalLayout {
             if message.first && message.notice == "": HorizontalLayout {
                 spacing: 8px;
                 Rectangle {
-                    min-width: author-name.min-width; preferred-width: author-name.preferred-width;
+                    min-width: author-name.min-width; preferred-width: ClientStyle.enabled ? author-plain.preferred-width : author-name.preferred-width;
                     preferred-height: author-name.preferred-height; horizontal-stretch: 0;
+                    // Discord's names are medium weight, a step under bold.
+                    author-plain := Text {
+                        width: parent.width; height: parent.height; visible: ClientStyle.enabled && message.name-style.effect == 0;
+                        text: message.author; color: message.has-color ? message.color : Theme.text;
+                        font-size: root.message-font-size; font-weight: 500; vertical-alignment: center; overflow: elide;
+                    }
                     author-name := StyledText {
-                        width: parent.width; height: parent.height; visible: message.name-style.effect == 0;
+                        width: parent.width; height: parent.height; visible: !ClientStyle.enabled && message.name-style.effect == 0;
                         text: message.author-styled; link-color: Theme.link; default-color: message.has-color ? message.color : Theme.text; default-font-size: root.message-font-size; max-lines: 1; vertical-alignment: center;
                     }
                     if message.name-style.effect > 0: StyledName {
