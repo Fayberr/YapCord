@@ -1119,6 +1119,7 @@ impl Tracker {
                     username: names.username(user).map(str::to_owned),
                     avatar: names.avatar(None, user),
                     group: heading.clone(),
+                    tag: names.server_tag(user).cloned(),
                     presence: known.presence,
                     color: None,
                     activity: known.activity,
@@ -1515,7 +1516,13 @@ impl Tracker {
                 self.presences.get(user),
             )
                 .hash(&mut hasher);
-            names.is_official(user).hash(&mut hasher);
+            (
+                names
+                    .server_tag(user)
+                    .map(|tag| (&tag.guild, &tag.text, &tag.badge)),
+                names.is_official(user),
+            )
+                .hash(&mut hasher);
         }
         let ringing = self.calls.get(&private.id);
         ringing.is_some().hash(&mut hasher);
@@ -1583,6 +1590,10 @@ impl Tracker {
             id: private.id.clone(),
             name: title,
             avatar,
+            tag: (!private.group)
+                .then(|| private.recipients.first())
+                .flatten()
+                .and_then(|user| names.server_tag(user).cloned()),
             official: !private.group
                 && private
                     .recipients
