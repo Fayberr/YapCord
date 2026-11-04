@@ -7346,7 +7346,8 @@ fn yapfast_typography_is_compact_and_preserves_explicit_text_sizes() {
 }
 
 /// CPU-side snapshot throughput, not the display's presented frame rate.
-/// Run with --features i-slint-backend-testing/renderer-skia, --ignored --nocapture.
+/// Run with --ignored --nocapture. It measures the testing backend's software
+/// renderer: the testing backend here has no option to choose Skia.
 #[test]
 #[ignore = "manual renderer benchmark with the Skia testing feature"]
 fn yapfast_server_rail_scroll_snapshot_benchmark() {
@@ -7356,7 +7357,6 @@ fn yapfast_server_rail_scroll_snapshot_benchmark() {
         i_slint_backend_testing::TestingBackendOptions {
             mock_time: true,
             threading: false,
-            renderer_name: Some("skia-software".into()),
         },
     )))
     .unwrap();
