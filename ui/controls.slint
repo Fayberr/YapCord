@@ -331,6 +331,12 @@ export component Avatar inherits Rectangle {
     /// A corner radius for a rounded square; negative is a circle.
     in property <length> corner: -1px;
     property <length> shape: root.corner >= 0px ? root.corner : root.size / 2;
+    /// Corners that differ from `corner`, as Discord's folder previews have a
+    /// large outer corner and small others; negative follows `corner`.
+    in property <length> corner-tl: -1px;
+    in property <length> corner-tr: -1px;
+    in property <length> corner-bl: -1px;
+    in property <length> corner-br: -1px;
     in property <bool> speaking;
     /// The address of the decoration around the avatar, which Discord draws
     /// a fifth larger than it, centred, over its edge.
@@ -355,7 +361,10 @@ export component Avatar inherits Rectangle {
     changed decoration => { root.request-decoration(); }
     changed animated-url => { root.request-decoration(); }
     width: root.size; height: root.size;
-    border-radius: root.shape;
+    border-top-left-radius: root.corner-tl >= 0px ? root.corner-tl : root.shape;
+    border-top-right-radius: root.corner-tr >= 0px ? root.corner-tr : root.shape;
+    border-bottom-left-radius: root.corner-bl >= 0px ? root.corner-bl : root.shape;
+    border-bottom-right-radius: root.corner-br >= 0px ? root.corner-br : root.shape;
     background: root.shown-picture.width > 0 ? transparent : root.tint;
     if root.shown-picture.width == 0: Text {
         text: root.initial; color: #ffffff; font-size: root.size * 0.42; font-weight: 700;
@@ -363,7 +372,11 @@ export component Avatar inherits Rectangle {
     }
     if root.shown-picture.width > 0: Rectangle {
         width: root.size; height: root.size;
-        border-radius: root.shape; clip: true;
+        border-top-left-radius: root.corner-tl >= 0px ? root.corner-tl : root.shape;
+        border-top-right-radius: root.corner-tr >= 0px ? root.corner-tr : root.shape;
+        border-bottom-left-radius: root.corner-bl >= 0px ? root.corner-bl : root.shape;
+        border-bottom-right-radius: root.corner-br >= 0px ? root.corner-br : root.shape;
+        clip: true;
         Image { source: root.shown-picture; width: root.size; height: root.size; image-fit: cover; }
     }
     if root.decoration.width > 0: Picture {

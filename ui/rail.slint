@@ -282,7 +282,10 @@ component FolderItem inherits Rectangle {
         if !root.open: Rectangle {
             for server[index] in root.servers: Avatar {
                 x: (ClientStyle.enabled ? 4px : 6px) + Math.mod(index, 2) * (ClientStyle.enabled ? 21px : 20px); y: (ClientStyle.enabled ? 4px : 6px) + floor(index / 2) * (ClientStyle.enabled ? 21px : 20px);
-                size: ClientStyle.enabled ? 19px : 16px; corner: ClientStyle.enabled ? 6px : -1px; initial: server.initial; picture-url: server.picture-url; tint: Theme.raised;
+                size: ClientStyle.enabled ? 19px : 16px; corner: ClientStyle.enabled ? 4px : -1px;
+                corner-tl: ClientStyle.enabled && index == 0 ? 13px : -1px; corner-tr: ClientStyle.enabled && index == 1 ? 13px : -1px;
+                corner-bl: ClientStyle.enabled && index == 2 ? 13px : -1px; corner-br: ClientStyle.enabled && index == 3 ? 13px : -1px;
+                initial: server.initial; picture-url: server.picture-url; tint: Theme.raised;
             }
         }
         Rectangle {
