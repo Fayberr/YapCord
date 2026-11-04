@@ -56,98 +56,13 @@ pub struct Effect {
 }
 
 /// The effect a profile response names: the server's, else the user's own.
-/// Where the usual `profile_effect` field is null, an effect equipped as a
-/// shop collectible is looked for among the `collectibles`.
 pub fn sku(profile: &Value, guild: bool) -> Option<String> {
-    let named = |value: &Value| {
-        sku_of(&value["profile_effect"]).or_else(|| in_collectibles(&value["collectibles"]))
-    };
+    let named = |value: &Value| value["profile_effect"]["id"].as_str().map(str::to_owned);
     guild
         .then(|| named(&profile["guild_member_profile"]))
         .flatten()
         .or_else(|| named(&profile["user_profile"]))
-        .or_else(|| named(&profile["user"]))
         .or_else(|| named(profile))
-}
-
-/// The SKU a profile effect value names: `{id}`, `{sku_id}` or a bare string.
-fn sku_of(effect: &Value) -> Option<String> {
-    if let Some(sku) = effect.as_str() {
-        return Some(sku.to_owned()).filter(|sku| !sku.is_empty());
-    }
-    ["id", "sku_id", "skuId"]
-        .into_iter()
-        .find_map(|key| effect[key].as_str().map(str::to_owned))
-}
-
-/// The effect among a profile's `collectibles`, which may be an object keyed
-/// by kind (`{"nameplate": {..}, "profile_effect": {..}}`) or a list of items
-/// that say what they are in `type`.
-fn in_collectibles(collectibles: &Value) -> Option<String> {
-    let is_effect = |kind: &Value| {
-        kind.as_str().is_some_and(|kind| {
-            let kind = kind.to_ascii_lowercase();
-            kind.contains("effect")
-        })
-    };
-    match collectibles {
-        Value::Object(object) => object
-            .iter()
-            .find(|(key, _)| is_effect(&Value::from(key.as_str())))
-            .and_then(|(_, value)| sku_of(value))
-            .or_else(|| {
-                object
-                    .values()
-                    .find(|value| is_effect(&value["type"]))
-                    .and_then(sku_of)
-            }),
-        Value::Array(items) => items
-            .iter()
-            .find(|item| is_effect(&item["type"]) || !item["profile_effect"].is_null())
-            .and_then(|item| sku_of(&item["profile_effect"]).or_else(|| sku_of(item))),
-        _ => None,
-    }
-}
-
-/// What a `collectibles` value holds, for the log: its keys, and for each
-/// entry the type of its value and the identifying fields it carries. Never
-/// the values of anything else.
-pub fn shape(collectibles: &Value) -> String {
-    let kind = |value: &Value| match value {
-        Value::Null => "null",
-        Value::Bool(_) => "bool",
-        Value::Number(_) => "number",
-        Value::String(_) => "string",
-        Value::Array(_) => "array",
-        Value::Object(_) => "object",
-    };
-    let entry = |name: &str, value: &Value| {
-        let fields = value
-            .as_object()
-            .map(|object| {
-                object
-                    .iter()
-                    .map(|(key, value)| match key.as_str() {
-                        "sku_id" | "id" | "type" | "profile_effect" | "label" => {
-                            format!("{key}={value}")
-                        }
-                        _ => format!("{key}:{}", kind(value)),
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            })
-            .unwrap_or_else(|| value.to_string());
-        format!("[{name} {} {{{fields}}}]", kind(value))
-    };
-    match collectibles {
-        Value::Object(object) => object.iter().map(|(key, value)| entry(key, value)).collect(),
-        Value::Array(items) => items
-            .iter()
-            .enumerate()
-            .map(|(index, value)| entry(&index.to_string(), value))
-            .collect(),
-        other => entry("-", other),
-    }
 }
 
 /// An address the shop gives, which is whole or starts at the CDN's root.
@@ -272,19 +187,6 @@ mod tests {
             sku(&json!({"user_profile": {"profile_effect": null}}), true),
             None
         );
-    }
-
-    #[test]
-    fn finds_an_effect_equipped_among_the_collectibles() {
-        let keyed = json!({"user_profile": {"profile_effect": null,
-            "collectibles": {"nameplate": {"sku_id": "1"}, "profile_effect": {"sku_id": "40"}}}});
-        assert_eq!(sku(&keyed, false).as_deref(), Some("40"));
-        let listed = json!({"user_profile": {"collectibles": [
-            {"type": "nameplate", "sku_id": "1"}, {"type": "profile_effect", "sku_id": "41"}]}});
-        assert_eq!(sku(&listed, true).as_deref(), Some("41"));
-        let none = json!({"user_profile": {"collectibles": {"nameplate": {"sku_id": "1"}}}});
-        assert_eq!(sku(&none, true), None);
-        assert!(shape(&keyed["user_profile"]["collectibles"]).contains("sku_id=\"40\""));
     }
 
     #[test]
