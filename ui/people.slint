@@ -30,6 +30,28 @@ export struct MemberRow {
     tag: string, tag-badge: string,
 }
 
+// An activity's picture: square with rounded corners, asked for as it shows.
+component ActivityPicture inherits Rectangle {
+    in property <string> url;
+    in property <string> label;
+    in property <length> size;
+    property <image> picture: root.url != "" ? PictureStore.picture(root.url, PictureStore.revision) : @image-url("");
+    function request() {
+        if root.url != "" && root.picture.width == 0 {
+            PictureStore.request(root.url);
+        }
+    }
+    init => { root.request(); }
+    changed url => { root.request(); }
+    changed picture => { root.request(); }
+    width: root.size; height: root.size;
+    border-radius: root.size / 6; clip: true;
+    background: Theme.raised;
+    accessible-role: image;
+    accessible-label: root.label;
+    Image { source: root.picture; width: root.size; height: root.size; image-fit: cover; }
+}
+
 /// One member's current activity in the panel above the member list.
 export struct MemberActivityRow {
     id: string, name: string, initial: string, tint: color, picture-url: string,
@@ -75,7 +97,7 @@ export component MemberPanel inherits Rectangle {
                     if root.activity-total > 3: Middle {
                         Image {
                             source: @image-url("icons/chevron-down.svg"); width: 14px; height: 14px; colorize: #81828a;
-                            rotation-angle: root.activity-open ? 180deg : 0deg;
+                            transform-rotation: root.activity-open ? 180deg : 0deg;
                         }
                     }
                 }
@@ -289,28 +311,6 @@ export struct ProfileData {
 
 export component ProfileHeading inherits Text {
     color: Theme.muted; font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
-}
-
-// An activity's picture: square with rounded corners, asked for as it shows.
-component ActivityPicture inherits Rectangle {
-    in property <string> url;
-    in property <string> label;
-    in property <length> size;
-    property <image> picture: root.url != "" ? PictureStore.picture(root.url, PictureStore.revision) : @image-url("");
-    function request() {
-        if root.url != "" && root.picture.width == 0 {
-            PictureStore.request(root.url);
-        }
-    }
-    init => { root.request(); }
-    changed url => { root.request(); }
-    changed picture => { root.request(); }
-    width: root.size; height: root.size;
-    border-radius: root.size / 6; clip: true;
-    background: Theme.raised;
-    accessible-role: image;
-    accessible-label: root.label;
-    Image { source: root.picture; width: root.size; height: root.size; image-fit: cover; }
 }
 
 // A badge on a profile: its picture, with its name on hover, opening its
