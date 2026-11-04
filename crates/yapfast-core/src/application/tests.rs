@@ -9992,35 +9992,3 @@ mod ownership;
 mod people;
 #[cfg(feature = "discord")]
 mod server_settings;
-
-#[test]
-fn a_video_call_joins_then_turns_the_camera_on_once_connected_and_forgets_a_failed_join() {
-    let films = |effects: &[Effect]| {
-        effects
-            .iter()
-            .filter(|effect| matches!(effect, Effect::Backend(Command::Voice(voice::Command::Video(true)))))
-            .count()
-    };
-    let mut app = bob_live_in_lounge();
-    let me = || in_call("@alice:test", true, false);
-    assert!(matches!(
-        app.dispatch(Action::StartVideoCall("lounge".into())).as_slice(),
-        [Effect::Backend(Command::Voice(voice::Command::Join(room)))] if room == "lounge"
-    ));
-    assert_eq!(app.state.pending_camera.as_deref(), Some("lounge"));
-    assert_eq!(films(&app.apply(call(Phase::Joining, "lounge", vec![me()]))), 0);
-    assert_eq!(films(&app.apply(call(Phase::Connected, "lounge", vec![me()]))), 1);
-    assert!(app.state.pending_camera.is_none());
-    // Filmed once.
-    assert_eq!(films(&app.apply(call(Phase::Connected, "lounge", vec![me()]))), 0);
-
-    // A join that fails forgets the camera.
-    let mut app = bob_live_in_lounge();
-    app.dispatch(Action::StartVideoCall("lounge".into()));
-    app.apply(call(Phase::Joining, "lounge", vec![]));
-    app.apply(Event::Voice(voice::State {
-        error: Some("Discord voice took too long to connect. Try again.".into()),
-        ..Default::default()
-    }));
-    assert!(app.state.pending_camera.is_none());
-}

@@ -498,8 +498,6 @@ pub struct AppState {
     /// it, as clicking them in the channel list asks: the voice channel and
     /// their user id. Discord drops a watch made before.
     pub pending_watch: Option<(String, String)>,
-    /// A video call's room: the camera goes on once its call connects.
-    pub pending_camera: Option<String>,
     pub account: Option<String>,
     /// The account's name, avatar address and connection status, where the
     /// network gives them; a Discord-only build shows Discord's.
@@ -1461,8 +1459,6 @@ pub enum Action {
     Logout,
     Preview,
     RequestJoinVoice(String),
-    /// Join a room's call with the camera on, as Discord's video call button does.
-    StartVideoCall(String),
     /// Answer a Discord DM call ringing this account: open the conversation
     /// and join, leaving any other call, or decline it.
     AcceptCall(String),
@@ -2750,7 +2746,6 @@ impl Application {
             Action::Logout => self.logout(),
             Action::Preview => self.start_preview(),
             Action::RequestJoinVoice(id) => self.request_join_voice(id),
-            Action::StartVideoCall(id) => self.request_video_call(id),
             Action::AcceptCall(id) => self.accept_call(id),
             Action::DeclineCall(room) => vec![Effect::Backend(Command::Discord(
                 DiscordCommand::DeclineCall { room },
@@ -3182,7 +3177,6 @@ impl Application {
             Action::CancelVoiceSwitch => {
                 self.state.switch_voice = None;
                 self.state.pending_watch = None;
-                self.state.pending_camera = None;
                 vec![]
             }
             Action::ShowVoicePerson { room, user } => self.show_voice_person(room, user),
@@ -3335,17 +3329,9 @@ impl Application {
                 {
                     self.state.pending_watch = None;
                 }
-                // The same for a video call's camera.
-                if let Some(room) = &self.state.pending_camera
-                    && self.state.voice.room.as_ref() == Some(room)
-                    && state.room.as_ref() != Some(room)
-                {
-                    self.state.pending_camera = None;
-                }
                 self.state.voice = state;
                 let mut effects = sounds;
                 effects.extend(self.watch_when_connected());
-                effects.extend(self.film_when_connected());
                 return effects;
             }
             Event::Connected {

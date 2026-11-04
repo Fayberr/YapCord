@@ -1101,9 +1101,6 @@ fn set_strings(window: &YapfastWindow) {
     strings.set_official_badge(tr("official_badge").into());
     strings.set_official_message(tr("official_message").into());
     strings.set_wave(tr("wave").into());
-    strings.set_start_voice_call(tr("start_voice_call").into());
-    strings.set_start_video_call(tr("start_video_call").into());
-    strings.set_join_call(tr("join_call").into());
     strings.set_invite_people(tr("invite_people").into());
     strings.set_show_mutual(tr("show_mutual").into());
     strings.set_roles(tr("roles").into());

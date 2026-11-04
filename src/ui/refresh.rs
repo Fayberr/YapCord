@@ -1353,53 +1353,6 @@ impl Adapter {
         window.set_room_activity_emoji(activity_emoji);
         window.set_profile_available(state.one_to_one().is_some());
         window.set_room_request(room.is_some_and(|room| room.request));
-        // What opens a server channel's history in Discord's client: "Welcome
-        // to" the server for its first channel, else the channel itself.
-        let (intro, intro_title, intro_text) = match (room, &state.navigation) {
-            (Some(room), Navigation::Server(id))
-                if room.network == Network::Discord
-                    && !room.direct
-                    && !room.voice
-                    && room.parent.is_none() =>
-            {
-                let server = state.servers.iter().find(|server| &server.id == id);
-                let first = server.is_some_and(|server| {
-                    server
-                        .channels
-                        .iter()
-                        .filter_map(|channel| state.rooms.iter().find(|room| &room.id == channel))
-                        .find(|room| !room.voice && room.parent.is_none() && !room.forum)
-                        .is_some_and(|first| first.id == room.id)
-                });
-                let name = room.name.as_str();
-                match server {
-                    Some(server) if first => (
-                        "server",
-                        server.name.clone(),
-                        yapfast_core::i18n::tr("intro_server_start").to_owned(),
-                    ),
-                    _ => (
-                        "channel",
-                        yapfast_core::i18n::tr("intro_welcome_channel").replace("{name}", name),
-                        yapfast_core::i18n::tr("intro_channel_start").replace("{name}", name),
-                    ),
-                }
-            }
-            _ => ("", String::new(), String::new()),
-        };
-        window.set_intro_kind(intro.into());
-        window.set_intro_welcome(yapfast_core::i18n::tr("intro_welcome_server").into());
-        window.set_intro_title(intro_title.into());
-        window.set_intro_text(intro_text.into());
-        window.set_composer_placeholder(room.map_or(SharedString::default(), |room| {
-            yapfast_core::i18n::composer_hint(
-                &room.name,
-                room.direct,
-                room.person.is_some(),
-                room.parent.is_none(),
-            )
-            .into()
-        }));
         window.set_request_title(
             match room {
                 Some(room) if room.category == discord::SPAM => {

@@ -291,18 +291,6 @@ pub(super) fn bind_callbacks(window: &YapfastWindow, adapter: &Rc<RefCell<Adapte
     });
     let state = adapter.clone();
     let weak = window.as_weak();
-    window.on_start_video_call(move || {
-        if let Some(window) = weak.upgrade() {
-            let id = state.borrow().app.state.selected.clone();
-            if let Some(id) = id {
-                state
-                    .borrow_mut()
-                    .action(&window, Action::StartVideoCall(id));
-            }
-        }
-    });
-    let state = adapter.clone();
-    let weak = window.as_weak();
     window.on_answer_call(move |room, accept| {
         if let Some(window) = weak.upgrade() {
             let room = room.to_string();
