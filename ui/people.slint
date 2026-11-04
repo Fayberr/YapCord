@@ -560,6 +560,9 @@ export component ProfileListRow inherits Rectangle {
 export component ProfileCard inherits Rectangle {
     in property <ProfileData> data;
     in property <bool> large;
+    /// The card as the left column of the full profile: large, but narrow,
+    /// and without the mutual lists, which the modal's tabs hold.
+    in property <bool> side;
     in property <bool> docked;
     /// A preview of one's own, as the server profile editor shows it, which
     /// opens nothing.
@@ -580,9 +583,9 @@ export component ProfileCard inherits Rectangle {
     callback open-friend(string, length, length, length, length);
     /// Enter in the card's message box, with what it held.
     callback send-message(string);
-    property <length> banner-height: root.large ? 210px : root.docked ? (ClientStyle.enabled ? 105px : 120px) : 105px;
-    property <length> avatar-size: root.large ? 120px : 80px;
-    property <length> pad: root.large ? 24px : 16px;
+    property <length> banner-height: root.side ? 140px : root.large ? 210px : root.docked ? (ClientStyle.enabled ? 105px : 120px) : 105px;
+    property <length> avatar-size: root.side ? 96px : root.large ? 120px : 80px;
+    property <length> pad: root.side ? 20px : root.large ? 24px : 16px;
     // A profile theme, as Discord draws it: the card's gradient runs from
     // the first colour to the second under a 60% black wash, flat down to the
     // banner's end, inside a 1px border that is the same two colours,
@@ -771,11 +774,11 @@ export component ProfileCard inherits Rectangle {
                             }
                         }
                     }
-                    if (root.large ? root.data.role-rows-large : root.data.role-rows).length > 0: VerticalLayout {
+                    if (root.large && !root.side ? root.data.role-rows-large : root.data.role-rows).length > 0: VerticalLayout {
                         spacing: 6px;
                         // The card's chips speak for themselves.
                         if root.full: ProfileHeading { text: "ROLES"; }
-                        for row in (root.large ? root.data.role-rows-large : root.data.role-rows): HorizontalLayout {
+                        for row in (root.large && !root.side ? root.data.role-rows-large : root.data.role-rows): HorizontalLayout {
                             spacing: 4px; alignment: start;
                             for role in row.roles: Rectangle {
                                 height: 24px; border-radius: 4px; background: Theme.raised;
@@ -787,7 +790,7 @@ export component ProfileCard inherits Rectangle {
                             }
                         }
                     }
-                    if root.full && root.data.servers.length > 0: VerticalLayout {
+                    if root.full && !root.side && root.data.servers.length > 0: VerticalLayout {
                         spacing: 6px;
                         ProfileHeading { text: "MUTUAL SERVERS — " + root.data.servers.length; }
                         VerticalLayout {
@@ -800,7 +803,7 @@ export component ProfileCard inherits Rectangle {
                             }
                         }
                     }
-                    if root.full && root.data.friends.length > 0: VerticalLayout {
+                    if root.full && !root.side && root.data.friends.length > 0: VerticalLayout {
                         spacing: 6px;
                         ProfileHeading { text: "MUTUAL FRIENDS — " + root.data.friends.length; }
                         VerticalLayout {
@@ -840,7 +843,7 @@ export component ProfileCard inherits Rectangle {
         // The friend request and the person's menu sit over the banner's
         // top right corner, as in Discord.
         if !root.preview && (root.data.friend > 0 || root.data.id != ""): HorizontalLayout {
-            x: parent.width - self.preferred-width - (root.large ? 54px : 10px); y: 10px;
+            x: parent.width - self.preferred-width - (root.large && !root.side ? 54px : 10px); y: 10px;
             height: 32px; spacing: 8px;
             if root.data.friend > 0: Rectangle {
                 width: 32px; height: 32px; border-radius: 16px;
@@ -876,13 +879,126 @@ export component ProfileCard inherits Rectangle {
             end: root.data.effect-end; loops: root.data.effect-loops;
         }
     }
-    if root.large: Rectangle {
+    if root.large && !root.side: Rectangle {
         x: parent.width - 44px; y: 10px; width: 34px; height: 34px; border-radius: 17px; background: #00000080;
         IconButton { icon: @image-url("icons/x.svg"); label: "Close profile"; tint: #ffffff; clicked => { root.close(); } }
     }
     if root.docked && ClientStyle.enabled: Rectangle {
         x: 16px; y: parent.height - 48px; width: parent.width - 32px; height: 36px;
         ActionButton { width: parent.width; text: "View Full Profile"; clicked => { root.enlarge(); } }
+    }
+}
+
+// A person's full profile, as Discord's modal shows it: their card on the
+// left, with its theme and effect, and on the right tabs for what they are
+// doing and what they share with this account.
+export component ProfileModal inherits Rectangle {
+    in property <ProfileData> data;
+    callback close;
+    callback more(length, length);
+    callback befriend;
+    callback open-link(string);
+    callback open-server(ProfileServerRow, length, length, length, length);
+    /// A mutual friend's full profile was asked for.
+    callback open-friend(string, length, length, length, length);
+    /// 0 activity, 1 mutual friends, 2 mutual servers.
+    in-out property <int> page: 0;
+    // The tab asked for when it is empty falls back to the first.
+    property <string> person: root.data.id;
+    changed person => { root.page = 0; }
+    background: Theme.sidebar; border-radius: 12px; border-width: 1px; border-color: Theme.edge;
+    drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
+    accessible-role: groupbox;
+    accessible-label: root.data.name + "'s full profile";
+    TouchArea { }
+    HorizontalLayout {
+        padding: 8px; spacing: 8px;
+        ProfileCard {
+            large: true; side: true;
+            width: 360px; height: parent.height - 16px;
+            data: root.data;
+            close => { root.close(); }
+            befriend => { root.befriend(); }
+            more(x, y) => { root.more(x, y); }
+            open-link(link) => { root.open-link(link); }
+        }
+        VerticalLayout {
+            padding-left: 12px; padding-right: 12px; padding-top: 4px; spacing: 12px;
+            // The tabs, with the close button at the end.
+            HorizontalLayout {
+                height: 40px; spacing: 20px;
+                for entry[index] in [
+                    { label: "Activity", count: -1 },
+                    { label: "Mutual friends", count: root.data.friends.length },
+                    { label: "Mutual servers", count: root.data.servers.length },
+                ]: Rectangle {
+                    width: tab-text.preferred-width; height: 40px;
+                    accessible-role: tab;
+                    accessible-label: entry.label;
+                    accessible-checkable: true;
+                    accessible-checked: root.page == index;
+                    accessible-action-default => { root.page = index; }
+                    tab-text := Text {
+                        text: entry.count >= 0 ? entry.label + " " + entry.count : entry.label;
+                        color: root.page == index || tab-touch.has-hover ? Theme.text : Theme.muted;
+                        font-size: 15px; font-weight: 500; vertical-alignment: center;
+                    }
+                    Rectangle { y: parent.height - 2px; height: 2px; border-radius: 1px; background: Theme.text; visible: root.page == index; }
+                    tab-touch := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.page = index; } }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                Rectangle {
+                    width: 32px; height: 32px; y: 4px; border-radius: 16px;
+                    background: close-touch.has-hover ? Theme.hover : transparent;
+                    accessible-role: button;
+                    accessible-label: "Close profile";
+                    accessible-action-default => { root.close(); }
+                    Image { source: @image-url("icons/x.svg"); width: 18px; height: 18px; x: 7px; y: 7px; colorize: Theme.secondary; }
+                    close-touch := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.close(); } }
+                }
+            }
+            Rectangle { height: 1px; background: Theme.line; }
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    alignment: start; spacing: 8px;
+                    if root.page == 0: VerticalLayout {
+                        spacing: 8px;
+                        for activity in root.data.activities: ActivityCard {
+                            activity: activity;
+                            open-link(url) => { root.open-link(url); }
+                        }
+                        if root.data.activities.length == 0: Text {
+                            text: "Nothing to show here right now."; color: Theme.muted; font-size: 14px; wrap: word-wrap;
+                        }
+                    }
+                    if root.page == 1: VerticalLayout {
+                        spacing: 0px;
+                        for friend in root.data.friends: ProfileListRow {
+                            person: true; name: friend.name; initial: friend.initial; tint: friend.tint;
+                            picture: friend.picture; presence: friend.presence;
+                            label: friend.name + "'s profile";
+                            clicked => { root.open-friend(friend.id, self.absolute-position.x, self.absolute-position.y, self.width, self.height); }
+                        }
+                        if root.data.friends.length == 0: Text {
+                            text: "No friends in common."; color: Theme.muted; font-size: 14px; wrap: word-wrap;
+                        }
+                    }
+                    if root.page == 2: VerticalLayout {
+                        spacing: 0px;
+                        for server in root.data.servers: ProfileListRow {
+                            name: server.name; initial: server.initial; picture: server.picture;
+                            detail: server.nick;
+                            label: "Open " + server.name + (server.nick != "" ? ", where they're " + server.nick : "");
+                            clicked => { root.open-server(server, self.absolute-position.x, self.absolute-position.y, self.width, self.height); }
+                        }
+                        if root.data.servers.length == 0: Text {
+                            text: "No servers in common."; color: Theme.muted; font-size: 14px; wrap: word-wrap;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
