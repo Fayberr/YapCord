@@ -703,6 +703,9 @@ const LIVE_BACKLOG: usize = 256;
 const PROFILE_AGE: Duration = Duration::from_secs(5 * 60);
 const PROFILES: usize = 32;
 
+/// The levels of someone's badges being fetched, from [`Discord::start_badge_levels`].
+pub struct EarlyBadges(tokio::task::JoinHandle<Result<Value>>);
+
 impl Discord {
     /// Connects on the current Tokio runtime and keeps reconnecting until
     /// Discord rejects the token.
@@ -1332,12 +1335,22 @@ impl Discord {
     /// their own, which Discord answers more slowly than the profile, so the
     /// card doesn't wait for it: this runs once it is on screen. Whether any
     /// badge has a level now.
-    pub async fn badge_levels(&self, guild: &str, user: &str, profile: &mut Profile) -> bool {
+    pub async fn badge_levels(
+        &self,
+        guild: &str,
+        user: &str,
+        profile: &mut Profile,
+        early: Option<EarlyBadges>,
+    ) -> bool {
         if !profile.badges.iter().any(|badge| badge.level_icon.is_some() || badge.link.is_some()) {
             return false;
         }
         let asked = Instant::now();
-        match self.api.badges(user).await {
+        let levels = match early {
+            Some(early) => early.0.await.map_err(anyhow::Error::from).and_then(|levels| levels),
+            None => self.api.badges(user).await,
+        };
+        match levels {
             Ok(levels) => profile.with_levels(&levels),
             Err(error) => {
                 tracing::debug!(%error, user, "could not fetch badge levels");
@@ -1358,6 +1371,14 @@ impl Discord {
         let (guild, user, saving) = (guild.to_owned(), user.to_owned(), profile.clone());
         tokio::task::spawn_blocking(move || cache::save_profile(&guild, &user, &saving));
         true
+    }
+
+    /// Starts asking for the levels of someone's badges, beside their
+    /// profile, which says whether they have any. The answer is waited for
+    /// in [`Self::badge_levels`]; if there are no badges it is dropped.
+    pub fn start_badge_levels(&self, user: &str) -> EarlyBadges {
+        let (api, user) = (self.api.clone(), user.to_owned());
+        EarlyBadges(tokio::spawn(async move { api.badges(&user).await }))
     }
 
     /// A member's nickname and avatar in a server, as Names knows them.
