@@ -199,30 +199,37 @@ impl SidebarShown {
 impl Icons {
     /// A conversation's icon, as the sidebar shows it.
     fn room(&self, room: &yapfast_core::chat::ChatRoom) -> slint::Image {
+        use yapfast_core::chat::symbol;
+        // Discord puts a padlock on the icon of a channel @everyone can't see.
+        let private = room.symbol & symbol::PRIVATE != 0;
+        let kind = room.symbol & !symbol::PRIVATE;
         if room.locked {
             self.lock.clone()
         } else if room.voice {
-            if room.symbol == yapfast_core::chat::symbol::STAGE {
-                self.stage.clone()
-            } else {
-                self.voice.clone()
+            match (kind == symbol::STAGE, private) {
+                (true, true) => self.stage_private.clone(),
+                (true, false) => self.stage.clone(),
+                (false, true) => self.voice_private.clone(),
+                (false, false) => self.voice.clone(),
             }
         } else if room.forum {
-            if room.symbol == yapfast_core::chat::symbol::MEDIA {
-                self.media.clone()
-            } else {
-                self.forum.clone()
+            match (kind == symbol::MEDIA, private) {
+                (true, true) => self.media_private.clone(),
+                (true, false) => self.media.clone(),
+                (false, true) => self.forum_private.clone(),
+                (false, false) => self.forum.clone(),
             }
         } else if room.direct {
             self.dm.clone()
         } else if room.parent.is_some() {
             self.thread.clone()
         } else {
-            use yapfast_core::chat::symbol;
-            match room.symbol {
+            match kind {
                 symbol::RULES => self.rules.clone(),
+                symbol::ANNOUNCEMENT if private => self.announcement_private.clone(),
                 symbol::ANNOUNCEMENT => self.announcement.clone(),
                 symbol::AGE_RESTRICTED => self.age_restricted.clone(),
+                _ if private => self.text_private.clone(),
                 _ => self.text.clone(),
             }
         }

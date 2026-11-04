@@ -566,6 +566,37 @@ pub struct Overwrite {
 }
 
 impl Server {
+    /// Whether @everyone may not see `channel`: the server's @everyone
+    /// permissions with the channel's overwrite for @everyone applied, as
+    /// Discord's client works it out to put a padlock on the channel's icon.
+    /// A thread has its channel's readers and no padlock of its own.
+    pub fn private(&self, channel: &Channel) -> bool {
+        if channel.thread.is_some() {
+            return false;
+        }
+        // Without the server's roles @everyone is taken to see channels.
+        let Some(&everyone) = self.roles.get(&self.id) else {
+            return false;
+        };
+        if everyone & permission::ADMINISTRATOR != 0 {
+            return false;
+        }
+        let mut seen = everyone & permission::VIEW_CHANNEL != 0;
+        if let Some(overwrite) = channel
+            .overwrites
+            .iter()
+            .find(|overwrite| !overwrite.member && overwrite.id == self.id)
+        {
+            if overwrite.deny & permission::VIEW_CHANNEL != 0 {
+                seen = false;
+            }
+            if overwrite.allow & permission::VIEW_CHANNEL != 0 {
+                seen = true;
+            }
+        }
+        !seen
+    }
+
     /// Who can read `channel`, as Discord's id for its member list, which
     /// channels with the same readers share: `everyone` when @everyone sees
     /// it and no overwrite hides it, else a hash of the overwrites that allow

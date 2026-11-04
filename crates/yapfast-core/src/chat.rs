@@ -46,6 +46,9 @@ pub mod symbol {
     pub const MEDIA: u8 = 4;
     /// A text channel that is age-restricted.
     pub const AGE_RESTRICTED: u8 = 5;
+    /// Set on any of the above for a channel @everyone may not see, which
+    /// Discord marks with a padlock on the icon.
+    pub const PRIVATE: u8 = 0x80;
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]

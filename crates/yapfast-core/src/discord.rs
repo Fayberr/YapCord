@@ -840,11 +840,15 @@ fn server_rooms(
                 tag: None,
                 official: false,
         empty: false,
-                symbol: if channel.stage {
-                    chat::symbol::STAGE
-                } else {
-                    chat::symbol::TEXT
-                },
+                symbol: private_symbol(
+                    server,
+                    channel,
+                    if channel.stage {
+                        chat::symbol::STAGE
+                    } else {
+                        chat::symbol::TEXT
+                    },
+                ),
                 preview: None,
             }
         } else {
@@ -896,7 +900,7 @@ fn server_rooms(
                 tag: None,
                 official: false,
         empty: false,
-                symbol: if server.rules_channel.as_deref() == Some(channel.id.as_str()) {
+                symbol: private_symbol(server, channel, if server.rules_channel.as_deref() == Some(channel.id.as_str()) {
                     chat::symbol::RULES
                 } else if channel.announcement {
                     chat::symbol::ANNOUNCEMENT
@@ -906,7 +910,7 @@ fn server_rooms(
                     chat::symbol::AGE_RESTRICTED
                 } else {
                     chat::symbol::TEXT
-                },
+                }),
                 preview: None,
             }
         });
@@ -934,6 +938,20 @@ fn server_rooms(
         pinned,
     };
     (rooms, server)
+}
+
+/// A channel's icon `kind`, with the padlock mark when @everyone may not see it.
+#[cfg(feature = "discord")]
+fn private_symbol(
+    server: &MarkedServer,
+    channel: &yapfast_discord::ready::Channel,
+    kind: u8,
+) -> u8 {
+    if server.private(channel) {
+        kind | chat::symbol::PRIVATE
+    } else {
+        kind
+    }
 }
 
 /// A thread as it lists under `parent`, its channel's room.

@@ -1625,6 +1625,13 @@ struct Icons {
     age_restricted: slint::Image,
     voice: slint::Image,
     lock: slint::Image,
+    /// Channels @everyone may not see: the icon with Discord's padlock on its corner.
+    text_private: slint::Image,
+    voice_private: slint::Image,
+    announcement_private: slint::Image,
+    stage_private: slint::Image,
+    forum_private: slint::Image,
+    media_private: slint::Image,
     read: slint::Image,
     call: slint::Image,
     profile: slint::Image,
@@ -1872,6 +1879,24 @@ impl Adapter {
             ))?,
             voice: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/volume-2.svg"))?,
             lock: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/lock.svg"))?,
+            text_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/hash-lock.svg"
+            ))?,
+            voice_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/volume-lock.svg"
+            ))?,
+            announcement_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/megaphone-lock.svg"
+            ))?,
+            stage_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/stage-lock.svg"
+            ))?,
+            forum_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/forum-lock.svg"
+            ))?,
+            media_private: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/media-lock.svg"
+            ))?,
             read: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/check.svg"))?,
             call: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/phone.svg"))?,
             profile: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/user.svg"))?,
