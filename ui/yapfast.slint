@@ -2148,13 +2148,13 @@ export component YapfastWindow inherits Window {
                                 property <bool> banner: ClientStyle.enabled && root.header-server != "" && root.header-banner != "";
                                 height: ClientStyle.header-height + (header-box.banner ? 81px : 0px);
                                 if header-box.banner: Image {
-                                    width: parent.width; height: parent.height;
+                                    x: 0px; y: 0px; width: parent.width; height: parent.height;
                                     source: PictureStore.picture(root.header-banner, PictureStore.revision);
                                     image-fit: cover; accessible-role: none;
                                     init => { PictureStore.request(root.header-banner); }
                                 }
                                 if header-box.banner: Rectangle {
-                                    height: ClientStyle.header-height;
+                                    x: 0px; y: 0px; width: parent.width; height: ClientStyle.header-height;
                                     background: @linear-gradient(180deg, #00000099 0%, #00000000 100%);
                                 }
                                 if root.header-server == "" && !(ClientStyle.enabled && root.dms-selected): Text { x: 16px; width: parent.width - (root.dms-selected && !root.preview ? (root.discord-linked ? 88px : 56px) : 32px); text: root.sidebar-title; font-size: 16px; font-weight: 700; color: Theme.text; vertical-alignment: center; overflow: elide; }
