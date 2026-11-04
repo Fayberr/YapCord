@@ -87,6 +87,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     let app = &adapter.app;
     let state = &app.state;
     let in_voice = voice_target(id);
+    let id_is_header = id.starts_with(HEADER);
     let thread = thread_more(id);
     let mut choices = if let Some((room, user)) = in_voice {
         app.voice_person_choices(room, user)
@@ -99,9 +100,10 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     } else {
         app.menu_choices(id)
     };
-    // A person's menu is Discord's: its order, without row icons.
-    let plain = person && thread.is_none();
-    if plain {
+    // Discord's menus have an icon on Copy ID alone; a person's also take its
+    // order. A call's and a thread's keep theirs.
+    let plain = thread.is_none() && in_voice.is_none();
+    if plain && person {
         discord_order(&mut choices);
     }
     let id = match (in_voice, thread) {
@@ -283,6 +285,28 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
             }
         })
         .collect();
+    // A conversation's and a server's menu always starts with Mark as read,
+    // greyed when there is nothing to read.
+    let listed = !person
+        && plain
+        && !adapter.app.preview
+        && !id_is_header
+        && (server || state.rooms.iter().any(|found| found.id == id));
+    if listed && !rows.iter().any(|row| row.id == choice_id(MenuChoice::MarkRead)) {
+        rows.insert(
+            0,
+            MenuRow {
+                id: choice_id(MenuChoice::MarkRead).into(),
+                text: "Mark as read".into(),
+                disabled: true,
+                plain,
+                ..Default::default()
+            },
+        );
+        if let Some(next) = rows.get_mut(1) {
+            next.separated = true;
+        }
+    }
     let notify = Notify::of(adapter, id);
     if let Some(notify) = &notify {
         for row in &mut rows {
