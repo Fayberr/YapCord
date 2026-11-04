@@ -15,7 +15,7 @@ fn bio_with_emoji(bio: &str) -> String {
 #[cfg(feature = "discord")]
 fn bio_with_emoji_tags(bio: &str) -> String {
     let mut out = bio.to_owned();
-    for emoji in yapfast_discord::message::custom_emoji(bio) {
+    for emoji in yapfast_core::yapfast_discord::message::custom_emoji(bio) {
         let shown = crate::custom_emoji::glyph(&emoji.id)
             .map_or_else(|| format!(":{}:", emoji.name), String::from);
         for tag in [
