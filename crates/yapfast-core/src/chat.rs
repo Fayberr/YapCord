@@ -777,6 +777,26 @@ pub struct Profile {
     pub tag: Option<ServerTag>,
     /// The badges their Discord profile shows, in Discord's order.
     pub badges: Vec<ProfileBadge>,
+    /// The custom emoji in their bio, which show as their pictures once
+    /// those arrive; the bio names each as `:name:`.
+    pub bio_emoji: Vec<CustomEmoji>,
+    /// The note this account keeps on them, as the full profile edits it.
+    pub note: String,
+    /// The accounts on other services their profile shows.
+    pub connections: Vec<ProfileConnection>,
+}
+
+/// An account on another service on a profile, such as Steam.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ProfileConnection {
+    /// The service: `steam`, `twitch`, `github`.
+    pub kind: String,
+    pub name: String,
+    pub verified: bool,
+    /// Where the account is, when it can be opened.
+    pub url: Option<String>,
+    /// When the account was made, as a date, when the service says.
+    pub since: Option<String>,
 }
 
 /// A badge on a profile, such as HypeSquad Bravery.

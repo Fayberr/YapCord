@@ -47,6 +47,40 @@ pub struct Profile {
     /// gradient runs from the first to the second.
     #[serde(default)]
     pub theme: Option<[u32; 2]>,
+    /// The accounts on other services their profile shows.
+    #[serde(default)]
+    pub connections: Vec<Connection>,
+}
+
+/// An account on another service that a profile shows, such as Steam.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct Connection {
+    /// The service, as Discord names it: `steam`, `twitch`, `github`.
+    pub kind: String,
+    pub name: String,
+    pub verified: bool,
+    /// Where the account is, when Discord's client knows how to link it.
+    pub url: Option<String>,
+    /// When the account was made, in Unix milliseconds, when the service says.
+    #[serde(default)]
+    pub since: Option<u64>,
+}
+
+/// A connected account's page on its service, where Discord's client links
+/// one.
+fn connection_url(kind: &str, id: &str, name: &str) -> Option<String> {
+    Some(match kind {
+        "steam" => format!("https://steamcommunity.com/profiles/{id}"),
+        "twitch" => format!("https://twitch.tv/{name}"),
+        "github" => format!("https://github.com/{name}"),
+        "youtube" => format!("https://www.youtube.com/channel/{id}"),
+        "twitter" | "x" => format!("https://twitter.com/{name}"),
+        "reddit" => format!("https://reddit.com/u/{name}"),
+        "spotify" => format!("https://open.spotify.com/user/{id}"),
+        "tiktok" => format!("https://tiktok.com/@{name}"),
+        "bluesky" => format!("https://bsky.app/profile/{name}"),
+        _ => return None,
+    })
 }
 
 /// One of the badges a profile shows: HypeSquad, Active Developer, a
@@ -323,6 +357,23 @@ pub fn parse(value: &Value, guild: Option<&str>) -> Option<Profile> {
                     link: text(&badge["link"]).map(str::to_owned),
                     level_icon: text(&badge["simple_icon_url"]).map(str::to_owned),
                     level: None,
+                })
+            })
+            .collect(),
+        connections: value["connected_accounts"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|account| {
+                let kind = text(&account["type"])?;
+                let name = text(&account["name"])?;
+                let id = account["id"].as_str().unwrap_or_default();
+                Some(Connection {
+                    kind: kind.to_owned(),
+                    name: name.to_owned(),
+                    verified: account["verified"].as_bool().unwrap_or(false),
+                    url: connection_url(kind, id, name),
+                    since: account["metadata"]["created_at"].as_str().and_then(iso_ms),
                 })
             })
             .collect(),

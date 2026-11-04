@@ -1803,6 +1803,12 @@ pub enum Action {
         ask: PersonAsk,
     },
     AnswerPerson(String),
+    /// Save this account's note on a Discord user, as the full profile's
+    /// note field does; empty removes it.
+    SaveNote {
+        user: String,
+        note: String,
+    },
     ClosePersonDialog,
     // A server member's menu; see `members.rs`.
     /// Put a mention of someone in the open channel's composer.
@@ -2278,6 +2284,12 @@ fn pictures_on_screen<'a>(
                         )
                         .chain(profile.friends.iter().map(|friend| &friend.avatar))
                         .filter_map(Option::as_deref)
+                        .chain(
+                            profile
+                                .bio_emoji
+                                .iter()
+                                .map(|emoji| emoji.picture.as_str()),
+                        )
                         .chain(effect.into_iter().flat_map(|effect| effect.pictures()))
                 }),
         )
@@ -2993,6 +3005,7 @@ impl Application {
             }
             Action::MentionPerson(user) => self.mention_person(user),
             Action::CallPerson(user) => self.call_person(user),
+            Action::SaveNote { user, note } => self.save_note(user, note),
             Action::AskMember { place, user, ask } => self.ask_member(place, user, ask),
             Action::ChoosePersonOption(choice) => {
                 if let Some(dialog) = &mut self.state.person_dialog {
@@ -3613,6 +3626,15 @@ impl Application {
             }
             Event::DiscordUnlinked => return self.forget_discord(),
             Event::Note { user, result } => {
+                if let Ok(note) = &result {
+                    for view in [&mut self.state.profile, &mut self.state.panel_profile]
+                        .into_iter()
+                        .flatten()
+                        .filter(|view| view.profile.id == user)
+                    {
+                        view.profile.note.clone_from(note);
+                    }
+                }
                 if let Some(dialog) = self
                     .state
                     .person_dialog

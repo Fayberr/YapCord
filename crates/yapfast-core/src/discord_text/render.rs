@@ -518,6 +518,7 @@ pub(super) fn chat_profile(
         .iter()
         .find(|server| server.id == guild)
         .map(|server| &*server.server);
+    let bio_emoji = profile.bio.as_deref().map(emoji_in).unwrap_or_default();
     Profile {
         name: profile.name,
         avatar: Some(profile.avatar),
@@ -582,6 +583,18 @@ pub(super) fn chat_profile(
                     progress: level.progress,
                     picture: level.picture,
                 }),
+            })
+            .collect(),
+        bio_emoji,
+        connections: profile
+            .connections
+            .into_iter()
+            .map(|connection| ProfileConnection {
+                kind: connection.kind,
+                name: connection.name,
+                verified: connection.verified,
+                url: connection.url,
+                since: connection.since.map(|ms| crate::clock::day(ms / 1000)),
             })
             .collect(),
         handle: profile.username,

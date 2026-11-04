@@ -221,7 +221,16 @@ pub(super) fn command(
                             });
                         }
                     };
-                    tokio::join!(effect_task, badges_task);
+                    // The note this account keeps on them fills the full profile's.
+                    let note_task = async {
+                        if let Ok(note) = discord.note(&user).await {
+                            let _ = events.send(Event::Note {
+                                user: user.clone(),
+                                result: Ok(note),
+                            });
+                        }
+                    };
+                    tokio::join!(effect_task, badges_task, note_task);
                 });
             }
             (discord, _) => {
