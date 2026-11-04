@@ -671,7 +671,9 @@ export component StatusText inherits HorizontalLayout {
         Image {
             source: root.icon == 1 ? @image-url("icons/gamepad.svg") : root.icon == 2 ? @image-url("icons/music.svg") : root.icon == 3 ? @image-url("icons/tv.svg") : root.icon == 4 ? @image-url("icons/video.svg") : @image-url("icons/trophy.svg");
             width: root.font-size * 1.25; height: root.font-size * 1.25;
-            image-fit: contain; colorize: root.color; accessible-role: none;
+            image-fit: contain; accessible-role: none;
+            // Discord draws the game controller in its online green.
+            colorize: root.icon == 1 && ClientStyle.enabled ? Theme.live : root.color;
         }
     }
     if root.icon > 0 && root.bullet: VerticalLayout {
