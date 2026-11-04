@@ -160,6 +160,8 @@ export component DeviceToggle inherits Rectangle {
     in property <bool> alert;
     in property <bool> enabled: true;
     in property <bool> open;
+    in property <length> glyph: 20px;
+    in property <color> tint: Theme.secondary;
     out property <bool> hovered: toggle.hovered || caret.has-hover;
     callback clicked;
     callback menu;
@@ -175,6 +177,7 @@ export component DeviceToggle inherits Rectangle {
     HorizontalLayout {
         toggle := IconButton {
             icon: root.icon; label: root.label; alert: root.alert; enabled: root.enabled; radius: 4px;
+            glyph: root.glyph; tint: root.tint;
             clicked => { root.clicked(); }
         }
         Rectangle {

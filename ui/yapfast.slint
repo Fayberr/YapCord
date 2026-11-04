@@ -2297,7 +2297,8 @@ export component YapfastWindow inherits Window {
                         }
                         if root.voice-visible: Rectangle { x: 12px; y: 0px; width: parent.width - 24px; height: 1px; background: Theme.line; }
                         HorizontalLayout {
-                            padding-right: 8px; spacing: 2px;
+                            // Discord's controls sit 3px further apart and 6px further from the edge.
+                            padding-right: ClientStyle.enabled ? 14px : 8px; spacing: ClientStyle.enabled ? 5px : 2px;
                             Rectangle {
                                 width: ClientStyle.enabled ? 50px : 58px;
                                 Avatar { x: ClientStyle.enabled ? 8px : 19px; y: (parent.height - self.height) / 2; size: ClientStyle.enabled ? 40px : 34px; initial: root.account-initial; tint: root.account-tint; picture: root.account-picture; speaking: root.account-speaking; decoration-url: AccountLook.decoration-url; animate: account-panel.hot; prefetch: true; }
@@ -2344,6 +2345,8 @@ export component YapfastWindow inherits Window {
                                 icon: root.shown-muted ? @image-url("icons/mic-off.svg") : @image-url("icons/mic.svg");
                                 label: root.voice-active ? (root.muted ? "Unmute" : "Mute") : root.shown-muted ? "Join calls unmuted" : "Join calls muted";
                                 alert: root.shown-muted;
+                                // Discord's glyphs are white and a little larger than the default.
+                                tint: ClientStyle.enabled ? Theme.text : Theme.secondary;
                                 menu-label: "Input options"; open: root.input-open;
                                 enabled: root.voice-ready || !root.voice-active;
                                 clicked => { root.toggle-mute(); }
@@ -2356,6 +2359,8 @@ export component YapfastWindow inherits Window {
                                 icon: root.shown-deafened ? @image-url("icons/headphone-off.svg") : @image-url("icons/headphones.svg");
                                 label: root.voice-active ? (root.deafened ? "Undeafen" : "Deafen") : root.deafen-on-join ? "Join calls undeafened" : "Join calls deafened";
                                 alert: root.shown-deafened;
+                                glyph: ClientStyle.enabled ? 21px : 20px;
+                                tint: ClientStyle.enabled ? Theme.text : Theme.secondary;
                                 menu-label: "Output options"; open: root.output-open;
                                 enabled: root.voice-ready || !root.voice-active;
                                 clicked => { root.toggle-deafen(); }
@@ -2370,6 +2375,8 @@ export component YapfastWindow inherits Window {
                             }
                             cog := IconButton {
                                 icon: @image-url("icons/settings.svg"); label: "Settings"; radius: 4px;
+                                glyph: ClientStyle.enabled ? 24px : 20px;
+                                tint: ClientStyle.enabled ? Theme.text : Theme.secondary;
                                 clicked => { root.settings-open = true; root.refresh-devices(); }
                             }
                         }
