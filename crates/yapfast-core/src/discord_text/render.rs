@@ -586,6 +586,8 @@ pub(super) fn chat_profile(
             })
             .collect(),
         bio_emoji,
+        // The note comes with its own request; see `fill_profile`.
+        note: String::new(),
         connections: profile
             .connections
             .into_iter()

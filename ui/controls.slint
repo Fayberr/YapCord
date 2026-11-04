@@ -652,6 +652,11 @@ export component StatusText inherits HorizontalLayout {
     in property <length> font-size: 13px;
     in property <int> font-weight: 400;
     in property <TextWrap> wrap: no-wrap;
+    /// What they're doing, as a small icon before the words: 1 a controller,
+    /// 2 a music note, 3 a screen, 4 a camera, 5 a trophy; 0 for none.
+    in property <int> icon;
+    /// A bullet follows the icon, before a custom status.
+    in property <bool> bullet;
     property <image> emoji: root.emoji-url != "" ? PictureStore.picture(root.emoji-url, PictureStore.revision) : @image-url("");
     function request-emoji() {
         if root.emoji-url != "" && root.emoji.width == 0 {
@@ -662,6 +667,20 @@ export component StatusText inherits HorizontalLayout {
     changed emoji-url => { root.request-emoji(); }
     changed emoji => { root.request-emoji(); }
     alignment: start; spacing: 4px;
+    if root.icon > 0: VerticalLayout {
+        alignment: center;
+        Image {
+            source: root.icon == 1 ? @image-url("icons/gamepad.svg") : root.icon == 2 ? @image-url("icons/music.svg") : root.icon == 3 ? @image-url("icons/tv.svg") : root.icon == 4 ? @image-url("icons/video.svg") : @image-url("icons/trophy.svg");
+            width: root.font-size * 1.25; height: root.font-size * 1.25;
+            image-fit: contain; accessible-role: none;
+            // Discord draws the game controller in its online green.
+            colorize: root.icon == 1 && ClientStyle.enabled ? Theme.live : root.color;
+        }
+    }
+    if root.icon > 0 && root.bullet: VerticalLayout {
+        alignment: center;
+        Text { text: "\u{2022}"; color: root.color; font-size: root.font-size; font-weight: root.font-weight; }
+    }
     // The emoji keeps its place while its picture is on the way.
     if root.emoji-url != "": VerticalLayout {
         alignment: start;
