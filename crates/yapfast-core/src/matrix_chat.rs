@@ -2035,6 +2035,7 @@ async fn publish_timeline(
                         avatar: None,
                         body: summary(&embedded.content),
                         item,
+                        color: None,
                     }
                 }
                 TimelineDetails::Error(_) => Reply {
@@ -2042,6 +2043,7 @@ async fn publish_timeline(
                     avatar: None,
                     body: "The original message could not be loaded.".into(),
                     item,
+                    color: None,
                 },
                 _ => {
                     if open.requested.insert(reply.event_id.to_string()) {
@@ -2057,6 +2059,7 @@ async fn publish_timeline(
                         avatar: None,
                         body: "Loading the original message...".into(),
                         item,
+                        color: None,
                     }
                 }
             });

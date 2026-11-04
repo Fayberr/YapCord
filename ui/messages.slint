@@ -602,7 +602,7 @@ export struct MessageRow {
     notice: string,
     /// Forwarded on Discord: the body, files and embeds are the original's.
     forwarded: bool,
-    reply-author: string, reply-body: string, reply-initial: string, reply-tint: color, reply-picture: image, has-reply: bool,
+    reply-author: string, reply-body: string, reply-initial: string, reply-tint: color, reply-color: color, reply-has-color: bool, reply-picture: image, has-reply: bool,
     /// The original message's item; clicking the reply jumps to it.
     reply-item: string,
     reactions: [ReactionChip],
@@ -1771,10 +1771,15 @@ export component MessageContent inherits VerticalLayout {
                 HorizontalLayout {
                     spacing: 6px;
                     if message.reply-author != "": Middle { Avatar { size: 16px; initial: message.reply-initial; tint: message.reply-tint; picture: message.reply-picture; picture-url: message.reply-picture-url; } }
-                    if message.reply-author != "": Text { text: message.reply-author; color: Theme.secondary; font-size: 14px; font-weight: 700; vertical-alignment: center; }
+                    if message.reply-author != "": Text {
+                        // Discord quotes "@Name" in the author's role colour, regular weight.
+                        text: ClientStyle.enabled ? "@" + message.reply-author : message.reply-author;
+                        color: ClientStyle.enabled && message.reply-has-color ? message.reply-color : Theme.secondary;
+                        font-size: 14px; font-weight: ClientStyle.enabled ? 400 : 700; vertical-alignment: center;
+                    }
                     Text {
-                        text: message.reply-body; font-size: 14px; vertical-alignment: center; overflow: elide; horizontal-stretch: 1;
-                        color: reply-touch.has-hover ? Theme.text : Theme.muted;
+                        text: message.reply-body; font-size: ClientStyle.enabled ? 13px : 14px; vertical-alignment: center; overflow: elide; horizontal-stretch: 1;
+                        color: reply-touch.has-hover ? Theme.text : ClientStyle.enabled ? Theme.secondary : Theme.muted;
                     }
                 }
                 reply-touch := TouchArea {

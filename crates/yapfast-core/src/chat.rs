@@ -1007,6 +1007,8 @@ pub struct Reply {
     pub body: String,
     /// The original message's item, to jump to it; none when it's gone.
     pub item: Option<String>,
+    /// The author's role colour, where the network gives one.
+    pub color: Option<u32>,
 }
 
 /// A Discord thread a message leads to: the one started from it, or that
