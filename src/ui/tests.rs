@@ -991,8 +991,8 @@ fn pictures_on_their_way_hold_their_place_as_skeletons() {
     });
     let cell = row.images.row_data(0).unwrap();
     assert!(cell.loading);
-    // As the 360 by 270 preview will be: 1600 by 900 scaled to fit.
-    assert_eq!((row.gallery_width, row.gallery_height), (360, 203));
+    // As the 550 by 400 preview will be: 1600 by 900 scaled to fit.
+    assert_eq!((row.gallery_width, row.gallery_height), (550, 309));
     assert_eq!(row.files.row_count(), 0, "not a file card meanwhile");
     // One whose preview failed is a file card instead.
     let row = message_row_plain(&ChatMessage {
@@ -1356,10 +1356,11 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
             "Start call",
             "Add note",
             "Add friend nickname",
-            "Change nickname",
+            "Apps",
             "Remove friend",
             "Ignore",
             "Block",
+            "Change nickname",
             "Roles",
             "Time out Dave",
             "Kick Dave",
@@ -1506,7 +1507,7 @@ fn invite_to_server_lists_the_servers_in_a_submenu() {
         .iter()
         .position(|row| row.text == "Invite to server")
         .unwrap();
-    assert_eq!(rows[at - 1].text, "Change nickname");
+    assert_eq!(rows[at - 1].text, "Apps");
     assert_eq!(rows[at + 1].text, "Remove friend");
     assert!(
         !rows[at].separated,
@@ -4432,7 +4433,7 @@ fn empty_categories_go_where_discords_order_puts_them() {
         .iter()
         .map(|row| format!("{}{}", row.heading, if row.hidden { "!" } else { "" }))
         .collect();
-    assert_eq!(listed, ["", "A!", "B", "", "C!", "D", "E!"]);
+    assert_eq!(listed, ["", "a!", "B", "", "c!", "D", "e!"]);
 }
 
 #[test]
