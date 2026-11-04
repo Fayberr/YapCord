@@ -172,6 +172,12 @@ export component YapfastWindow inherits Window {
     in property <bool> header-invite;
     /// The server in the header is a Community server.
     in property <bool> header-community;
+    /// Verified or partnered: a green badge before the name.
+    in property <bool> header-verified;
+    /// The address of the server's banner, which fills the top of its sidebar.
+    in property <string> header-banner;
+    /// How many scheduled events the server has; the "N Events" row opens them.
+    in property <int> header-events;
     // A Discord server's or channel's invite dialog: the link, and the
     // choices for another, as indices into each list it offers.
     in property <bool> invite-open;
@@ -1723,6 +1729,9 @@ export component YapfastWindow inherits Window {
         root.open-context-menu("header:" + root.header-server, false, x, y);
         root.header-menu = true;
     }
+    function open-events-menu(x: length, y: length) {
+        root.open-context-menu("events:" + root.header-server, false, x, y);
+    }
     function open-context-menu(id: string, person: bool, x: length, y: length) {
         root.header-menu = false;
         root.anchor(x, y, 0px, 0px, true);
@@ -2125,12 +2134,24 @@ export component YapfastWindow inherits Window {
                         clip: true;
                         VerticalLayout {
                             spacing: 0px;
-                            Rectangle {
-                                height: ClientStyle.header-height;
+                            header-box := Rectangle {
+                                property <bool> banner: ClientStyle.enabled && root.header-server != "" && root.header-banner != "";
+                                height: ClientStyle.header-height + (header-box.banner ? 81px : 0px);
+                                if header-box.banner: Image {
+                                    width: parent.width; height: parent.height;
+                                    source: PictureStore.picture(root.header-banner, PictureStore.revision);
+                                    image-fit: cover; accessible-role: none;
+                                    init => { PictureStore.request(root.header-banner); }
+                                }
+                                if header-box.banner: Rectangle {
+                                    height: ClientStyle.header-height;
+                                    background: @linear-gradient(180deg, #00000099 0%, #00000000 100%);
+                                }
                                 if root.header-server == "" && !(ClientStyle.enabled && root.dms-selected): Text { x: 16px; width: parent.width - (root.dms-selected && !root.preview ? (root.discord-linked ? 88px : 56px) : 32px); text: root.sidebar-title; font-size: 16px; font-weight: 700; color: Theme.text; vertical-alignment: center; overflow: elide; }
                                 if root.header-server != "": server-header := ServerHeader {
                                     x: 8px; y: 8px; width: parent.width - 16px - (root.header-invite ? 40px : 0px); height: 32px;
                                     name: root.sidebar-title; open: root.header-menu-open; community: root.header-community;
+                                    verified: root.header-verified; on-banner: header-box.banner;
                                     clicked => { root.open-header-menu(self.absolute-position.x, self.absolute-position.y + self.height + 6px); }
                                 }
                                 if root.header-server != "" && root.header-invite: IconButton {
@@ -2154,7 +2175,27 @@ export component YapfastWindow inherits Window {
                                     placeholder: "Find a conversation"; text <=> root.filter; label: "Find a conversation";
                                     edited => { root.filter-edited(); }
                                 }
-                                Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.outline : Theme.edge; }
+                                if !header-box.banner: Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.outline : Theme.edge; }
+                            }
+                            // Discord's "N Events" row under the server's name.
+                            if ClientStyle.enabled && root.header-server != "" && root.header-events > 0: events-row := Rectangle {
+                                height: 60px;
+                                Image { x: 16px; y: (parent.height - self.height) / 2; width: 20px; height: 20px; source: @image-url("icons/calendar.svg"); colorize: Theme.muted; accessible-role: none; }
+                                Text {
+                                    x: 44px; width: parent.width - 60px; height: parent.height;
+                                    text: root.header-events == 1 ? "1 Event" : root.header-events + " Events";
+                                    font-size: 14px; font-weight: 500; color: Theme.muted;
+                                    vertical-alignment: center; overflow: elide;
+                                }
+                                Rectangle { x: 16px; y: parent.height - 1px; width: parent.width - 32px; height: 1px; background: Theme.outline; }
+                                events-touch := TouchArea {
+                                    mouse-cursor: MouseCursor.pointer;
+                                    clicked => { root.open-events-menu(parent.absolute-position.x + 8px, parent.absolute-position.y + parent.height - 8px); }
+                                }
+                                if events-touch.has-hover: Rectangle { background: Theme.hover; border-radius: 6px; x: 8px; width: parent.width - 16px; y: 8px; height: parent.height - 16px; z: -1; }
+                                accessible-role: button;
+                                accessible-label: root.header-events + " events";
+                                accessible-action-default => { root.open-events-menu(self.absolute-position.x + 8px, self.absolute-position.y + self.height - 8px); }
                             }
                             // Discord's channel list starts at its first category: Ctrl+K finds channels.
                             if !ClientStyle.enabled: HorizontalLayout {

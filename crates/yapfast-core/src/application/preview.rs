@@ -26,6 +26,7 @@ impl Application {
                 hide_muted: false,
                 community: false,
                 pinned: Vec::new(),
+                ..Default::default()
             },
             ChatServer {
                 id: "coop".into(),
@@ -43,6 +44,7 @@ impl Application {
                 hide_muted: false,
                 community: false,
                 pinned: Vec::new(),
+                ..Default::default()
             },
         ]
         .into_iter()

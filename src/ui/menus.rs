@@ -14,6 +14,10 @@ use super::*;
 /// some of the server menu's choices: this, then the server's id.
 pub(super) const HEADER: &str = "header:";
 
+/// How a menu target names a Discord server's "N Events" row, whose popout
+/// lists the server's scheduled events: this, then the server's id.
+pub(super) const EVENTS: &str = "events:";
+
 /// How a Discord thread header's More button names its menu, before the
 /// thread's room id: the header in full view, and the one beside its channel.
 pub(super) const TOOLBAR: &str = "thread-toolbar:";
@@ -35,12 +39,49 @@ fn thread_more(id: &str) -> Option<(&str, &'static str)> {
 /// ContextMenu takes them.
 pub(super) type Menu = (Vec<MenuRow>, Vec<Vec<MenuRow>>);
 
+/// A server's scheduled events as the popout under its "N Events" row lists
+/// them: each one's name, and when it starts and where.
+fn events(adapter: &Adapter, server: &str) -> Menu {
+    let rows = adapter
+        .app
+        .state
+        .servers
+        .iter()
+        .find(|found| found.id == server)
+        .into_iter()
+        .flat_map(|server| &server.events)
+        .map(|event| {
+            let when = match u64::try_from(event.start) {
+                Ok(_) if event.active => "Happening now".to_owned(),
+                Ok(start) => until(start, adapter.layout.twelve_hour_clock),
+                Err(_) => String::new(),
+            };
+            let subtitle = match &event.location {
+                Some(place) if !when.is_empty() => format!("{when} · {place}"),
+                Some(place) => place.clone(),
+                None => when,
+            };
+            MenuRow {
+                id: format!("event:{}", event.id).into(),
+                text: event.name.clone().into(),
+                subtitle: subtitle.into(),
+                plain: true,
+                ..Default::default()
+            }
+        })
+        .collect();
+    (rows, Vec::new())
+}
+
 /// What a server's, conversation's or person's menu offers; nothing for one
 /// Yapfast doesn't know.
 pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     if let Some(place) = id.strip_prefix(BELL) {
         return Notify::of(adapter, place)
             .map_or_else(Menu::default, |notify| notify.bell(adapter));
+    }
+    if let Some(server) = id.strip_prefix(EVENTS) {
+        return events(adapter, server);
     }
     let icons = &adapter.icons;
     let app = &adapter.app;
@@ -743,6 +784,10 @@ pub(super) fn choose(
     person: bool,
     id: &str,
 ) {
+    // The events popout only lists them.
+    if target.starts_with(EVENTS) {
+        return;
+    }
     // A checkbox shows its new state at once, as the menu stays open.
     let ticked = toggle(window, id);
     // Someone's menu in a voice channel acts on them in its server.

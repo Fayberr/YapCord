@@ -936,6 +936,21 @@ fn server_rooms(
         hide_muted: server.marks.notifications.hide_muted_channels,
         community: server.community,
         pinned,
+        banner: server.banner.clone(),
+        verified: server.verified,
+        events: server
+            .events
+            .iter()
+            .map(|event| chat::ServerEvent {
+                id: event.id.clone(),
+                name: event.name.clone(),
+                start: yapfast_discord::message::iso_ms(&event.start)
+                    .map_or(0, |ms| i64::try_from(ms / 1000).unwrap_or(0)),
+                location: event.location.clone(),
+                active: event.status == 2,
+                interested: event.interested,
+            })
+            .collect(),
     };
     (rooms, server)
 }

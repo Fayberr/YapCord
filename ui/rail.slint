@@ -760,6 +760,11 @@ export component ServerHeader inherits Rectangle {
     in property <bool> open;
     /// A Community server, whose header starts with Discord's badge.
     in property <bool> community;
+    /// Verified or partnered, which Discord marks with a green badge before
+    /// the name.
+    in property <bool> verified;
+    /// The name sits over the server's banner, in white.
+    in property <bool> on-banner;
     callback clicked;
     border-radius: 6px;
     background: touch.has-hover || root.open ? Theme.hover : transparent;
@@ -776,18 +781,25 @@ export component ServerHeader inherits Rectangle {
         }
     }
     HorizontalLayout {
-        padding-left: 8px; padding-right: 8px; spacing: 6px; alignment: start;
-        if root.community: VerticalLayout {
+        padding-left: ClientStyle.enabled && root.verified ? 10px : 8px; padding-right: 8px;
+        spacing: ClientStyle.enabled ? 10px : 6px; alignment: start;
+        if !ClientStyle.enabled && root.community: VerticalLayout {
             alignment: center;
             Image { source: @image-url("icons/community.svg"); width: 20px; height: 20px; colorize: Theme.text; accessible-role: none; }
         }
+        if ClientStyle.enabled && root.verified: VerticalLayout {
+            alignment: center;
+            Image { source: @image-url("icons/verified.svg"); width: 16px; height: 16px; accessible-role: none; }
+        }
         Text {
-            text: root.name; font-size: ClientStyle.text-size; font-weight: 700; color: Theme.text;
+            text: root.name; font-size: ClientStyle.text-size;
+            font-weight: ClientStyle.enabled ? 600 : 700;
+            color: root.on-banner ? #ffffff : Theme.text;
             vertical-alignment: center; overflow: elide;
         }
         Image {
             source: @image-url("icons/chevron-down.svg"); width: 20px; height: 20px; y: (parent.height - self.height) / 2;
-            colorize: Theme.muted; transform-rotation: root.open ? 180deg : 0deg;
+            colorize: root.on-banner ? #ffffff : Theme.muted; transform-rotation: root.open ? 180deg : 0deg;
             animate transform-rotation { duration: 120ms; easing: ease-out; }
         }
     }

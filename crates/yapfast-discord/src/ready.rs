@@ -186,6 +186,10 @@ pub struct Server {
     pub mfa_level: u8,
     /// Its custom emoji, by name.
     pub emojis: Arc<Vec<Emoji>>,
+    /// Its scheduled events that haven't ended, soonest first, which its
+    /// header counts; see [`ScheduledEvent`].
+    #[serde(default)]
+    pub events: Arc<Vec<ScheduledEvent>>,
     /// When this account joined it, as Discord's ISO 8601 time.
     pub joined_at: Option<String>,
     /// Out of reach in a Discord outage: still listed, with what was last
@@ -204,6 +208,66 @@ pub struct Emoji {
     /// Usable: a server that loses boosts keeps emoji it no longer has room for,
     /// unavailable.
     pub available: bool,
+}
+
+/// A server's scheduled event, which the header's "N Events" row counts and
+/// lists; see <https://docs.discord.food/resources/guild-scheduled-event>.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ScheduledEvent {
+    pub id: String,
+    pub name: String,
+    /// When it starts, as Discord's ISO 8601 time.
+    pub start: String,
+    /// When it ends, for one with an end.
+    pub end: Option<String>,
+    /// 1 scheduled, 2 active, 3 completed, 4 canceled.
+    pub status: u8,
+    /// Where it is, for one outside Discord, or the name of its channel.
+    pub location: Option<String>,
+    /// The channel of one in a voice or stage channel.
+    pub channel: Option<String>,
+    /// How many are interested.
+    pub interested: u64,
+}
+
+impl ScheduledEvent {
+    /// A guild scheduled event object, from a guild object, the REST API or
+    /// a GUILD_SCHEDULED_EVENT_* dispatch.
+    pub fn parse(value: &Value) -> Option<Self> {
+        Some(Self {
+            id: value["id"].as_str()?.to_owned(),
+            name: value["name"].as_str()?.to_owned(),
+            start: value["scheduled_start_time"].as_str()?.to_owned(),
+            end: value["scheduled_end_time"].as_str().map(str::to_owned),
+            status: value["status"]
+                .as_u64()
+                .map_or(1, |status| u8::try_from(status).unwrap_or(1)),
+            location: value["entity_metadata"]["location"]
+                .as_str()
+                .map(str::to_owned),
+            channel: value["channel_id"].as_str().map(str::to_owned),
+            interested: value["user_count"].as_u64().unwrap_or(0),
+        })
+    }
+
+    /// Scheduled or under way: the events Discord counts.
+    pub fn counts(&self) -> bool {
+        matches!(self.status, 1 | 2)
+    }
+}
+
+/// A server's scheduled events that count, soonest first, from a guild
+/// object's `guild_scheduled_events`.
+pub fn scheduled_events(list: &Value) -> Vec<ScheduledEvent> {
+    let mut events: Vec<ScheduledEvent> = list
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(ScheduledEvent::parse)
+        .filter(ScheduledEvent::counts)
+        .collect();
+    events.sort_by(|a, b| a.start.cmp(&b.start));
+    events
 }
 
 /// A server's emoji list, from a guild object or GUILD_EMOJIS_UPDATE.
@@ -566,6 +630,17 @@ pub struct Overwrite {
 }
 
 impl Server {
+    /// Keeps `event` as a GUILD_SCHEDULED_EVENT_CREATE or _UPDATE gives it, or
+    /// forgets it for a delete or one that no longer counts.
+    pub fn put_event(&mut self, event: ScheduledEvent, deleted: bool) {
+        let events = Arc::make_mut(&mut self.events);
+        events.retain(|known| known.id != event.id);
+        if !deleted && event.counts() {
+            events.push(event);
+            events.sort_by(|a, b| a.start.cmp(&b.start));
+        }
+    }
+
     /// Whether @everyone may not see `channel`: the server's @everyone
     /// permissions with the channel's overwrite for @everyone applied, as
     /// Discord's client works it out to put a padlock on the channel's icon.
@@ -1273,6 +1348,7 @@ pub fn server(guild: &Value) -> Option<Server> {
             .or_else(|| guild["properties"]["mfa_level"].as_u64())
             .map_or(0, |level| u8::try_from(level).unwrap_or(1)),
         emojis: Arc::new(emojis(&guild["emojis"])),
+        events: Arc::new(scheduled_events(&guild["guild_scheduled_events"])),
         joined_at: guild["joined_at"].as_str().map(str::to_owned),
         default_level: Level::from(&guild["properties"]["default_message_notifications"])
             .or_else(|| Level::from(&guild["default_message_notifications"]))
@@ -1694,6 +1770,36 @@ mod tests {
         ] {
             assert_eq!(murmur3(text.as_bytes()), hash, "{text:?}");
         }
+    }
+
+    #[test]
+    fn a_server_counts_its_events_that_have_not_ended() {
+        let event = |id: &str, start: &str, status: u64| {
+            json!({"id": id, "name": id, "scheduled_start_time": start, "status": status,
+                "entity_metadata": {"location": "Here"}, "user_count": 3})
+        };
+        let mut server = Server {
+            events: Arc::new(scheduled_events(&json!([
+                event("b", "2026-11-02T10:00:00+00:00", 1),
+                event("a", "2026-11-01T10:00:00+00:00", 2),
+                event("done", "2026-10-01T10:00:00+00:00", 3),
+                event("off", "2026-10-02T10:00:00+00:00", 4),
+            ]))),
+            ..Default::default()
+        };
+        let ids = |server: &Server| server.events.iter().map(|e| e.id.clone()).collect::<Vec<_>>();
+        assert_eq!(ids(&server), ["a", "b"], "soonest first, only live ones");
+        assert_eq!(server.events[0].location.as_deref(), Some("Here"));
+        assert_eq!(server.events[0].interested, 3);
+        let new = ScheduledEvent::parse(&event("c", "2026-11-01T12:00:00+00:00", 1)).unwrap();
+        server.put_event(new, false);
+        assert_eq!(ids(&server), ["a", "c", "b"]);
+        let gone = ScheduledEvent::parse(&event("a", "2026-11-01T10:00:00+00:00", 2)).unwrap();
+        server.put_event(gone, true);
+        assert_eq!(ids(&server), ["c", "b"]);
+        let ended = ScheduledEvent::parse(&event("c", "2026-11-01T12:00:00+00:00", 3)).unwrap();
+        server.put_event(ended, false);
+        assert_eq!(ids(&server), ["b"], "one that ended no longer counts");
     }
 
     #[test]

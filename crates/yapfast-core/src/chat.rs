@@ -440,7 +440,7 @@ pub struct VoicePerson {
     pub elsewhere: bool,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Default, PartialEq, Eq, Hash)]
 pub struct ChatServer {
     pub id: String,
     pub name: String,
@@ -465,6 +465,27 @@ pub struct ChatServer {
     /// The room ids of the channels this account pinned to the top of its
     /// channel list, a Discord server's, in the order they show there.
     pub pinned: Vec<String>,
+    /// The address of its banner, which tops its channel list.
+    pub banner: Option<String>,
+    /// Verified or partnered, which its name carries a tick for.
+    pub verified: bool,
+    /// Its scheduled events that haven't ended, soonest first, which its
+    /// channel list counts in an "N Events" row.
+    pub events: Vec<ServerEvent>,
+}
+
+/// A Discord server's scheduled event, as its events list shows it.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct ServerEvent {
+    pub id: String,
+    pub name: String,
+    /// When it starts, in seconds since the epoch.
+    pub start: i64,
+    /// Where it is, if it says.
+    pub location: Option<String>,
+    /// Under way now.
+    pub active: bool,
+    pub interested: u64,
 }
 
 /// Where a Discord channel or category goes in its server's channel list.

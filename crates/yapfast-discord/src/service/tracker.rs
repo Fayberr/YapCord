@@ -470,6 +470,20 @@ impl Tracker {
                 self.settings(encoded);
                 true
             }
+            Event::GuildScheduledEventCreate
+            | Event::GuildScheduledEventUpdate
+            | Event::GuildScheduledEventDelete => {
+                let (Some(server), Some(scheduled)) = (
+                    data["guild_id"]
+                        .as_str()
+                        .and_then(|guild| self.server_mut(guild)),
+                    ready::ScheduledEvent::parse(data),
+                ) else {
+                    return false;
+                };
+                server.put_event(scheduled, *event == Event::GuildScheduledEventDelete);
+                true
+            }
             Event::GuildEmojisUpdate => {
                 let Some(server) = data["guild_id"]
                     .as_str()

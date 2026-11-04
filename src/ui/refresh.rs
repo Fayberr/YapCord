@@ -527,6 +527,20 @@ impl Adapter {
                 .any(|server| &server.id == id && server.community),
             Navigation::DirectMessages => false,
         });
+        let header_server = match &state.navigation {
+            Navigation::Server(id) => state.servers.iter().find(|server| &server.id == id),
+            Navigation::DirectMessages => None,
+        };
+        window.set_header_verified(header_server.is_some_and(|server| server.verified));
+        window.set_header_banner(
+            header_server
+                .and_then(|server| server.banner.as_deref())
+                .unwrap_or_default()
+                .into(),
+        );
+        window.set_header_events(
+            header_server.map_or(0, |server| i32::try_from(server.events.len()).unwrap_or(0)),
+        );
         window.set_filter_placeholder(
             if state.navigation == Navigation::DirectMessages {
                 "Find a DM"
