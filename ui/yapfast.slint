@@ -481,6 +481,8 @@ export component YapfastWindow inherits Window {
     in property <int> unread-index: -1;
     in property <string> unread-label;
     in property <string> composer-hint;
+    /// The composer's hint for the open conversation: "Message @sam", "Message #general".
+    in property <string> composer-placeholder;
     // Who else is typing in the open conversation; it takes the hint's place.
     in property <string> typing;
     // Who the `@` word being typed may mention; the chosen one is highlighted.
@@ -859,6 +861,7 @@ export component YapfastWindow inherits Window {
     /// Someone is in the open DM's call, so the header joins rather than starts it.
     in property <bool> call-going;
     callback start-call;
+    callback start-video-call;
     /// The open DM's header lists its pinned messages, searches it, and adds
     /// friends to it.
     in property <bool> can-pin;
@@ -2429,9 +2432,16 @@ export component YapfastWindow inherits Window {
                         }
                         if root.can-call: Middle {
                             IconButton {
-                                icon: @image-url("icons/phone.svg"); label: root.call-going ? "Join the call" : "Start a call";
+                                icon: @image-url("icons/phone.svg"); label: root.call-going ? Strings.join-call : Strings.start-voice-call;
                                 size: 32px; glyph: 20px; enabled: root.can-join; tip-side: 2;
                                 clicked => { root.start-call(); }
+                            }
+                        }
+                        if root.can-call: Middle {
+                            IconButton {
+                                icon: @image-url("icons/video.svg"); label: Strings.start-video-call;
+                                size: 32px; glyph: 20px; enabled: root.can-join; tip-side: 2;
+                                clicked => { root.start-video-call(); }
                             }
                         }
                         if root.can-list-threads: Middle {
@@ -3100,7 +3110,7 @@ export component YapfastWindow inherits Window {
                                         composer := Composer {
                                             pad: ClientStyle.composer-padding; min-height: ClientStyle.composer-height;
                                             text <=> root.draft; enabled: root.composer-enabled; label: "Message";
-                                            placeholder: root.is-editing ? "Edit your message" : root.compose-label != "" ? "Write a reply" : root.room-selected && !root.room-direct && root.room-parent == "" ? "Message #" + root.room-name : root.room-selected ? "Message " + root.room-name : "Write a message";
+                                            placeholder: root.is-editing ? "Edit your message" : root.compose-label != "" ? "Write a reply" : root.room-selected ? root.composer-placeholder : "Write a message";
                                             edited(text) => { root.draft-edited(text); }
                                             accepted => { root.send(); }
                                             suggesting: root.mentions.length > 0 || root.emoji-suggestions.length > 0;

@@ -1306,6 +1306,15 @@ impl Adapter {
         window.set_room_activity_emoji(activity_emoji);
         window.set_profile_available(state.one_to_one().is_some());
         window.set_room_request(room.is_some_and(|room| room.request));
+        window.set_composer_placeholder(room.map_or(SharedString::default(), |room| {
+            yapfast_core::i18n::composer_hint(
+                &room.name,
+                room.direct,
+                room.person.is_some(),
+                room.parent.is_none(),
+            )
+            .into()
+        }));
         window.set_request_title(
             match room {
                 Some(room) if room.category == discord::SPAM => {

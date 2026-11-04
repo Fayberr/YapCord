@@ -1098,6 +1098,9 @@ enum Animate {
 fn set_strings(window: &YapfastWindow) {
     use i18n::tr;
     let strings = window.global::<Strings>();
+    strings.set_start_voice_call(tr("start_voice_call").into());
+    strings.set_start_video_call(tr("start_video_call").into());
+    strings.set_join_call(tr("join_call").into());
     strings.set_invite_people(tr("invite_people").into());
     strings.set_show_mutual(tr("show_mutual").into());
     strings.set_roles(tr("roles").into());

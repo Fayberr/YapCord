@@ -55,6 +55,19 @@ pub fn message_hint(name: &str) -> String {
     tr("message_hint").replace("{name}", name)
 }
 
+/// The composer's hint for a conversation: `Message @sam` in a DM, `Message
+/// Group` in a group DM and `Message #general` in a channel; `named` is a
+/// thread's or other room's own name, shown as it is.
+pub fn composer_hint(name: &str, direct: bool, person: bool, channel: bool) -> String {
+    let key = match (direct, person, channel) {
+        (true, true, _) => "message_hint",
+        (true, false, _) => "message_hint_group",
+        (false, _, true) => "message_hint_channel",
+        (false, _, false) => "message_hint_group",
+    };
+    tr(key).replace("{name}", name)
+}
+
 /// "1 mutual friend" or "5 mutual friends", in the current language.
 pub fn mutual_friends(count: usize) -> String {
     let key = if count == 1 { "mutual_friend_one" } else { "mutual_friend_many" };
@@ -68,6 +81,11 @@ pub fn mutual_servers(count: usize) -> String {
 }
 
 pub(crate) const KEYS: &[&str] = &[
+    "start_voice_call",
+    "start_video_call",
+    "join_call",
+    "message_hint_group",
+    "message_hint_channel",
     "invite_people",
     "show_mutual",
     "roles",
@@ -121,6 +139,11 @@ fn english(key: &str) -> Option<&'static str> {
         "mutual_server_one" => "{n} mutual server",
         "mutual_server_many" => "{n} mutual servers",
         "invite_people" => "Invite people",
+        "message_hint_group" => "Message {name}",
+        "message_hint_channel" => "Message #{name}",
+        "start_voice_call" => "Start Voice Call",
+        "start_video_call" => "Start Video Call",
+        "join_call" => "Join the call",
         "message_hint" => "Message @{name}",
         "view_full_bio" => "View full bio",
         "member_since" => "Member since",
@@ -161,6 +184,11 @@ fn german(key: &str) -> Option<&'static str> {
         "mutual_server_one" => "{n} gemeinsamer Server",
         "mutual_server_many" => "{n} gemeinsame Server",
         "invite_people" => "Mitglieder einladen",
+        "message_hint_group" => "Nachricht an {name}",
+        "message_hint_channel" => "Nachricht an #{name}",
+        "start_voice_call" => "Sprachanruf starten",
+        "start_video_call" => "Videoanruf starten",
+        "join_call" => "Dem Anruf beitreten",
         "message_hint" => "Nachricht an @{name}",
         "view_full_bio" => "Vollständige Bio anzeigen",
         "member_since" => "Mitglied seit",
@@ -216,6 +244,13 @@ mod tests {
             "Nachricht an @sam"
         );
         assert_eq!(message_hint("sam"), "Message @sam");
+        assert_eq!(composer_hint("sam", true, true, false), "Message @sam");
+        assert_eq!(composer_hint("Crew", true, false, false), "Message Crew");
+        assert_eq!(composer_hint("dev", false, false, true), "Message #dev");
+        assert_eq!(
+            tr_in(Language::German, "message_hint_channel").replace("{name}", "dev"),
+            "Nachricht an #dev"
+        );
         assert_eq!(
             tr_in(Language::German, "mutual_friend_many").replace("{n}", "5"),
             "5 gemeinsame Freunde"
