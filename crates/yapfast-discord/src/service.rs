@@ -1295,11 +1295,7 @@ impl Discord {
         if let Some(earlier) = earlier {
             kept(earlier);
         }
-        // The badges' levels don't depend on the profile, so they are asked
-        // for together with it: one round trip, not two.
-        let (value, levels) =
-            tokio::join!(self.api.profile(user, server(guild)), self.api.badges(user));
-        let value = value?;
+        let value = self.api.profile(user, server(guild)).await?;
         self.write_names().learn_user(&value["user"]);
         let mut profile = profile::parse(&value, server(guild))
             .ok_or_else(|| anyhow!("could not understand Discord's answer"))?;
