@@ -615,6 +615,21 @@ impl Application {
         let Some(server) = server else {
             return invitable(place).then(|| place.to_owned());
         };
+        #[cfg(feature = "discord")]
+        if let Some((found, _, me)) = self.discord_place(place) {
+            let first = server.channels.iter().find_map(|room| {
+                let (_, id, _) = self.discord_place(room)?;
+                found.server.channel(id?)
+            });
+            tracing::info!(
+                "invitedbg place={place} owner={:?} my_roles={:?} server_perms={:x} first_channel_perms={:?} channels={}",
+                found.owner_id,
+                found.marks.roles,
+                found.server.server_permissions(me, &found.marks.roles),
+                first.map(|channel| found.server.channel_permissions(channel, me, &found.marks.roles)),
+                server.channels.len()
+            );
+        }
         self.state
             .selected
             .iter()
