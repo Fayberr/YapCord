@@ -18,6 +18,12 @@ export global Theme {
     in-out property <color> row-hover: #1a1b20;
     in-out property <color> line: #2c2d34;
     in-out property <color> edge: #0c0d0f;
+    /// The faint outline of the sidebar and the top of the window, and under the server name.
+    in-out property <color> outline: #2c2d34;
+    /// The lines on the conversation's side: under the channel name, and left of the member list.
+    in-out property <color> outline-chat: #2c2d34;
+    /// The outline of the message box.
+    in-out property <color> outline-field: #2c2d34;
     /// The ground of a context menu: Discord's near black panel on a dark theme.
     out property <color> menu: self.dark ? self.sunken.mix(#000000, 0.88) : self.raised;
     in-out property <color> text: #eef0f4;

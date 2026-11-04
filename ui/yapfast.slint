@@ -538,7 +538,7 @@ export component YapfastWindow inherits Window {
     /// below the header.
     pure public function over-aside(x: length, y: length) -> bool {
         root.workspace && root.aside-docked && !root.new-thread-open
-            && x >= root.width - root.aside-shown && y >= root.title-height + 48px
+            && x >= root.width - root.aside-shown && y >= root.title-height + ClientStyle.header-height
     }
     /// Why the last files dropped were refused, and more, until dismissed.
     in-out property <string> drop-refusal;
@@ -2121,12 +2121,12 @@ export component YapfastWindow inherits Window {
                     // Channel sidebar: a lighter sheet held by the rail and the dock.
                     Rectangle {
                         width: root.sidebar-shown; background: Theme.sidebar;
-                        border-top-left-radius: ClientStyle.enabled ? 8px : 10px; border-bottom-left-radius: ClientStyle.enabled ? 0px : 10px;
+                        border-top-left-radius: ClientStyle.enabled ? 12px : 10px; border-bottom-left-radius: ClientStyle.enabled ? 0px : 10px;
                         clip: true;
                         VerticalLayout {
                             spacing: 0px;
                             Rectangle {
-                                height: 48px;
+                                height: ClientStyle.header-height;
                                 if root.header-server == "" && !(ClientStyle.enabled && root.dms-selected): Text { x: 16px; width: parent.width - (root.dms-selected && !root.preview ? (root.discord-linked ? 88px : 56px) : 32px); text: root.sidebar-title; font-size: 16px; font-weight: 700; color: Theme.text; vertical-alignment: center; overflow: elide; }
                                 if root.header-server != "": server-header := ServerHeader {
                                     x: 8px; y: 8px; width: parent.width - 16px - (root.header-invite ? 40px : 0px); height: 32px;
@@ -2154,7 +2154,7 @@ export component YapfastWindow inherits Window {
                                     placeholder: "Find a conversation"; text <=> root.filter; label: "Find a conversation";
                                     edited => { root.filter-edited(); }
                                 }
-                                Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.line : Theme.edge; }
+                                Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.outline : Theme.edge; }
                             }
                             // Discord's channel list starts at its first category: Ctrl+K finds channels.
                             if !ClientStyle.enabled: HorizontalLayout {
@@ -2203,14 +2203,13 @@ export component YapfastWindow inherits Window {
                                 }
                             }
                         }
-                        // Discord's outline: the top and left edges meet in a rounded corner,
-                        // and the left line runs down under the account panel.
+                        // Discord's outline: the top and left edges meet in a 12px rounded corner,
+                        // and the left line runs down to the account panel. There is no line
+                        // between the sidebar and the conversation: only their grounds differ.
                         if ClientStyle.enabled: Rectangle {
                             x: 0px; y: 0px; width: parent.width + 16px; height: parent.height + 16px;
-                            border-width: 1px; border-color: Theme.line; border-radius: 8px; background: transparent;
+                            border-width: 1px; border-color: Theme.outline; border-radius: 12px; background: transparent;
                         }
-                        // The edge against the conversation.
-                        if ClientStyle.enabled: Rectangle { x: parent.width - 1px; width: 1px; background: Theme.line; }
                     }
                 }
                 // The dock spans the rail and the sidebar. Its avatar and voice icon sit on the
@@ -2326,7 +2325,7 @@ export component YapfastWindow inherits Window {
                         // Discord's thin outline around the card.
                         if ClientStyle.enabled: Rectangle {
                             width: parent.width; height: parent.height; border-radius: 8px;
-                            border-width: 1px; border-color: Theme.line; background: transparent;
+                            border-width: 1px; border-color: Theme.overlay.with-alpha(0.02); background: transparent;
                         }
                     }
                 }
@@ -2338,7 +2337,7 @@ export component YapfastWindow inherits Window {
             VerticalLayout {
                 spacing: 0px;
                 Rectangle {
-                    height: 48px;
+                    height: ClientStyle.header-height;
                     HorizontalLayout {
                         padding-left: 16px; padding-right: 16px; spacing: 10px;
                         if root.room-direct: Middle {
@@ -2581,7 +2580,7 @@ export component YapfastWindow inherits Window {
                             Text { text: root.members; color: Theme.muted; font-size: 14px; font-weight: 500; vertical-alignment: center; }
                         }
                     }
-                    Rectangle { y: parent.height - 1px; height: 1px; background: Theme.edge; }
+                    Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.outline-chat : Theme.edge; }
                 }
                 HorizontalLayout {
                     spacing: 0px;
@@ -3084,7 +3083,7 @@ export component YapfastWindow inherits Window {
                                 background: Theme.field;
                                 // Discord's outline: faint, and a notch lighter with the keys.
                                 border-width: 1px;
-                                border-color: composer.focused ? Theme.muted.with-alpha(0.55) : Theme.line;
+                                border-color: composer.focused ? Theme.muted.with-alpha(0.55) : ClientStyle.enabled ? Theme.outline-field : Theme.line;
                                 animate border-color { duration: Theme.quick; }
                                 border-radius: 10px;
                                 border-top-left-radius: root.compose-label != "" ? 0px : 10px;
@@ -3312,8 +3311,10 @@ export component YapfastWindow inherits Window {
                     }
                 }
             }
+            // The window's top outline carries on over the conversation to its right edge.
+            if ClientStyle.enabled: Rectangle { y: 0px; height: 1px; background: Theme.outline; }
             // The header casts a soft shadow over the conversation.
-            Rectangle {
+            if !ClientStyle.enabled: Rectangle {
                 y: 48px; height: 6px;
                 background: @linear-gradient(180deg, #00000040 0%, #00000000 100%);
             }
@@ -3342,7 +3343,7 @@ export component YapfastWindow inherits Window {
     }
     // So does the edge of the thread beside the conversation, below the header.
     if root.workspace && root.aside-docked: TouchArea {
-        x: root.width - root.aside-shown - 4px; y: root.title-height + 48px; width: 8px; height: root.height - root.title-height - 48px;
+        x: root.width - root.aside-shown - 4px; y: root.title-height + ClientStyle.header-height; width: 8px; height: root.height - root.title-height - ClientStyle.header-height;
         mouse-cursor: ew-resize;
         moved => {
             if self.pressed {
@@ -3370,7 +3371,7 @@ export component YapfastWindow inherits Window {
     if root.pip-shown: StreamPip {
         property <length> left: 72px + root.sidebar-shown + 16px;
         property <length> right: root.width - self.width - 16px;
-        property <length> top: root.title-height + 48px + 16px;
+        property <length> top: root.title-height + ClientStyle.header-height + 16px;
         property <length> bottom: root.height - self.height - 16px;
         x: (root.pip-left ? self.left : self.right) + self.drag-x;
         y: (root.pip-bottom ? self.bottom : self.top) + self.drag-y;
