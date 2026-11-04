@@ -2083,7 +2083,7 @@ export component YapfastWindow inherits Window {
                     // Channel sidebar: a lighter sheet held by the rail and the dock.
                     Rectangle {
                         width: root.sidebar-shown; background: Theme.sidebar;
-                        border-top-left-radius: ClientStyle.enabled ? 0px : 10px; border-bottom-left-radius: ClientStyle.enabled ? 0px : 10px;
+                        border-top-left-radius: ClientStyle.enabled ? 8px : 10px; border-bottom-left-radius: ClientStyle.enabled ? 0px : 10px;
                         clip: true;
                         VerticalLayout {
                             spacing: 0px;
@@ -2116,7 +2116,7 @@ export component YapfastWindow inherits Window {
                                     placeholder: "Find a conversation"; text <=> root.filter; label: "Find a conversation";
                                     edited => { root.filter-edited(); }
                                 }
-                                Rectangle { y: parent.height - 1px; height: 1px; background: Theme.edge; }
+                                Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.line.mix(Theme.sidebar, 0.4) : Theme.edge; }
                             }
                             if !(ClientStyle.enabled && root.dms-selected): HorizontalLayout {
                                 padding: 10px; padding-bottom: 6px;
@@ -2159,6 +2159,14 @@ export component YapfastWindow inherits Window {
                                 }
                             }
                         }
+                        // Discord's outline: the top and left edges meet in a rounded corner,
+                        // and the left line runs down under the account panel.
+                        if ClientStyle.enabled: Rectangle {
+                            x: 0px; y: 0px; width: parent.width + 16px; height: parent.height + 16px;
+                            border-width: 1px; border-color: Theme.line.mix(Theme.sidebar, 0.4); border-radius: 8px; background: transparent;
+                        }
+                        // The edge against the conversation.
+                        if ClientStyle.enabled: Rectangle { x: parent.width - 1px; width: 1px; background: Theme.line.mix(Theme.sidebar, 0.4); }
                     }
                 }
                 // The dock spans the rail and the sidebar. Its avatar and voice icon sit on the
