@@ -155,10 +155,10 @@ export component RailItem inherits Rectangle {
     property <bool> lit: root.selected || pointer.has-hover;
     Rectangle {
         x: 0px; y: (parent.height - self.height) / 2; width: 4px;
-        height: root.selected ? (ClientStyle.enabled ? 32px : 40px) : pointer.has-hover ? 20px : root.unread ? 8px : 0px;
+        height: root.selected ? 40px : pointer.has-hover ? 20px : root.unread ? 8px : 0px;
         border-top-right-radius: 4px; border-bottom-right-radius: 4px;
         background: Theme.text;
-        animate height { duration: 160ms; easing: ease-out; }
+        animate height { duration: 200ms; easing: ease-out; }
     }
     // A picture only changes shape when lit, as in Discord.
     tile := Rectangle {
@@ -267,10 +267,10 @@ component FolderItem inherits Rectangle {
     forward-focus: focus;
     Rectangle {
         x: 0px; y: (parent.height - self.height) / 2; width: 4px;
-        height: root.open ? 0px : root.selected ? (ClientStyle.enabled ? 32px : 40px) : pointer.has-hover ? 20px : root.unread ? 8px : 0px;
+        height: root.open ? 0px : root.selected ? 40px : pointer.has-hover ? 20px : root.unread ? 8px : 0px;
         border-top-right-radius: 4px; border-bottom-right-radius: 4px;
         background: Theme.text;
-        animate height { duration: 160ms; easing: ease-out; }
+        animate height { duration: 200ms; easing: ease-out; }
     }
     tile := Rectangle {
         x: root.tile-left; width: root.tile-size; height: root.tile-size; border-radius: ClientStyle.folder-radius;
@@ -842,14 +842,14 @@ export component ServerRail inherits Rectangle {
             for server[index] in root.servers: Rectangle {
                 // Home already has a pinned separator. Keep the model's line
                 // only when it separates unread DMs from servers below them.
-                height: server.divider ? (ClientStyle.enabled && index == 0 ? 0px : (ClientStyle.enabled ? 1px : 2px) + 8px) : (server.folder ? ClientStyle.folder-tile : ClientStyle.rail-tile) + 8px;
+                height: server.divider ? (ClientStyle.enabled && index == 0 ? 0px : (ClientStyle.enabled ? 1px : 2px) + 8px) : (server.folder ? ClientStyle.folder-tile : ClientStyle.rail-tile) + (ClientStyle.enabled && ((server.folder && server.open) || (server.nested && server.last)) ? 4px : 0px) + (ClientStyle.enabled && server.folder && server.open ? 0px : 8px);
                 if server.divider && (!ClientStyle.enabled || index > 0): Rectangle {
                     x: (72px - self.width) / 2; y: 0px; width: 32px; height: ClientStyle.enabled ? 1px : 2px; border-radius: ClientStyle.enabled ? 0px : 1px; background: ClientStyle.enabled ? Theme.outline : Theme.line;
                 }
                 // An open folder's servers sit on a strip of its colour,
                 // from its folder down to its last server.
                 if server.open || server.nested: Rectangle {
-                    x: (72px - ClientStyle.folder-tile) / 2; y: 0px; width: ClientStyle.folder-tile; height: server.last ? ClientStyle.rail-tile : parent.height;
+                    x: (72px - ClientStyle.folder-tile) / 2; y: 0px; width: ClientStyle.folder-tile; height: server.last ? ClientStyle.rail-tile + (ClientStyle.enabled ? 4px : 0px) : parent.height;
                     border-top-left-radius: server.open ? (ClientStyle.enabled ? 12px : 16px) : 0px;
                     border-top-right-radius: self.border-top-left-radius;
                     border-bottom-left-radius: server.last ? (ClientStyle.enabled ? 12px : 16px) : 0px;
