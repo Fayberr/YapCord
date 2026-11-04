@@ -894,19 +894,7 @@ impl Discord {
                 reply,
             });
         }
-        let parsed: Vec<_> = values.iter().filter_map(message::parse).collect();
-        if parsed.len() < values.len() {
-            // Diagnostic for the empty-DM wave: which kinds are not shown.
-            tracing::info!(
-                "dropped message kinds: {:?}",
-                values
-                    .iter()
-                    .filter(|value| message::parse(value).is_none())
-                    .map(|value| value["type"].as_u64())
-                    .collect::<Vec<_>>()
-            );
-        }
-        (parsed, arrived)
+        (values.iter().filter_map(message::parse).collect(), arrived)
     }
 
     /// [`Self::learn`], waiting a while for the authors' server profiles,
