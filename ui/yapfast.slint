@@ -3037,6 +3037,10 @@ export component YapfastWindow inherits Window {
                                 visible: !root.room-request;
                                 min-height: root.room-request ? 0px : ClientStyle.composer-height; max-height: root.room-request ? 0px : 100000px;
                                 background: Theme.field;
+                                // Discord's outline: faint, and a notch lighter with the keys.
+                                border-width: 1px;
+                                border-color: composer.focused ? Theme.muted.with-alpha(0.55) : Theme.line;
+                                animate border-color { duration: Theme.quick; }
                                 border-radius: 10px;
                                 border-top-left-radius: root.compose-label != "" ? 0px : 10px;
                                 border-top-right-radius: root.compose-label != "" ? 0px : 10px;

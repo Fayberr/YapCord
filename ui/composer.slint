@@ -64,6 +64,8 @@ export component Composer inherits Rectangle {
     // Mention or emoji suggestions show, so the arrow keys, Tab, Enter and Escape
     // go to them.
     in property <bool> suggesting;
+    /// The field has the keys, which the box around it shows.
+    out property <bool> focused: input.has-focus;
     callback edited(string);
     callback accepted;
     // The text and the cursor's byte offset in it, after an edit or a move.
