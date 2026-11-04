@@ -1785,6 +1785,8 @@ export component MessageContent inherits VerticalLayout {
             }
             if message.first && message.notice == "": HorizontalLayout {
                 spacing: 8px;
+                // Discord's name line is 22px tall, a little over the text's.
+                padding-bottom: ClientStyle.enabled ? 2px : 0px;
                 Rectangle {
                     min-width: author-name.min-width; preferred-width: ClientStyle.enabled ? author-plain.preferred-width : author-name.preferred-width;
                     preferred-height: author-name.preferred-height; horizontal-stretch: 0;
