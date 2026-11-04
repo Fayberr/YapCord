@@ -169,30 +169,20 @@ pub(super) fn command(
                             profile: chat_profile(&discord, &guild, profile),
                         });
                     };
-                    let result = discord.profile(&guild, &user, kept).await;
-                    let Ok(mut profile) = result else {
-                        let error = result.err().map(|error| error.to_string());
-                        tracing::warn!(error, "could not fetch a Discord profile");
-                        let _ = events.send(Event::Profile {
-                            user,
-                            result: Err(error.unwrap_or_default()),
+                    let result = discord
+                        .profile(&guild, &user, kept)
+                        .await
+                        .map(|profile| chat_profile(&discord, &guild, profile))
+                        .map_err(|error| {
+                            tracing::warn!(%error, "could not fetch a Discord profile");
+                            error.to_string()
                         });
                         return;
                     };
                     let _ = events.send(Event::Profile {
                         user: user.clone(),
-                        result: Ok(chat_profile(&discord, &guild, profile.clone())),
+                        result: Ok(chat_profile(&discord, &guild, profile)),
                     });
-                    // The badges' levels come after the card is on screen.
-                    let badges_task = async {
-                        if discord.badge_levels(&guild, &user, &mut profile).await {
-                            let badges = chat_profile(&discord, &guild, profile).badges;
-                            let _ = events.send(Event::BadgeLevels {
-                                user: user.clone(),
-                                badges,
-                            });
-                        }
-                    };
                     // The note this account keeps on them fills the full profile's.
                     let note_task = async {
                         if let Ok(note) = discord.note(&user).await {
@@ -202,7 +192,7 @@ pub(super) fn command(
                             });
                         }
                     };
-                    tokio::join!(badges_task, note_task);
+                    note_task.await;
                 });
             }
             (discord, _) => {
