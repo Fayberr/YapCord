@@ -134,7 +134,7 @@ export component MemberPanel inherits Rectangle {
                                 RoleIcon { url: member.role-icon; size: 16px; opacity: member.presence == "offline" ? 0.5 : 1; }
                             }
                             if member.tag != "": Middle {
-                                ServerTagChip { text: member.tag; badge: member.tag-badge; font-size: 12px; fill: #ffffff24; opacity: member.presence == "offline" ? 0.5 : 1; }
+                                ServerTagChip { text: member.tag; badge: member.tag-badge; font-size: 12px; opacity: member.presence == "offline" ? 0.5 : 1; }
                             }
                             if member.timed-out: Image {
                                 source: @image-url("icons/clock.svg"); width: 14px; image-fit: contain;
