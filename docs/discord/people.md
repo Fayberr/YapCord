@@ -694,3 +694,11 @@ and prints counts, times and heap, never process names or paths:
 nix develop path:./nix --command cargo build --profile measure -p yapfast-discord --bin yapfast-game-detection-probe
 target/measure/yapfast-game-detection-probe /path/to/discord-games.json 30
 ```
+
+## Role icons
+
+A role with an icon (`icon` on the role, from GUILD_CREATE and GUILD_ROLE_*)
+shows it 20px beside its group's name in the member list, and the highest role
+with an icon shows 16px before a member's tag in the list. The picture is
+`/role-icons/{role}/{hash}.png?size=64`. Unicode-emoji role icons and the icon
+beside a message author aren't drawn.
