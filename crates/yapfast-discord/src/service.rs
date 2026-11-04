@@ -1337,6 +1337,10 @@ impl Discord {
         self.write_names().learn_user(&value["user"]);
         let profile = profile::parse(&value, server(guild))
             .ok_or_else(|| anyhow!("could not understand Discord's answer"))?;
+        tracing::info!(
+            theme = ?profile.theme,
+            "the theme colours a profile arrived with"
+        );
         {
             let mut profiles = self.lock_profiles();
             profiles.retain(|old| !same(&old));

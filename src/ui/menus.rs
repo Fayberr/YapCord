@@ -1229,3 +1229,48 @@ fn mute_id(muting: Muting) -> String {
         Muting::Off => "unmute".into(),
     }
 }
+
+#[cfg(test)]
+mod order_tests {
+    use super::*;
+
+    #[test]
+    fn a_members_menu_follows_discords_order() {
+        let mut choices = vec![
+            MenuChoice::CopyId,
+            MenuChoice::Block,
+            MenuChoice::Roles,
+            MenuChoice::AddFriend,
+            MenuChoice::AddNote,
+            MenuChoice::Message,
+            MenuChoice::Profile,
+            MenuChoice::Mention,
+            MenuChoice::Ignore,
+            MenuChoice::InviteToServer,
+        ];
+        discord_order(&mut choices);
+        assert_eq!(
+            choices,
+            [
+                MenuChoice::Profile,
+                MenuChoice::Mention,
+                MenuChoice::Message,
+                MenuChoice::AddNote,
+                MenuChoice::Apps,
+                MenuChoice::InviteToServer,
+                MenuChoice::AddFriend,
+                MenuChoice::Ignore,
+                MenuChoice::Block,
+                MenuChoice::Roles,
+                MenuChoice::CopyId,
+            ]
+        );
+    }
+
+    #[test]
+    fn a_menu_without_a_member_gets_no_apps() {
+        let mut choices = vec![MenuChoice::CopyId, MenuChoice::Profile];
+        discord_order(&mut choices);
+        assert_eq!(choices, [MenuChoice::Profile, MenuChoice::CopyId]);
+    }
+}
