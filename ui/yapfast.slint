@@ -2431,7 +2431,7 @@ export component YapfastWindow inherits Window {
                         // one line, cut short, and in full once clicked.
                         if root.has-topic && !ClientStyle.enabled: Middle { Rectangle { width: 1px; height: 24px; background: Theme.line; } }
                         // Discord's is a small round dot, with room either side.
-                        if root.has-topic && ClientStyle.enabled: Middle { Rectangle { width: 12px; height: 4px; Rectangle { width: 4px; height: 4px; x: 4px; border-radius: 2px; background: Theme.faint; } } }
+                        if root.has-topic && ClientStyle.enabled: Middle { Rectangle { width: 9px; height: 3px; Rectangle { width: 3px; height: 3px; x: 2px; border-radius: 1.5px; background: Theme.faint.with-alpha(0.75); } } }
                         if root.has-topic: topic-area := Rectangle {
                             horizontal-stretch: 1; min-width: 40px;
                             accessible-role: button;
