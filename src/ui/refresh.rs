@@ -930,11 +930,21 @@ impl Adapter {
             .map(status_line)
             .unzip();
         window.set_account_status_emoji(status_emoji.flatten().unwrap_or_default().into());
+        // The game Yapfast shows as playing, as the activity icon Discord puts
+        // before the status: alone it names the game, before a status it adds a bullet.
+        let playing = state
+            .discord_playing
+            .as_ref()
+            .filter(|_| state.online && !state.preview && state.discord_show_game);
+        window.set_account_activity_icon(i32::from(playing.is_some()));
+        window.set_account_activity_bullet(playing.is_some() && custom_status.is_some());
         window.set_account_status(
             if state.preview {
                 "Local only"
             } else if let Some(status) = &custom_status {
                 status
+            } else if let Some(playing) = playing {
+                &playing.name
             } else if let Some(status) = &state.account_status {
                 status
             } else if state.online {

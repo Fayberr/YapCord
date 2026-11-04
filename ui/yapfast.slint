@@ -311,6 +311,9 @@ export component YapfastWindow inherits Window {
     /// The account is speaking in the call, unmuted, as its own row there shows.
     in property <bool> account-speaking;
     in property <string> account-status;
+    /// A small icon before the status, 1 for a game, and a bullet after it, as Discord's account panel has.
+    in property <int> account-activity-icon;
+    in property <bool> account-activity-bullet;
     /// The game the Discord account shows it plays, and for how long, which
     /// the window asks for with `game-duration-due` while the menu shows it.
     in property <string> game-activity-name;
@@ -2264,7 +2267,7 @@ export component YapfastWindow inherits Window {
                                     if (account-touch.has-hover || avatar-touch.has-hover) && root.account-username != "": Text {
                                         text: root.account-username; color: Theme.muted; font-size: 13px; overflow: elide;
                                     }
-                                    if !((account-touch.has-hover || avatar-touch.has-hover) && root.account-username != ""): StatusText { text: root.account-status; emoji-url: root.account-status-emoji; }
+                                    if !((account-touch.has-hover || avatar-touch.has-hover) && root.account-username != ""): StatusText { text: root.account-status; emoji-url: root.account-status-emoji; icon: root.account-activity-icon; bullet: root.account-activity-bullet; }
                                 }
                                 account-touch := TouchArea {
                                     enabled: root.discord-linked; mouse-cursor: MouseCursor.pointer;
