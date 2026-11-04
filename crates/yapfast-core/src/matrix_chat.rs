@@ -1072,7 +1072,6 @@ fn load_members(open: &mut OpenRoom, events: &UnboundedSender<Event>) {
                 let mut members: Vec<_> = members
                     .iter()
                     .map(|member| ChatMember {
-                        bot: false,
                         id: member.user_id().to_string(),
                         name: member
                             .display_name()
