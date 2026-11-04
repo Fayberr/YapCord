@@ -877,8 +877,6 @@ mod tests {
                 username: String::new(),
                 name: "Alice".into(),
                 avatar: "a.png".into(),
-                decoration: None,
-                nameplate: None,
                 premium_type: 0,
                 mfa_enabled: false,
                 has_email: true,

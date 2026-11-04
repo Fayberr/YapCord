@@ -10,7 +10,6 @@ use serde_json::Value;
 
 use crate::{
     activity::{Activities, activities},
-    collectibles::Nameplate,
     message::{self, CustomEmoji, Names, Tag},
     ready::Server,
 };
@@ -26,10 +25,6 @@ pub struct ListedMember {
     pub username: Option<String>,
     /// The address of the avatar Discord shows for them on this server.
     pub avatar: String,
-    /// The decoration they wear around their avatar, and the nameplate
-    /// behind their row.
-    pub decoration: Option<String>,
-    pub nameplate: Option<Nameplate>,
     /// The heading they're listed under, with its size, such as `Mods — 2`.
     pub group: String,
     /// The address of the picture of the role their group is, and of the
@@ -319,8 +314,6 @@ impl MemberList {
                             .to_owned(),
                         username: names.username(user).map(str::to_owned),
                         avatar: names.avatar(Some(&self.guild), user),
-                        decoration: names.decoration(user),
-                        nameplate: names.nameplate(user),
                         group: group
                             .as_ref()
                             .map(|(_, heading)| heading.clone())

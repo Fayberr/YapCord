@@ -86,11 +86,6 @@ pub struct Account {
     pub username: String,
     /// The address of its avatar.
     pub avatar: String,
-    /// The decoration it wears around its avatar, and its nameplate.
-    #[serde(default)]
-    pub decoration: Option<String>,
-    #[serde(default)]
-    pub nameplate: Option<crate::collectibles::Nameplate>,
     /// Its Nitro: 0 none, 1 Nitro Classic, 2 Nitro, 3 Nitro Basic; see
     /// [`crate::api::upload_limit`].
     pub premium_type: u8,
@@ -2905,16 +2900,6 @@ impl Discord {
     /// The server tag a user wears beside their name, if they do.
     pub fn server_tag(&self, user: &str) -> Option<crate::message::Tag> {
         self.read_names().server_tag(user).cloned()
-    }
-
-    /// The address of the decoration a user wears around their avatar.
-    pub fn decoration(&self, user: &str) -> Option<String> {
-        self.read_names().decoration(user)
-    }
-
-    /// The nameplate a user equips.
-    pub fn nameplate(&self, user: &str) -> Option<crate::collectibles::Nameplate> {
-        self.read_names().nameplate(user)
     }
 
     /// A member's roles in a server by id, as far as they're known, shared

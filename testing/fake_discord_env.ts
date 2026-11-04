@@ -42,16 +42,10 @@ export type Me = {
   /** A picture file; without one a generated picture, with null Discord's default. */
   avatar?: string | null;
   email?: string;
-  /** What they equip from the collectibles shop; see `Person`. */
-  decoration?: string;
-  nameplate?: Nameplate;
   nitro?: boolean;
   status?: Status;
   customStatus?: CustomStatus;
 };
-
-/** A nameplate: the SKU it was sold as, which names its picture, and a palette such as "violet", "teal" or "bubble_gum". */
-export type Nameplate = { sku: string; palette: string };
 
 export type Person = {
   /** How the env names them: in `from`, `with`, `who`, reactions' `by`, and `<@key>`. */
@@ -60,9 +54,6 @@ export type Person = {
   username?: string;
   name?: string;
   avatar?: string | null;
-  /** The SKU of the avatar decoration they wear: a ring around their avatar. */
-  decoration?: string;
-  nameplate?: Nameplate;
   bot?: boolean;
   /** "online" without one. */
   status?: Status;
