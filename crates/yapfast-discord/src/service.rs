@@ -1308,6 +1308,24 @@ impl Discord {
         let asked = Instant::now();
         let value = self.api.profile(user, server(guild)).await?;
         tracing::info!(ms = asked.elapsed().as_millis() as u64, "fetched a profile");
+        // What the answer says of an effect, to find where Discord puts it
+        // when a card shows none. Only keys and the effect's own value.
+        let keys = |value: &Value| {
+            value
+                .as_object()
+                .map(|object| object.keys().cloned().collect::<Vec<_>>().join(","))
+                .unwrap_or_default()
+        };
+        tracing::info!(
+            top = keys(&value),
+            user_profile = keys(&value["user_profile"]),
+            guild_profile = keys(&value["guild_member_profile"]),
+            effect = %value["user_profile"]["profile_effect"],
+            guild_effect = %value["guild_member_profile"]["profile_effect"],
+            top_effect = %value["profile_effect"],
+            user_effect = %value["user"]["profile_effect"],
+            "what a profile says of its effect"
+        );
         self.write_names().learn_user(&value["user"]);
         let profile = profile::parse(&value, server(guild))
             .ok_or_else(|| anyhow!("could not understand Discord's answer"))?;
