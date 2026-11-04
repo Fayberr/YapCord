@@ -160,6 +160,7 @@ export component DeviceToggle inherits Rectangle {
     in property <bool> alert;
     in property <bool> enabled: true;
     in property <bool> open;
+    out property <bool> hovered: toggle.hovered || caret.has-hover;
     callback clicked;
     callback menu;
     width: 52px; min-height: 32px;
