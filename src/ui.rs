@@ -531,6 +531,34 @@ fn watch_window(window: &YapfastWindow, adapter: &Rc<RefCell<Adapter>>) {
                     }
                     return EventResult::PreventDefault;
                 }
+                // Alt+Left and Alt+Right go back and forward through the
+                // conversations visited, as in Discord.
+                if let WindowEvent::KeyboardInput { event: key, .. } = event
+                    && key.state == ElementState::Pressed
+                    && keys.alt_only()
+                    && let Key::Named(named @ (NamedKey::ArrowLeft | NamedKey::ArrowRight)) =
+                        key.logical_key
+                    && let Some(window) = weak.upgrade()
+                    && window.get_workspace()
+                    && !window.get_settings_open()
+                {
+                    if !key.repeat {
+                        let action = if named == NamedKey::ArrowLeft {
+                            Action::NavigateBack
+                        } else {
+                            Action::NavigateForward
+                        };
+                        let (adapter, weak) = (adapter.clone(), weak.clone());
+                        slint::Timer::single_shot(Duration::ZERO, move || {
+                            if let (Some(adapter), Some(window)) =
+                                (adapter.upgrade(), weak.upgrade())
+                            {
+                                adapter.borrow_mut().action(&window, action);
+                            }
+                        });
+                    }
+                    return EventResult::PreventDefault;
+                }
                 let step = match keys.event(event) {
                     zoom::Outcome::Pass => return EventResult::Propagate,
                     zoom::Outcome::Taken => return EventResult::PreventDefault,
