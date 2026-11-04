@@ -7449,3 +7449,23 @@ fn yapfast_server_rail_scroll_snapshot_benchmark() {
     );
     window.hide().unwrap();
 }
+
+/// A profile without a banner tints its banner area with the avatar's
+/// dominant colour: a vivid colour on a grey ground wins over the ground.
+#[test]
+fn dominant_colour_of_an_avatar_is_its_vivid_colour() {
+    use slint::{Rgba8Pixel, SharedPixelBuffer};
+    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(32, 32);
+    for (at, pixel) in buffer.make_mut_slice().iter_mut().enumerate() {
+        *pixel = if at % 8 == 0 {
+            Rgba8Pixel::new(200, 20, 20, 255)
+        } else {
+            Rgba8Pixel::new(120, 120, 120, 255)
+        };
+    }
+    let color = profile::dominant_color(&slint::Image::from_rgba8(buffer)).unwrap();
+    let (red, green) = ((color >> 16) & 0xff, (color >> 8) & 0xff);
+    assert!(red > 150 && green < 90, "{color:06x}");
+    let empty = SharedPixelBuffer::<Rgba8Pixel>::new(4, 4);
+    assert_eq!(profile::dominant_color(&slint::Image::from_rgba8(empty)), None);
+}

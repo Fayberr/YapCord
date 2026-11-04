@@ -356,6 +356,15 @@ pub(super) fn profile_data(
             .iter()
             .find(|effect| effect.sku == sku)
     });
+    let avatar = cached_picture(pictures, state, profile.avatar.as_deref());
+    let banner = cached_picture(pictures, state, profile.banner.as_deref());
+    // With no banner, accent colour or theme, Discord tints the banner area
+    // with the avatar's dominant colour.
+    let accent = profile.accent.or_else(|| {
+        (profile.banner.is_none() && profile.theme.is_none())
+            .then(|| dominant_color(&avatar))
+            .flatten()
+    });
     ProfileData {
         effect_layers: ModelRc::new(VecModel::from(
             effect.map_or_else(Vec::new, |effect| effect_layers(effect)),
@@ -381,7 +390,7 @@ pub(super) fn profile_data(
         name: profile.name.clone().into(),
         initial: initial(&profile.name),
         tint: tint(&profile.name),
-        picture: cached_picture(pictures, state, profile.avatar.as_deref()),
+        picture: avatar.clone(),
         decoration_url: profile.decoration.as_deref().unwrap_or_default().into(),
         name_style: super::name_style::row(profile.style, &profile.name),
         handle: profile.handle.as_str().into(),
@@ -396,9 +405,9 @@ pub(super) fn profile_data(
             .and_then(|tag| tag.badge.as_deref())
             .unwrap_or_default()
             .into(),
-        banner: cached_picture(pictures, state, profile.banner.as_deref()),
-        accent: role_color(profile.accent),
-        has_accent: profile.accent.is_some(),
+        banner: banner.clone(),
+        accent: role_color(accent),
+        has_accent: accent.is_some(),
         presence: presence_name(profile.presence).into(),
         activity: activity.into(),
         activity_emoji: activity_emoji.unwrap_or_default().into(),
@@ -575,6 +584,40 @@ pub(super) fn role_rows(roles: &[ProfileRole], width: f32) -> ModelRc<ProfileRol
             })
             .collect::<Vec<_>>(),
     ))
+}
+
+/// The colour that stands out most in a picture, as 0xRRGGBB: the average of
+/// its opaque pixels, each counted by how saturated it is, so a vivid avatar
+/// on a grey background gives its vivid colour. A grey picture gives its
+/// plain average. None while the picture is empty or not a pixel buffer.
+pub(super) fn dominant_color(picture: &slint::Image) -> Option<u32> {
+    let pixels = picture.to_rgba8()?;
+    // About 1000 samples are enough for an average.
+    let step = (pixels.as_slice().len() / 1024).max(1);
+    let (mut total, mut sum, mut count) = (0.0f64, [0.0f64; 3], 0.0f64);
+    for pixel in pixels.as_slice().iter().step_by(step) {
+        if pixel.a < 128 {
+            continue;
+        }
+        let channels = [f64::from(pixel.r), f64::from(pixel.g), f64::from(pixel.b)];
+        let high = channels.iter().copied().fold(0.0, f64::max);
+        let low = channels.iter().copied().fold(255.0, f64::min);
+        // Saturation, with a floor so that grey pictures still average.
+        let weight = (high - low) / 255.0 + 0.02;
+        for (at, channel) in channels.iter().enumerate() {
+            sum[at] += channel * weight;
+        }
+        total += weight;
+        count += 1.0;
+    }
+    if count == 0.0 {
+        return None;
+    }
+    let mut color = 0u32;
+    for sum in sum {
+        color = (color << 8) | (sum / total).round().clamp(0.0, 255.0) as u32;
+    }
+    Some(color)
 }
 
 /// A Discord role's RGB colour for Slint.

@@ -734,7 +734,7 @@ export component ProfileCard inherits Rectangle {
     property <color> ground: root.themed ? root.theme-start : root.plain-ground;
     height: min(body.preferred-height, root.limit);
     background: root.themed ? @linear-gradient(180deg, root.data.theme-primary 0%, root.data.theme-secondary 100%) : root.plain-ground;
-    border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; border-width: root.docked || root.themed ? 0px : 1px; border-color: Theme.edge;
+    border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; border-width: root.themed ? 0px : root.docked && !ClientStyle.enabled ? 0px : 1px; border-color: Theme.edge;
     drop-shadow-blur: root.docked ? 0px : 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: root.docked ? 0px : 8px;
     accessible-role: groupbox;
     accessible-label: root.data.name + "'s profile";
