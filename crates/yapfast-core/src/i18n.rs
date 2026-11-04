@@ -55,7 +55,33 @@ pub fn message_hint(name: &str) -> String {
     tr("message_hint").replace("{name}", name)
 }
 
+/// "1 mutual friend" or "5 mutual friends", in the current language.
+pub fn mutual_friends(count: usize) -> String {
+    let key = if count == 1 { "mutual_friend_one" } else { "mutual_friend_many" };
+    tr(key).replace("{n}", &count.to_string())
+}
+
+/// "1 mutual server" or "2 mutual servers", in the current language.
+pub fn mutual_servers(count: usize) -> String {
+    let key = if count == 1 { "mutual_server_one" } else { "mutual_server_many" };
+    tr(key).replace("{n}", &count.to_string())
+}
+
 pub(crate) const KEYS: &[&str] = &[
+    "show_mutual",
+    "roles",
+    "connections",
+    "note_title",
+    "note_hint",
+    "add_friend",
+    "friends",
+    "friend_sent",
+    "accept_friend",
+    "view_full_profile",
+    "mutual_friend_one",
+    "mutual_friend_many",
+    "mutual_server_one",
+    "mutual_server_many",
     "message_hint",
     "view_full_bio",
     "member_since",
@@ -79,9 +105,23 @@ pub(crate) const KEYS: &[&str] = &[
 
 fn english(key: &str) -> Option<&'static str> {
     Some(match key {
+        "show_mutual" => "Show mutual friends and servers in the full profile",
+        "roles" => "Roles",
+        "connections" => "Connections",
+        "note_title" => "Note (only visible to you)",
+        "note_hint" => "Click to add a note",
+        "add_friend" => "Add Friend",
+        "friends" => "Friends",
+        "friend_sent" => "Friend Request Sent",
+        "accept_friend" => "Accept Friend Request",
+        "view_full_profile" => "View Full Profile",
+        "mutual_friend_one" => "{n} mutual friend",
+        "mutual_friend_many" => "{n} mutual friends",
+        "mutual_server_one" => "{n} mutual server",
+        "mutual_server_many" => "{n} mutual servers",
         "message_hint" => "Message @{name}",
         "view_full_bio" => "View full bio",
-        "member_since" => "MEMBER SINCE",
+        "member_since" => "Member since",
         "tab_activity" => "Activity",
         "tab_mutual_friends" => "Mutual friends",
         "tab_mutual_servers" => "Mutual servers",
@@ -104,9 +144,23 @@ fn english(key: &str) -> Option<&'static str> {
 
 fn german(key: &str) -> Option<&'static str> {
     Some(match key {
+        "show_mutual" => "Gemeinsame Freunde und Server im vollständigen Profil anzeigen",
+        "roles" => "Rollen",
+        "connections" => "Verknüpfungen",
+        "note_title" => "Notiz (nur für dich sichtbar)",
+        "note_hint" => "Hier klicken, um eine Notiz hinzuzufügen",
+        "add_friend" => "Freund hinzufügen",
+        "friends" => "Freunde",
+        "friend_sent" => "Freundschaftsanfrage gesendet",
+        "accept_friend" => "Freundschaftsanfrage annehmen",
+        "view_full_profile" => "Vollständiges Profil anzeigen",
+        "mutual_friend_one" => "{n} gemeinsamer Freund",
+        "mutual_friend_many" => "{n} gemeinsame Freunde",
+        "mutual_server_one" => "{n} gemeinsamer Server",
+        "mutual_server_many" => "{n} gemeinsame Server",
         "message_hint" => "Nachricht an @{name}",
         "view_full_bio" => "Vollständige Bio anzeigen",
-        "member_since" => "MITGLIED SEIT",
+        "member_since" => "Mitglied seit",
         "tab_activity" => "Aktivität",
         "tab_mutual_friends" => "Gemeinsame Freunde",
         "tab_mutual_servers" => "Gemeinsame Server",
@@ -159,5 +213,10 @@ mod tests {
             "Nachricht an @sam"
         );
         assert_eq!(message_hint("sam"), "Message @sam");
+        assert_eq!(
+            tr_in(Language::German, "mutual_friend_many").replace("{n}", "5"),
+            "5 gemeinsame Freunde"
+        );
+        assert_eq!(tr_in(Language::English, "mutual_server_one").replace("{n}", "1"), "1 mutual server");
     }
 }

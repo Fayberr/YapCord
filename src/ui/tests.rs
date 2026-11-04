@@ -4782,7 +4782,8 @@ fn edit_server_profile_opens_the_per_server_profile_editor() {
     assert_eq!(window.get_profile_editor_pronouns(), "she/her");
     assert_eq!(prompt.name_placeholder, "alice");
     assert_eq!(prompt.preview.name, "Alice", "the main profile's name");
-    assert_eq!(prompt.preview.handle, "alice · she/her");
+    assert_eq!(prompt.preview.handle, "alice");
+    assert_eq!(prompt.preview.pronouns, "she/her");
     assert!(prompt.preview.has_bio, "the main profile's bio");
     assert_eq!(prompt.bio_left, 190);
 

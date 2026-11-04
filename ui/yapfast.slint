@@ -655,6 +655,10 @@ export component YapfastWindow inherits Window {
     callback close-profile();
     /// Send someone a message in their DM from their card: who, and what.
     callback message-from-profile(string, string);
+    /// Open the DM with this person, from the buttons of the full profile.
+    callback message-person(string);
+    /// Save the note on this person: the id, then the note ("" removes it).
+    callback save-note(string, string);
     in property <bool> viewer-open;
     in property <image> viewer-image;
     in property <[image]> viewer-frames;
@@ -3745,11 +3749,13 @@ export component YapfastWindow inherits Window {
         }
         ProfileModal {
             opacity: Popup.opacity(large-profile-motion.amount); transform-scale: Popup.scale(large-profile-motion.amount);
-            width: min(860px, root.width - 64px); height: min(640px, root.height - 64px);
+            width: min(max(root.width * 0.7, 720px), root.width - 32px); height: min(max(root.height * 0.75, 520px), root.height - 32px);
             x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             data: root.profile;
             close => { root.close-profile(); }
             befriend => { root.befriend(root.profile.id); }
+            message-person(user) => { root.close-profile(); root.message-person(user); }
+            save-note(user, note) => { root.save-note(user, note); }
             more(x, y) => { root.open-context-menu(root.profile.id, true, x, y); }
             open-link(link) => { root.open-link(link); }
             open-server(server, x, y, width, height) => { root.open-server-card(server, x, y, width, height); }

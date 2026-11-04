@@ -3,26 +3,14 @@
 
 use super::*;
 
-/// A bio with each custom emoji tag, `<:name:id>`, as its glyph where the
-/// emoji's picture has arrived already, and as `:name:` where it has not.
-fn bio_with_emoji(bio: &str) -> String {
-    #[cfg(not(feature = "discord"))]
-    return bio.to_owned();
-    #[cfg(feature = "discord")]
-    bio_with_emoji_tags(bio)
-}
-
-#[cfg(feature = "discord")]
-fn bio_with_emoji_tags(bio: &str) -> String {
-    let mut out = bio.to_owned();
-    for emoji in yapfast_core::yapfast_discord::message::custom_emoji(bio) {
-        let shown = crate::custom_emoji::glyph(&emoji.id)
-            .map_or_else(|| format!(":{}:", emoji.name), String::from);
-        for tag in [
-            format!("<:{}:{}>", emoji.name, emoji.id),
-            format!("<a:{}:{}>", emoji.name, emoji.id),
-        ] {
-            out = out.replace(&tag, &shown);
+/// A bio with each custom emoji as its glyph where the emoji's picture has
+/// arrived already, and as a blank of an emoji's width where it has not, so
+/// the bio doesn't show `:name:` and then jump when the picture comes.
+fn bio_with_emoji(bio: &str, emoji: &[yapfast_core::chat::CustomEmoji]) -> String {
+    let mut out = crate::custom_emoji::text(bio, emoji);
+    for each in emoji {
+        if crate::custom_emoji::glyph(&each.id).is_none() {
+            out = out.replace(&each.text, "\u{2003}");
         }
     }
     out
@@ -321,11 +309,14 @@ pub(super) fn profile_data(
     view: &ProfileView,
 ) -> ProfileData {
     let profile = &view.profile;
-    let handle = [profile.handle.as_str(), profile.pronouns.as_str()]
-        .into_iter()
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join(" · ");
+    // Emoji in the bio whose pictures are here become glyphs now, so the
+    // bio below can show them.
+    crate::custom_emoji::add(profile.bio_emoji.iter().filter_map(|emoji| {
+        Some((
+            emoji.id.as_str(),
+            state.pictures.get(&emoji.picture)?.as_ref(),
+        ))
+    }));
     // The profile keeps the status's own line breaks. A line that only
     // names an activity goes, as its card says more.
     let (activity_emoji, activity) = profile
@@ -367,7 +358,8 @@ pub(super) fn profile_data(
         picture: cached_picture(pictures, state, profile.avatar.as_deref()),
         decoration_url: profile.decoration.as_deref().unwrap_or_default().into(),
         name_style: super::name_style::row(profile.style, &profile.name),
-        handle: handle.into(),
+        handle: profile.handle.as_str().into(),
+        pronouns: profile.pronouns.as_str().into(),
         tag: profile
             .tag
             .as_ref()
@@ -420,7 +412,7 @@ pub(super) fn profile_data(
                 })
                 .collect::<Vec<_>>(),
         )),
-        bio: markdown(&bio_with_emoji(&profile.bio)),
+        bio: markdown(&bio_with_emoji(&profile.bio, &profile.bio_emoji)),
         has_bio: !profile.bio.trim().is_empty(),
         role_rows: role_rows(&profile.roles, PROFILE_CARD_WIDTH),
         role_rows_large: role_rows(&profile.roles, PROFILE_LARGE_WIDTH),
@@ -477,8 +469,31 @@ pub(super) fn profile_data(
         friend: if profile.id.starts_with('@') {
             0
         } else {
-            friend_offer(state.relation(&profile.id))
+            match state.relation(&profile.id) {
+                Relation::Friend => 4,
+                relation => friend_offer(relation),
+            }
         },
+        connections: ModelRc::new(VecModel::from(
+            profile
+                .connections
+                .iter()
+                .map(|connection| ProfileConnectionRow {
+                    kind: connection.kind.as_str().into(),
+                    name: connection.name.as_str().into(),
+                    url: connection.url.as_deref().unwrap_or_default().into(),
+                    since: connection.since.as_deref().unwrap_or_default().into(),
+                    verified: connection.verified,
+                })
+                .collect::<Vec<_>>(),
+        )),
+        mutual_friends_text: yapfast_core::i18n::mutual_friends(profile.friends.len()).into(),
+        mutual_servers_text: yapfast_core::i18n::mutual_servers(profile.servers.len()).into(),
+        note_text: profile.note.as_str().into(),
+        note_editable: !profile.id.starts_with('@') && state.relation(&profile.id) != Relation::Me,
+        can_message: state
+            .person_choices(&profile.id)
+            .contains(&MenuChoice::Message),
         // Discord's card names them as the profile does.
         message_hint: if state
             .person_choices(&profile.id)

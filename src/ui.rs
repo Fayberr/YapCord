@@ -1098,6 +1098,16 @@ enum Animate {
 fn set_strings(window: &YapfastWindow) {
     use i18n::tr;
     let strings = window.global::<Strings>();
+    strings.set_show_mutual(tr("show_mutual").into());
+    strings.set_roles(tr("roles").into());
+    strings.set_connections(tr("connections").into());
+    strings.set_note_title(tr("note_title").into());
+    strings.set_note_hint(tr("note_hint").into());
+    strings.set_add_friend(tr("add_friend").into());
+    strings.set_friends(tr("friends").into());
+    strings.set_friend_sent(tr("friend_sent").into());
+    strings.set_accept_friend(tr("accept_friend").into());
+    strings.set_view_full_profile(tr("view_full_profile").into());
     strings.set_view_full_bio(tr("view_full_bio").into());
     strings.set_member_since(tr("member_since").into());
     strings.set_tab_activity(tr("tab_activity").into());

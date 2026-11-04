@@ -708,6 +708,13 @@ export component TextField inherits Rectangle {
     in property <length> pad: 12px;
     in property <color> fill: Theme.sunken;
     in property <bool> ring: true;
+    /// What the placeholder is drawn in.
+    in property <color> placeholder-color: Theme.muted;
+    /// A picture at the field's right end, such as a smiley, which the text
+    /// stays clear of.
+    in property <image> trailing-icon;
+    in property <color> trailing-tint: Theme.secondary;
+    property <length> trailing: root.trailing-icon.width > 0 ? 28px : 0px;
     /// The field has the keys.
     out property <bool> focused: input.has-focus;
     callback edited(string);
@@ -719,13 +726,13 @@ export component TextField inherits Rectangle {
     border-width: root.ring && input.has-focus ? 1px : 0px;
     border-color: Theme.accent.with-alpha(0.8);
     Text {
-        x: root.pad; width: root.width - 2 * root.pad; height: root.height;
+        x: root.pad; width: root.width - 2 * root.pad - root.trailing; height: root.height;
         visible: root.text == "";
-        text: root.placeholder; color: root.enabled ? Theme.muted : Theme.faint; font-size: root.text-size;
+        text: root.placeholder; color: root.enabled ? root.placeholder-color : Theme.faint; font-size: root.text-size;
         vertical-alignment: center; overflow: elide;
     }
     Rectangle {
-        x: root.pad; width: root.width - 2 * root.pad; height: root.height; clip: true;
+        x: root.pad; width: root.width - 2 * root.pad - root.trailing; height: root.height; clip: true;
         input := TextInput {
             property <length> scroll: 0px;
             x: min(0px, max(parent.width - self.width, self.scroll));
@@ -751,6 +758,10 @@ export component TextField inherits Rectangle {
                 }
             }
         }
+    }
+    if root.trailing-icon.width > 0: Image {
+        x: root.width - root.pad - 20px + 4px; y: (root.height - 20px) / 2; width: 20px; height: 20px;
+        source: root.trailing-icon; colorize: root.trailing-tint;
     }
 }
 
