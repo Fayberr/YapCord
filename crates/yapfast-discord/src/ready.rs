@@ -1697,6 +1697,40 @@ mod tests {
     }
 
     #[test]
+    fn a_channel_is_private_when_everyone_may_not_see_it() {
+        let server = Server {
+            id: "10".into(),
+            roles: HashMap::from([("10".into(), VIEW_CHANNEL)]).into(),
+            ..Default::default()
+        };
+        let hidden = |allow, deny| Channel {
+            overwrites: vec![Overwrite {
+                id: "10".into(),
+                member: false,
+                allow,
+                deny,
+            }]
+            .into(),
+            ..Default::default()
+        };
+        assert!(!server.private(&Channel::default()));
+        assert!(server.private(&hidden(0, VIEW_CHANNEL)));
+        assert!(!server.private(&hidden(VIEW_CHANNEL, 0)));
+        // A role's overwrite is not @everyone's.
+        let role = Channel {
+            overwrites: vec![Overwrite {
+                id: "20".into(),
+                member: false,
+                allow: 0,
+                deny: VIEW_CHANNEL,
+            }]
+            .into(),
+            ..Default::default()
+        };
+        assert!(!server.private(&role));
+    }
+
+    #[test]
     fn channel_permissions_follow_roles_and_overwrites() {
         let everyone = VIEW_CHANNEL | CONNECT;
         let server = Server {
