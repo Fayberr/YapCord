@@ -1376,7 +1376,7 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
     };
     assert_eq!(
         marked(|row| row.separated),
-        ["Change nickname", "Roles", "Time out Dave", "Copy ID"]
+        ["Apps", "Change nickname", "Time out Dave", "Copy ID"]
     );
     assert_eq!(
         marked(|row| row.danger),
@@ -1390,7 +1390,7 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
     );
 
     // Roles: every one, ticked where held, greyed where out of reach.
-    let roles = window.get_menu_submenus().row_data(10).unwrap();
+    let roles = window.get_menu_submenus().row_data(11).unwrap();
     let shown: Vec<(String, bool, bool)> = roles
         .iter()
         .map(|row| (row.text.to_string(), row.checked, row.disabled))
