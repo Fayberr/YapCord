@@ -1459,6 +1459,9 @@ impl OpenChannel {
                             &discord.render(server.map(|server| &**server), &original.content),
                         )),
                         item: Some(format!("d:{id}")),
+                        color: server.and_then(|server| {
+                            discord.color(server, &original.author_id)
+                        }),
                     })
                 }),
                 attachments: pending
@@ -1589,12 +1592,14 @@ impl OpenChannel {
                 avatar: Some(discord.avatar(Some(&self.guild), author_id)),
                 body: plain_snippet(&crate::spoiler::hide(&discord.render(server, content))),
                 item: Some(format!("d:{id}")),
+                color: server.and_then(|server| discord.color(server, author_id)),
             },
             DiscordReply::Deleted => Reply {
                 author: String::new(),
                 avatar: None,
                 body: "The original message was deleted.".into(),
                 item: None,
+                color: None,
             },
         });
         let timestamp = message.timestamp();

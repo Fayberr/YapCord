@@ -15,6 +15,7 @@ pub mod application;
 mod audio_io;
 pub mod backend;
 pub mod blocks;
+pub mod i18n;
 #[cfg(feature = "matrix")]
 pub mod calls;
 pub mod camera;

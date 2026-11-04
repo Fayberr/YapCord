@@ -349,6 +349,16 @@ an error.
   current from RELATIONSHIP_ADD and RELATIONSHIP_REMOVE.
 - A reply's quoted line jumps to the original and highlights it for a
   moment, as described under [jumping to a message](#jumping-to-a-message).
+  In Discord's style the quote reads "@Name" in the author's role colour
+  (`Reply.color`, from the member's roles when the original is known), in
+  regular weight, before 13px text in the secondary colour.
+- A picture in a message sits straight on the message background: a
+  transparent PNG or GIF shows no backdrop, as in Discord. Only the
+  loading skeleton draws a fill.
+- The context menus (channel, server, member and message) use Discord's
+  shades (`Theme.menu`, `Theme.menu-line`, `Theme.danger-text`), a 255px
+  minimum width, icons only on the rows Discord gives them, and a greyed
+  "Mark as read" first row when there is nothing to read.
 - Desktop notifications follow the person's Discord settings: each channel's,
   category's or server's level (every message, mentions only or nothing),
   falling back to the server's default, with mutes leaving only mentions. DMs
@@ -606,3 +616,18 @@ Discord's do, built alike in `src/ui/menus.rs` (`Notify`):
   heading names its first channel, and Yapfast finds the channel's category
   (`Application::category_of`); an empty category's heading names the
   category itself.
+
+## Writing without permission
+
+In Discord mode, in a channel the account can read but not write in (no
+`SEND_MESSAGES`, a locked thread or an archived one), the composer is one
+disabled bar in place of the box and its toolbar, with Discord's words "You do
+not have permission to send messages in this channel." (`composer_no_permission`).
+A timed-out account keeps its own banner.
+
+## Dates
+
+A day divider reads 12px semibold. With a 12-hour clock English dates are
+month-first as in en-US ("November 4, 2026"); with a 24-hour clock they are
+day-first. German is always day-first ("4. November 2026"). The chat header
+puts a 4px round dot between the channel name and its topic.
