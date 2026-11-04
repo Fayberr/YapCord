@@ -328,6 +328,9 @@ export component Avatar inherits Rectangle {
     changed picture-url => { root.request-picture(); }
     changed shown-picture => { root.request-picture(); }
     in property <length> size: 40px;
+    /// A corner radius for a rounded square; negative is a circle.
+    in property <length> corner: -1px;
+    property <length> shape: root.corner >= 0px ? root.corner : root.size / 2;
     in property <bool> speaking;
     /// The address of the decoration around the avatar, which Discord draws
     /// a fifth larger than it, centred, over its edge.
@@ -352,7 +355,7 @@ export component Avatar inherits Rectangle {
     changed decoration => { root.request-decoration(); }
     changed animated-url => { root.request-decoration(); }
     width: root.size; height: root.size;
-    border-radius: root.size / 2;
+    border-radius: root.shape;
     background: root.shown-picture.width > 0 ? transparent : root.tint;
     if root.shown-picture.width == 0: Text {
         text: root.initial; color: #ffffff; font-size: root.size * 0.42; font-weight: 700;
@@ -360,7 +363,7 @@ export component Avatar inherits Rectangle {
     }
     if root.shown-picture.width > 0: Rectangle {
         width: root.size; height: root.size;
-        border-radius: root.size / 2; clip: true;
+        border-radius: root.shape; clip: true;
         Image { source: root.shown-picture; width: root.size; height: root.size; image-fit: cover; }
     }
     if root.decoration.width > 0: Picture {

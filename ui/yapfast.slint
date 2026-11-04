@@ -1524,7 +1524,7 @@ export component YapfastWindow inherits Window {
     changed browse-open => { Tip.text = ""; }
     property <bool> profile-docked: root.profile-available && root.profile-panel && root.panel-profile-shown && !root.search-open && !root.aside-docked;
     // Search results take the place of the member list or the profile.
-    property <length> docked-width: root.search-open ? 420px : root.aside-docked ? root.aside-shown : (root.members-docked ? 240px : 0px) + (root.profile-docked ? ClientStyle.profile-width : 0px);
+    property <length> docked-width: root.search-open ? 420px : root.aside-docked ? root.aside-shown : (root.members-docked ? ClientStyle.members-width : 0px) + (root.profile-docked ? ClientStyle.profile-width : 0px);
     // The pin and add buttons open their popovers under themselves.
     property <length> popover-x;
     property <length> popover-y;
@@ -2785,7 +2785,7 @@ export component YapfastWindow inherits Window {
                                             property <bool> keyed: self.lit && root.keyboard-popup != "";
                                             changed keyed => {
                                                 if self.keyed {
-                                                    root.anchor(self.absolute-position.x + self.width - 16px, self.absolute-position.y + self.top - 16px, 0px, 32px, false);
+                                                    root.anchor(self.absolute-position.x + self.width - 16px, self.absolute-position.y + self.body - 16px, 0px, 32px, false);
                                                     if root.keyboard-popup == "menu" { root.open-menu(message); } else { root.open-picker(message.item); }
                                                     root.keyboard-popup = "";
                                                 }
@@ -2812,34 +2812,47 @@ export component YapfastWindow inherits Window {
                                             // The last row's tints stop above the space it leaves at the end,
                                             // where the typing line sits on the chat's own colour.
                                             property <length> tail: index == root.messages.length - 1 ? (root.detached ? 74px : 20px) : 0px;
+                                            // Where the message itself starts: its tint, hover bar and edge
+                                            // leave out the history notice and the dividers above it.
+                                            property <length> head: (index == 0 && root.room-ready ? 42px : 0px)
+                                                + (message.day != "" || message.unread-start ? 26px : 0px);
+                                            property <length> body: self.top + (self.head > 0px ? col.padding-top + self.head : 0px);
                                             Rectangle {
-                                                y: parent.top; height: parent.height - parent.top - parent.tail;
+                                                y: parent.body; height: parent.height - parent.body - parent.tail;
                                                 background: parent.jumped && root.jump-lit ? Theme.accent.transparentize(0.86) : parent.lit ? Theme.row-hover : transparent;
                                                 animate background { duration: 400ms; }
                                             }
                                             // A message that calls on this account is tinted marigold with a
                                             // marigold edge, below the history notice and the dividers above it:
                                             // a mention always, a reply to its message while it's new.
-                                            property <length> head: (index == 0 && root.room-ready ? 42px : 0px)
-                                                + (message.day != "" || message.unread-start ? 26px : 0px);
                                             if message.highlighted: Rectangle {
-                                                y: parent.top + (parent.head > 0 ? col.padding-top + parent.head : 0px);
+                                                y: parent.body;
                                                 height: parent.height - self.y - parent.tail;
                                                 background: row-pointer.has-hover ? Theme.mentioned-hover : Theme.mentioned;
                                                 Rectangle { x: 0px; width: 2px; background: Theme.accent; }
                                             }
                                             // The keyboard's message has a marigold edge.
-                                            if self.lit && root.browsing: Rectangle { x: 0px; y: parent.top; width: 3px; height: parent.height - parent.top; background: Theme.accent; }
+                                            if self.lit && root.browsing: Rectangle { x: 0px; y: parent.body; width: 3px; height: parent.height - parent.body; background: Theme.accent; }
                                             // The pointer area wraps the row, so hovering selectable text still counts.
                                             // The last hovered or clicked message keeps its actions: the list takes
                                             // the pointer when a press starts, which ends hover, so a hover-only bar
                                             // would vanish before its button saw the click.
                                             row-pointer := TouchArea {
                                                 y: parent.top; height: parent.height - parent.top;
-                                                changed has-hover => { if self.has-hover { root.active-item = message.item; root.active-index = index; } }
+                                                // The notice and dividers above the message aren't it: the pointer
+                                                // over them doesn't call up its bar.
+                                                property <bool> on-body: self.mouse-y >= parent.body - parent.top;
+                                                changed has-hover => { if self.has-hover && self.on-body { root.active-item = message.item; root.active-index = index; } }
                                                 clicked => { root.active-item = message.item; root.active-index = index; }
                                                 // A right click opens the same menu as the hover bar's More button.
                                                 pointer-event(event) => {
+                                                    if event.kind == PointerEventKind.move && parent.head > 0px {
+                                                        if self.on-body {
+                                                            if root.active-item != message.item { root.active-item = message.item; root.active-index = index; }
+                                                        } else if root.active-item == message.item && !root.browsing && root.menu-item == "" && root.react-item == "" && root.confirm-delete == "" {
+                                                            root.active-item = "";
+                                                        }
+                                                    }
                                                     if event.button == PointerEventButton.right && event.kind == PointerEventKind.down
                                                         && !message.deleted && message.delivery == "" {
                                                         root.active-item = message.item;
@@ -2921,7 +2934,7 @@ export component YapfastWindow inherits Window {
                                             // Actions, the reaction picker and delete confirmation float over the
                                             // row's top edge, so opening them never moves the timeline.
                                             if (self.lit || root.react-item == message.item || root.menu-item == message.item || root.confirm-delete == message.item) && !message.deleted && message.delivery == "": Rectangle {
-                                                x: parent.width - self.width - 16px; y: parent.top + (index == 0 ? 4px : -16px);
+                                                x: parent.width - self.width - 16px; y: parent.body + (index == 0 && parent.head == 0px ? 4px : -16px);
                                                 width: actions.preferred-width; height: actions.preferred-height;
                                                 background: Theme.raised; border-color: Theme.edge; border-width: 1px; border-radius: 8px;
                                                 drop-shadow-blur: 10px; drop-shadow-color: #00000059; drop-shadow-offset-y: 2px;
@@ -3285,7 +3298,7 @@ export component YapfastWindow inherits Window {
                         save-attachment(id, index) => { root.save-attachment(id, index); }
                     }
                     if root.members-docked: MemberPanel {
-                        width: 240px; rows: root.roster; activity-rows: root.roster-activity; activity-total: root.roster-activity-total; note: root.roster-note; selected: root.profile-member;
+                        width: ClientStyle.members-width; rows: root.roster; activity-rows: root.roster-activity; activity-total: root.roster-activity-total; note: root.roster-note; selected: root.profile-member;
                         hover-profile(id) => { root.prefetch-profile(id); }
                         open-profile(id, y) => { root.profile-y = y; root.profile-at-pointer = false; root.show-profile(id); }
                         open-member-menu(id, x, y) => { root.open-context-menu(id, true, x, y); }
@@ -3764,7 +3777,7 @@ export component YapfastWindow inherits Window {
             width: 300px; limit: root.height - root.title-height - 16px;
             x: root.profile-at-pointer
                 ? root.beside(root.anchor-x, root.anchor-width, self.width)
-                : root.width - 240px - 8px - self.width;
+                : root.width - ClientStyle.members-width - 8px - self.width;
             y: max(root.title-height + 8px, min(root.height - self.height - 8px, (root.profile-at-pointer ? root.anchor-y - 8px : root.profile-y - 16px)));
             data: root.profile;
             enlarge => { root.enlarge-profile(); }

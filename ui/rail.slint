@@ -255,7 +255,7 @@ component FolderItem inherits Rectangle {
     /// A right click, or the Menu key or Shift+F10 when focused: where to open
     /// a menu in the window.
     callback context-menu(length, length);
-    property <length> tile-size: ClientStyle.rail-tile;
+    property <length> tile-size: ClientStyle.folder-tile;
     property <length> tile-left: (root.width - root.tile-size) / 2;
     width: 72px; height: root.tile-size;
     accessible-role: button;
@@ -273,7 +273,7 @@ component FolderItem inherits Rectangle {
         animate height { duration: 160ms; easing: ease-out; }
     }
     tile := Rectangle {
-        x: root.tile-left; width: root.tile-size; height: root.tile-size; border-radius: ClientStyle.enabled ? 12px : 16px;
+        x: root.tile-left; width: root.tile-size; height: root.tile-size; border-radius: ClientStyle.folder-radius;
         background: root.open ? transparent : root.tint.with-alpha(pointer.has-hover ? 0.55 : 0.4);
         animate background { duration: 160ms; easing: ease-out; }
         if root.open: Image {
@@ -281,12 +281,12 @@ component FolderItem inherits Rectangle {
         }
         if !root.open: Rectangle {
             for server[index] in root.servers: Avatar {
-                x: (ClientStyle.enabled ? 4px : 6px) + Math.mod(index, 2) * (ClientStyle.enabled ? 18px : 20px); y: (ClientStyle.enabled ? 4px : 6px) + floor(index / 2) * (ClientStyle.enabled ? 18px : 20px);
-                size: 16px; initial: server.initial; picture-url: server.picture-url; tint: Theme.raised;
+                x: (ClientStyle.enabled ? 4px : 6px) + Math.mod(index, 2) * (ClientStyle.enabled ? 21px : 20px); y: (ClientStyle.enabled ? 4px : 6px) + floor(index / 2) * (ClientStyle.enabled ? 21px : 20px);
+                size: ClientStyle.enabled ? 19px : 16px; corner: ClientStyle.enabled ? 6px : -1px; initial: server.initial; picture-url: server.picture-url; tint: Theme.raised;
             }
         }
         Rectangle {
-            width: root.tile-size; height: root.tile-size; border-radius: ClientStyle.enabled ? 12px : 16px;
+            width: root.tile-size; height: root.tile-size; border-radius: ClientStyle.folder-radius;
             border-width: focus.has-focus ? 2px : 0px;
             border-color: Theme.text;
         }
@@ -829,8 +829,8 @@ export component ServerRail inherits Rectangle {
             clicked => { root.navigate-dms(); }
         }
         if ClientStyle.enabled: Rectangle {
-            height: 2px;
-            Rectangle { width: 32px; height: 2px; border-radius: 1px; background: Theme.line; }
+            height: 1px;
+            Rectangle { width: 32px; height: 1px; background: Theme.outline; }
         }
         // A list view makes only the servers in sight, which
         // matters on accounts in many servers. Unread DMs scroll with them.
@@ -839,14 +839,14 @@ export component ServerRail inherits Rectangle {
             for server[index] in root.servers: Rectangle {
                 // Home already has a pinned separator. Keep the model's line
                 // only when it separates unread DMs from servers below them.
-                height: server.divider ? (ClientStyle.enabled && index == 0 ? 0px : 2px + 8px) : ClientStyle.rail-tile + 8px;
+                height: server.divider ? (ClientStyle.enabled && index == 0 ? 0px : (ClientStyle.enabled ? 1px : 2px) + 8px) : (server.folder ? ClientStyle.folder-tile : ClientStyle.rail-tile) + 8px;
                 if server.divider && (!ClientStyle.enabled || index > 0): Rectangle {
-                    x: (72px - self.width) / 2; y: 0px; width: 32px; height: 2px; border-radius: 1px; background: Theme.line;
+                    x: (72px - self.width) / 2; y: 0px; width: 32px; height: ClientStyle.enabled ? 1px : 2px; border-radius: ClientStyle.enabled ? 0px : 1px; background: ClientStyle.enabled ? Theme.outline : Theme.line;
                 }
                 // An open folder's servers sit on a strip of its colour,
                 // from its folder down to its last server.
                 if server.open || server.nested: Rectangle {
-                    x: (72px - ClientStyle.rail-tile) / 2; y: 0px; width: ClientStyle.rail-tile; height: server.last ? ClientStyle.rail-tile : parent.height;
+                    x: (72px - ClientStyle.folder-tile) / 2; y: 0px; width: ClientStyle.folder-tile; height: server.last ? ClientStyle.rail-tile : parent.height;
                     border-top-left-radius: server.open ? (ClientStyle.enabled ? 12px : 16px) : 0px;
                     border-top-right-radius: self.border-top-left-radius;
                     border-bottom-left-radius: server.last ? (ClientStyle.enabled ? 12px : 16px) : 0px;
