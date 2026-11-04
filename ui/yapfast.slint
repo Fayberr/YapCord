@@ -3332,7 +3332,6 @@ export component YapfastWindow inherits Window {
                     }
                     if root.members-docked: MemberPanel {
                         width: ClientStyle.members-width; rows: root.roster; note: root.roster-note; selected: root.profile-member;
-                        width: 240px; rows: root.roster; note: root.roster-note; selected: root.profile-member;
                         open-profile(id, y) => { root.profile-y = y; root.profile-at-pointer = false; root.show-profile(id); }
                         open-member-menu(id, x, y) => { root.open-context-menu(id, true, x, y); }
                     }
