@@ -358,22 +358,12 @@ nameplate among `collectibles` takes them off.
 
 Both pictures are served by `https://cdn.discordapp.com/media/v1/collectibles-shop/{sku_id}/static`,
 a PNG: 288 by 288 for a decoration, 448 by 84 or 672 by 126 for a plate. The
-client asks for `/animated`, an APNG, or `/video`, a WebM, and Yapfast
-asks for `/animated` (Discord's own client does on Linux and Safari). Which
-surface animates follows `useAvatarDecoration` and `useNameplateAnimation`: a
-decoration plays always on messages and the profile card, but only while the
-pointer is on its row in the member list, a DM's row and the account card; a
-nameplate plays while its row is pointed at or selected, and the account
-card's while the card is. Everything holds still when Yapfast's window isn't
-focused (`Motion.playing`), and a surface that stops being pointed at goes back
-to the still picture. The animated picture is fetched the first time
-something asks for it, and decodes the frame showing: `Picture`'s frames come
-from the kept file one at a time, as a GIF's do, and a decoder is let go a
-second after its last frame shows, so nothing animating off screen keeps
-anything. The pictures are kept in the picture cache with avatars. A
+client asks for `/animated`, an APNG, or `/video`, a WebM, while someone
+hovers a row or message, unless the system reduces motion; Yapfast shows the
+still picture only. The pictures are kept in the picture cache with avatars. A
 decoration decodes at up to 192 pixels and a plate whole, where other
-pictures take 128, and the still ones stay while the screen shows their
-person (`pictures_on_screen`).
+pictures take 128, and they stay while the screen shows their person
+(`pictures_on_screen`).
 
 What a member sets for one server alone, `avatar_decoration_data`,
 `collectibles` and `display_name_styles` on a member object (member lists,
