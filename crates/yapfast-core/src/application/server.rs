@@ -132,6 +132,17 @@ impl Application {
         false
     }
 
+    /// Whether this account may do what `permission` names in the Discord
+    /// server a place is in, whatever that channel's overwrites say, as
+    /// Discord's member menu asks for Manage Roles.
+    pub fn may_in_server(&self, place: &str, permission: Permission) -> bool {
+        #[cfg(feature = "discord")]
+        if let Some((server, _, _)) = self.discord_place(place) {
+            return self.may(&discord::server_id(&server.id), permission);
+        }
+        self.may(place, permission)
+    }
+
     /// Whether this account outranks `user`, holding `roles`, in the Discord
     /// server a place names, as kicking, banning, timing out, renaming or
     /// changing the roles of someone requires; see
