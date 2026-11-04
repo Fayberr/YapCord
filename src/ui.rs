@@ -2696,7 +2696,7 @@ fn display_part(name: &str) -> &str {
         .map_or(name, |(local, _)| local)
 }
 
-/// A server icon shows the first letter of up to three words, as in "Co-op crew" → "Cc".
+/// A server icon shows the first letter of up to three words, as in "Co-op crew" → "CC", in capitals like Discord.
 fn initials(name: &str) -> SharedString {
     let mut words = name
         .split_whitespace()
@@ -2705,7 +2705,7 @@ fn initials(name: &str) -> SharedString {
         .next()
         .map(|first| first.to_uppercase().collect())
         .unwrap_or_else(|| "?".into());
-    text.extend(words.take(2).flat_map(char::to_lowercase));
+    text.extend(words.take(2).flat_map(char::to_uppercase));
     text.into()
 }
 

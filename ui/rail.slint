@@ -175,7 +175,7 @@ export component RailItem inherits Rectangle {
             colorize: root.lit ? Theme.on-accent : root.icon-color;
         }
         if root.icon.width == 0 && root.shown-picture.width == 0: Text {
-            text: root.initial; font-size: 17px; font-weight: 700;
+            text: root.initial; font-size: ClientStyle.enabled ? 16px : 17px; font-weight: ClientStyle.enabled ? 500 : 700;
             color: root.lit ? Theme.on-accent : Theme.text;
         }
         // The focus ring, drawn over the picture.
