@@ -1,6 +1,6 @@
 import { ClientStyle } from "yapfast/style.slint";
 import { ScrollView, ListView } from "scrollview.slint";
-import { Theme, Middle, Label, Tip, BadgeTip } from "theme.slint";
+import { Theme, Middle, Label, Tip, BadgeTip, Strings } from "theme.slint";
 import { ActionButton, IconButton, Avatar, Nameplate, StatusText, StyledName, NameStyleRow, EffectLayer, ProfileEffect, PictureStore, TextField, ServerTagChip } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
@@ -763,14 +763,14 @@ export component ProfileCard inherits Rectangle {
                         Text {
                             property <bool> cut: !root.full && !root.preview && bio-text.preferred-height > 110px;
                             height: self.cut ? 20px : 0px; visible: self.cut;
-                            text: "View full bio"; color: Theme.link; font-size: 14px; font-weight: 500;
+                            text: Strings.view-full-bio; color: Theme.link; font-size: 14px; font-weight: 500;
                             TouchArea { enabled: parent.cut; mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                         }
                     }
                     // The card leaves the dates to the full profile.
                     if root.full && (root.data.created != "" || root.data.joined != ""): VerticalLayout {
                         spacing: 6px;
-                        ProfileHeading { text: "MEMBER SINCE"; }
+                        ProfileHeading { text: Strings.member-since; }
                         HorizontalLayout {
                             spacing: 24px; alignment: start;
                             if root.data.created != "": VerticalLayout {
@@ -937,9 +937,9 @@ export component ProfileModal inherits Rectangle {
             HorizontalLayout {
                 height: 40px; spacing: 20px;
                 for entry[index] in [
-                    { label: "Activity", count: -1 },
-                    { label: "Mutual friends", count: root.data.friends.length },
-                    { label: "Mutual servers", count: root.data.servers.length },
+                    { label: Strings.tab-activity, count: -1 },
+                    { label: Strings.tab-mutual-friends, count: root.data.friends.length },
+                    { label: Strings.tab-mutual-servers, count: root.data.servers.length },
                 ]: Rectangle {
                     width: tab-text.preferred-width; height: 40px;
                     accessible-role: tab;

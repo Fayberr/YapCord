@@ -133,3 +133,19 @@ export component PopupMotion {
     changed open => { self.amount = self.open ? 1 : 0; }
     animate amount { duration: Popup.duration; easing: ease-out-quad; }
 }
+
+/// Interface texts in the chosen language, which Rust fills in on start and
+/// whenever the language changes (`yapfast_core::i18n`).
+export global Strings {
+    in property <string> view-full-bio: "View full bio";
+    in property <string> member-since: "MEMBER SINCE";
+    in property <string> tab-activity: "Activity";
+    in property <string> tab-mutual-friends: "Mutual friends";
+    in property <string> tab-mutual-servers: "Mutual servers";
+    in property <string> setting-date-format: "DATE FORMAT";
+    in property <string> setting-time-zone: "TIME ZONE";
+    in property <string> setting-language: "LANGUAGE";
+    in property <[string]> date-formats: ["Day/Month/Year", "Month/Day/Year", "Year-Month-Day"];
+    in property <[string]> time-zones: ["System default"];
+    in property <[string]> languages: ["English", "Deutsch"];
+}

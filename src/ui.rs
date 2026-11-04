@@ -24,7 +24,9 @@ use yapfast_core::{
         ChannelKind, ChannelSettings, ChatMessage, Command, Delivery, EmbedField, Event, Picture,
         Placement, Presence, ProfilePicture, ProfileRole, Role, VideoCommand,
     },
-    discord, links, mention,
+    clock, discord,
+    i18n::{self, Language},
+    links, mention,
     meter::{self, InputMeter},
     network::Network,
     runtime::BackgroundRuntime,
@@ -962,6 +964,13 @@ struct Layout {
     twelve_hour_clock: bool,
     /// Message times with their seconds, as 21:41:05.
     clock_seconds: bool,
+    /// The order of day, month and year, as an index into
+    /// [`yapfast_core::clock::DateFormat::ALL`]; follows the clock unless chosen.
+    date_format: Option<i32>,
+    /// The time zone, in minutes east of UTC; the system's unless chosen.
+    time_zone: Option<i32>,
+    /// The interface language, as an index into [`yapfast_core::i18n::Language::ALL`].
+    language: i32,
     /// Message text: 0 small, 1 default, 2 large.
     text_size: Option<i32>,
     /// Link previews under messages; on unless turned off.
@@ -1085,6 +1094,47 @@ enum Animate {
     Never,
 }
 
+/// The texts of the interface in the current language.
+fn set_strings(window: &YapfastWindow) {
+    use i18n::tr;
+    let strings = window.global::<Strings>();
+    strings.set_view_full_bio(tr("view_full_bio").into());
+    strings.set_member_since(tr("member_since").into());
+    strings.set_tab_activity(tr("tab_activity").into());
+    strings.set_tab_mutual_friends(tr("tab_mutual_friends").into());
+    strings.set_tab_mutual_servers(tr("tab_mutual_servers").into());
+    strings.set_setting_date_format(tr("setting_date_format").into());
+    strings.set_setting_time_zone(tr("setting_time_zone").into());
+    strings.set_setting_language(tr("setting_language").into());
+    let list = |texts: Vec<SharedString>| ModelRc::new(VecModel::from(texts));
+    strings.set_date_formats(list(
+        ["date_dmy", "date_mdy", "date_ymd"]
+            .map(|key| tr(key).into())
+            .into(),
+    ));
+    let zones = std::iter::once(SharedString::from(tr("zone_system")))
+        .chain(clock::ZONES.iter().map(|&minutes| zone_name(minutes)));
+    strings.set_time_zones(list(zones.collect()));
+    strings.set_languages(list(Language::ALL.map(|l| l.name().into()).into()));
+}
+
+/// A zone as `UTC`, `UTC-8` or `UTC+5:30`.
+fn zone_name(minutes: i32) -> SharedString {
+    if minutes == 0 {
+        return "UTC".into();
+    }
+    let (sign, minutes) = if minutes < 0 {
+        ('-', -minutes)
+    } else {
+        ('+', minutes)
+    };
+    match minutes % 60 {
+        0 => format!("UTC{sign}{}", minutes / 60),
+        rest => format!("UTC{sign}{}:{rest:02}", minutes / 60),
+    }
+    .into()
+}
+
 /// The animation settings' choices, in the order they show.
 const ANIMATES: [Animate; 3] = [Animate::Focused, Animate::Always, Animate::Never];
 
@@ -1131,6 +1181,19 @@ fn chosen<T: Copy>(choices: &[T], index: i32) -> T {
 }
 
 impl Layout {
+    /// Hands the date format, time zone and language to what formats times and
+    /// words the interface, and fills the interface's texts in the language.
+    fn apply_clock_style(&self, window: &YapfastWindow) {
+        let format = self.date_format.and_then(|index| {
+            clock::DateFormat::ALL
+                .get(usize::try_from(index).ok()?)
+                .copied()
+        });
+        clock::set_style(format, self.time_zone);
+        i18n::set_language(chosen(&Language::ALL, self.language));
+        set_strings(window);
+    }
+
     /// The voice gate's sensitivity, in whole dBFS from -80 to 0.
     fn sensitivity(&self) -> i32 {
         self.input_sensitivity
@@ -1222,6 +1285,15 @@ impl Layout {
         window.set_profile_panel(!self.profile_panel_hidden);
         window.set_twelve_hour_clock(self.twelve_hour_clock);
         window.set_clock_seconds(self.clock_seconds);
+        window.set_date_format(self.date_format.unwrap_or(-1));
+        window.set_time_zone(self.time_zone.map_or(0, |minutes| {
+            clock::ZONES
+                .iter()
+                .position(|&zone| zone == minutes)
+                .map_or(0, |index| index as i32 + 1)
+        }));
+        window.set_language(self.language.clamp(0, Language::ALL.len() as i32 - 1));
+        self.apply_clock_style(window);
         window.set_text_size(self.text_size.unwrap_or(1).clamp(0, 2));
         window.set_link_previews(self.link_previews.unwrap_or(true));
         window.set_reply_ping_default(self.reply_ping.unwrap_or(true));
