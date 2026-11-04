@@ -793,16 +793,20 @@ export component ServerHeader inherits Rectangle {
             alignment: center;
             Image { source: @image-url("icons/verified.svg"); width: 16px; height: 16px; accessible-role: none; }
         }
-        Text {
-            text: root.name; font-size: ClientStyle.text-size;
-            font-weight: ClientStyle.enabled ? 600 : 700;
-            color: root.on-banner ? #ffffff : Theme.text;
-            vertical-alignment: center; overflow: elide;
-        }
-        Image {
-            source: @image-url("icons/chevron-down.svg"); width: 20px; height: 20px; y: (parent.height - self.height) / 2;
-            colorize: root.on-banner ? #ffffff : Theme.muted; transform-rotation: root.open ? 180deg : 0deg;
-            animate transform-rotation { duration: 120ms; easing: ease-out; }
+        // Discord's chevron follows the name closely, small and light.
+        HorizontalLayout {
+            spacing: ClientStyle.enabled ? 0px : 6px;
+            Text {
+                text: root.name; font-size: ClientStyle.text-size;
+                font-weight: ClientStyle.enabled ? 600 : 700;
+                color: root.on-banner ? #ffffff : Theme.text;
+                vertical-alignment: center; overflow: elide;
+            }
+            Image {
+                source: @image-url("icons/chevron-down.svg"); width: ClientStyle.enabled ? 16px : 20px; height: ClientStyle.enabled ? 16px : 20px; y: (parent.height - self.height) / 2;
+                colorize: root.on-banner ? #ffffff : ClientStyle.enabled ? Theme.secondary : Theme.muted; transform-rotation: root.open ? 180deg : 0deg;
+                animate transform-rotation { duration: 120ms; easing: ease-out; }
+            }
         }
     }
     touch := TouchArea {
