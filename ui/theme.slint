@@ -24,8 +24,11 @@ export global Theme {
     in-out property <color> outline-chat: #2c2d34;
     /// The outline of the message box.
     in-out property <color> outline-field: #2c2d34;
-    /// The ground of a context menu: Discord's near black panel on a dark theme.
-    out property <color> menu: self.dark ? self.sunken.mix(#000000, 0.88) : self.raised;
+    /// The ground of a context menu: on a dark theme Discord's panel, a step
+    /// above the raised surfaces (40, 40, 45 on its own dark theme).
+    out property <color> menu: self.dark ? self.raised.mix(#ffffff, 0.98) : self.raised;
+    /// A context menu's outline (53, 53, 59 on Discord's dark theme).
+    out property <color> menu-line: self.dark ? self.line.mix(#000000, 0.95) : self.line;
     in-out property <color> text: #eef0f4;
     in-out property <color> secondary: #b5b8c1;
     in-out property <color> muted: #8d919c;

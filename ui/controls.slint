@@ -1144,7 +1144,7 @@ export component ContextMenu inherits Rectangle {
         main-panel := Rectangle {
             x: root.flip ? root.content-width - root.menu-width : 0px; y: root.lift;
             width: root.menu-width; height: root.main-height;
-            background: Theme.menu; border-color: Theme.line; border-width: 1px; border-radius: 8px;
+            background: Theme.menu; border-color: Theme.menu-line; border-width: 1px; border-radius: 8px;
             drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
             clip: true;
             TouchArea { }
@@ -1186,7 +1186,7 @@ export component ContextMenu inherits Rectangle {
             x: root.flip ? root.widest - root.submenu-width : root.menu-width + 4px;
             y: root.lift + root.sub-top;
             width: root.submenu-width; height: root.sub-height;
-            background: Theme.menu; border-color: Theme.line; border-width: 1px; border-radius: 8px;
+            background: Theme.menu; border-color: Theme.menu-line; border-width: 1px; border-radius: 8px;
             drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
             clip: true;
             TouchArea { }
