@@ -2365,7 +2365,6 @@ async fn shows_profiles() {
     assert!(
         in_server
             .banner
-            .as_ref()
             .is_some_and(|banner| banner.contains("/banners/"))
     );
     assert_eq!(in_server.roles.len(), 1, "Bob is a Mod");
