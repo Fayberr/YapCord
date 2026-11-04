@@ -5149,42 +5149,6 @@ fn pictures_off_screen_go_once_many_have_arrived() {
 }
 
 #[test]
-fn decorations_and_nameplates_stay_while_their_people_show() {
-    let mut app = connected();
-    app.apply(Event::Timeline {
-        room: "dm".into(),
-        messages: timeline(vec![ChatMessage {
-            avatar: Some("ann.png".into()),
-            decoration: Some("ring.png".into()),
-            ..message("e:$ann", false)
-        }]),
-    });
-    app.state.members = Some(Ok(vec![ChatMember {
-        decoration: Some("bobs-ring.png".into()),
-        nameplate: Some(crate::chat::Nameplate {
-            picture: "plate.png".into(),
-            color: 0x730bc8,
-        }),
-        ..member("@bob", "Bob")
-    }]));
-    for url in ["ring.png", "bobs-ring.png", "plate.png"]
-        .into_iter()
-        .map(String::from)
-        .chain((0..=KEPT_PICTURES).map(|index| format!("{index}.png")))
-    {
-        app.requested_pictures.insert(url.clone());
-        app.apply(Event::Picture {
-            url,
-            picture: Arc::new(Picture::default()),
-        });
-    }
-    for shown in ["ring.png", "bobs-ring.png", "plate.png"] {
-        assert!(app.state.pictures.contains_key(shown), "{shown} stays");
-    }
-    assert!(!app.state.pictures.contains_key("0.png"));
-}
-
-#[test]
 fn avatars_stay_only_near_the_rows_on_screen() {
     let mut app = connected();
     // A busy channel followed for a while: each message someone else's.

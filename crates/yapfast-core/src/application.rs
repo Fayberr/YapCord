@@ -2100,19 +2100,11 @@ fn pictures_on_screen<'a>(
         .filter(move |_| list_avatars)
         .filter_map(|server| server.icon.as_deref())
         .chain(state.account_avatar.as_deref())
-        .chain(state.account_decoration.as_deref())
-        .chain(
-            state
-                .account_nameplate
-                .as_ref()
-                .map(|plate| plate.picture.as_str()),
-        )
         .chain(
             state
                 .scoped_rooms()
                 .filter(move |_| list_avatars)
-                .flat_map(|room| [room.avatar.as_deref(), room.decoration.as_deref()])
-                .flatten()
+                .filter_map(|room| room.avatar.as_deref())
                 .take(LISTED_PICTURES),
         )
         .chain(
@@ -2262,7 +2254,7 @@ fn pictures_on_screen<'a>(
                 .chain(&state.panel_profile)
                 .flat_map(|view| {
                     let profile = &view.profile;
-                    [&profile.avatar, &profile.decoration, &profile.banner]
+                    [&profile.avatar, &profile.banner]
                         .into_iter()
                         .chain(
                             profile
@@ -2302,12 +2294,7 @@ fn pictures_on_screen<'a>(
                         .reply
                         .as_ref()
                         .and_then(|reply| reply.avatar.as_deref());
-                    message
-                        .avatar
-                        .as_deref()
-                        .into_iter()
-                        .chain(message.decoration.as_deref())
-                        .chain(reply)
+                    message.avatar.as_deref().into_iter().chain(reply)
                 })
                 .chain(
                     timeline.iter().flat_map(|message| {
@@ -2330,17 +2317,7 @@ fn pictures_on_screen<'a>(
                         .filter(move |_| list_avatars)
                         .flat_map(|role| role.members.iter().flatten()),
                 )
-                .flat_map(|member| {
-                    [
-                        member.avatar.as_deref(),
-                        member.decoration.as_deref(),
-                        member
-                            .nameplate
-                            .as_ref()
-                            .map(|plate| plate.picture.as_str()),
-                    ]
-                })
-                .flatten(),
+                .filter_map(|member| member.avatar.as_deref()),
         )
         .chain(
             state
