@@ -1,6 +1,6 @@
 import { ClientStyle } from "yapfast/style.slint";
 import { ScrollView, ListView } from "scrollview.slint";
-import { Theme, Middle, Label, Tip, BadgeTip, Strings } from "theme.slint";
+import { Theme, Middle, Label, Tip, Strings } from "theme.slint";
 import { ActionButton, IconButton, Avatar, StatusText, PictureStore, TextField } from "controls.slint";
 import { StatusDot } from "rail.slint";
 
@@ -185,10 +185,8 @@ export global ActivityClock {
 }
 
 /// One of someone's badges: the address of its picture, what it says on
-/// hover, and where a click goes, empty when nowhere. A badge that levels up
-/// has a `title` too: its tooltip shows `kind` above it, `progress` below it
-/// and the large `picture` of the level above them.
-export struct ProfileBadgeRow { icon: string, description: string, link: string, kind: string, title: string, progress: string, picture: string }
+/// hover, and where a click goes, empty when nowhere.
+export struct ProfileBadgeRow { icon: string, description: string, link: string }
 
 /// An account on another service on a profile, such as Steam: the service,
 /// its name for the account, where it opens ("" when it doesn't), when the
@@ -250,19 +248,14 @@ component ProfileBadge inherits Rectangle {
     in property <ProfileBadgeRow> badge;
     callback open-link(string);
     property <image> picture: root.badge.icon != "" ? PictureStore.picture(root.badge.icon, PictureStore.revision) : @image-url("");
-    property <image> level-picture: root.badge.picture != "" ? PictureStore.picture(root.badge.picture, PictureStore.revision) : @image-url("");
     function request() {
         if root.badge.icon != "" && root.picture.width == 0 {
             PictureStore.request(root.badge.icon);
-        }
-        if root.badge.picture != "" && root.level-picture.width == 0 {
-            PictureStore.request(root.badge.picture);
         }
     }
     init => { root.request(); }
     changed badge => { root.request(); }
     changed picture => { root.request(); }
-    changed level-picture => { root.request(); }
     width: 20px; height: 20px;
     accessible-role: image;
     accessible-label: root.badge.description;
@@ -272,66 +265,13 @@ component ProfileBadge inherits Rectangle {
         clicked => { if root.badge.link != "" { root.open-link(root.badge.link); } }
         changed has-hover => {
             if self.has-hover {
-                if root.badge.title != "" {
-                    BadgeTip.kind = root.badge.kind;
-                    BadgeTip.title = root.badge.title;
-                    BadgeTip.progress = root.badge.progress;
-                    BadgeTip.picture-url = root.badge.picture;
-                    BadgeTip.x = self.absolute-position.x + self.width / 2;
-                    BadgeTip.y = self.absolute-position.y;
-                } else {
-                    Tip.text = root.badge.description;
-                    Tip.side = 0;
-                    Tip.x = self.absolute-position.x + self.width / 2;
-                    Tip.y = self.absolute-position.y;
-                }
-            } else if BadgeTip.title == root.badge.title && root.badge.title != "" {
-                BadgeTip.title = "";
+                Tip.text = root.badge.description;
+                Tip.side = 0;
+                Tip.x = self.absolute-position.x + self.width / 2;
+                Tip.y = self.absolute-position.y;
             } else if Tip.text == root.badge.description {
                 Tip.text = "";
             }
-        }
-    }
-}
-
-// The tooltip of a badge that levels up, set by Discord's own values: 200px
-// wide on the surface-high grey, 8px corners and a 1px edge, 12px inside at
-// the sides and 16px above and below, the level's picture 64px high, then
-// the kind, the level in capitals and the progress 4px apart.
-export component BadgeTipCard inherits Rectangle {
-    property <image> level-picture: BadgeTip.picture-url != "" ? PictureStore.picture(BadgeTip.picture-url, PictureStore.revision) : @image-url("");
-    width: 200px;
-    height: card.preferred-height;
-    background: #242429;
-    border-radius: 8px;
-    border-width: 1px;
-    border-color: #97979f1f;
-    drop-shadow-blur: 24px; drop-shadow-color: #0000003d; drop-shadow-offset-y: 12px;
-    // The caret under it, pointing at the badge.
-    Path {
-        x: parent.width / 2 - 8px; y: parent.height - 1px; width: 16px; height: 9px;
-        commands: "M 0 0 L 16 0 L 8 9 Z";
-        fill: #242429;
-    }
-    card := VerticalLayout {
-        padding-left: 12px; padding-right: 12px; padding-top: 16px;
-        padding-bottom: BadgeTip.progress != "" ? 16px : 24px;
-        spacing: 16px;
-        HorizontalLayout {
-            alignment: center;
-            height: 64px;
-            Image {
-                source: root.level-picture;
-                height: 64px;
-                width: self.source.height > 0 ? 64px * self.source.width / self.source.height : 0px;
-                image-fit: contain;
-            }
-        }
-        VerticalLayout {
-            spacing: 4px;
-            if BadgeTip.kind != "": Text { text: BadgeTip.kind; color: #c5c6ca; font-size: 14px; font-weight: 500; horizontal-alignment: center; wrap: word-wrap; }
-            Text { text: BadgeTip.title.to-uppercase(); color: #ffffff; font-size: 16px; font-weight: 900; horizontal-alignment: center; wrap: word-wrap; }
-            if BadgeTip.progress != "": Text { text: BadgeTip.progress; color: #c5c6ca; font-size: 14px; font-weight: 500; horizontal-alignment: center; wrap: word-wrap; }
         }
     }
 }

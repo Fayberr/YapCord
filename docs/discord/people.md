@@ -281,28 +281,6 @@ has a link opens it. A badge missing its description or icon is left out, and
 a profile with none shows no row. Badges show on profile cards only, not
 beside names in messages or the member list.
 
-The badges that level up (playing time, game variety, streaming, account age
-and Quests) say little in the profile: their `description` is only the kind,
-"Spielzeit". Discord's tooltip for them shows more: a large picture of the
-level, the kind in grey, the level's name in capitals and how far along the
-person is ("1.816 Stunden gespielt"). That comes from `GET
-/users/{id}/badges`, which `Discord::profile` asks for after the profile
-whenever a badge has a `simple_icon_url` or a link, and which works for
-anyone. Each of its `badges` has a `name` (the kind), an `info_label` (the
-progress), a `current_tier` naming one of its `tiers`, whose `name` is the
-level and `complex_icon_static_url` the large picture, an SVG. A badge
-without tiers, such as Quests, shows its own name as the title and its
-`simple_icon_url`. Yapfast matches an entry to a profile badge by the
-level's `simple_icon_url`, which both lists carry, else by the icon hash in
-`simple_icon_raster_url`; one the person doesn't own (`owned: false`) is
-skipped. A badge with no entry, such as Nitro's, keeps the plain tooltip, and
-so does every badge when the request fails. The SVGs are drawn by the
-picture decoder (`decode_picture`, with resvg) like any other picture. The
-card is `BadgeTipCard` in `ui/people.slint`, set by `BadgeTip` in
-`ui/theme.slint` and drawn by the window above everything else, with
-Discord's own values: 200px wide, 8px corners, the picture 64px high, the
-kind and progress in 14px medium and the level in 16px black.
-
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My

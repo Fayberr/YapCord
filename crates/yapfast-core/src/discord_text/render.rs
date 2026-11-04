@@ -571,12 +571,6 @@ pub(super) fn chat_profile(
                 description: badge.description,
                 icon: badge.icon,
                 link: badge.link,
-                level: badge.level.map(|level| ProfileBadgeLevel {
-                    kind: level.kind,
-                    title: level.title,
-                    progress: level.progress,
-                    picture: level.picture,
-                }),
             })
             .collect(),
         bio_emoji,

@@ -1297,7 +1297,7 @@ impl Discord {
         }
         let value = self.api.profile(user, server(guild)).await?;
         self.write_names().learn_user(&value["user"]);
-        let mut profile = profile::parse(&value, server(guild))
+        let profile = profile::parse(&value, server(guild))
             .ok_or_else(|| anyhow!("could not understand Discord's answer"))?;
         tracing::info!(
             theme = ?profile.theme,

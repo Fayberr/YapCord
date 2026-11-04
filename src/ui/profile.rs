@@ -270,30 +270,6 @@ pub(super) fn profile_data(
                     icon: badge.icon.as_str().into(),
                     description: badge.description.as_str().into(),
                     link: badge.link.as_deref().unwrap_or_default().into(),
-                    kind: badge
-                        .level
-                        .as_ref()
-                        .and_then(|l| l.kind.as_deref())
-                        .unwrap_or_default()
-                        .into(),
-                    title: badge
-                        .level
-                        .as_ref()
-                        .map(|l| l.title.as_str())
-                        .unwrap_or_default()
-                        .into(),
-                    progress: badge
-                        .level
-                        .as_ref()
-                        .map(|l| l.progress.as_str())
-                        .unwrap_or_default()
-                        .into(),
-                    picture: badge
-                        .level
-                        .as_ref()
-                        .map(|l| l.picture.as_str())
-                        .unwrap_or_default()
-                        .into(),
                 })
                 .collect::<Vec<_>>(),
         )),
