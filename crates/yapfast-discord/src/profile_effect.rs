@@ -97,6 +97,26 @@ pub fn parse(sku: &str, product: &Value) -> Option<Effect> {
         .as_array()?
         .iter()
         .find(|item| item["effects"].is_array())?;
+    parse_config(sku, item)
+}
+
+/// The effect `sku` names in the answer of `GET /user-profile-effects`, which
+/// lists every effect's config as `{"profile_effect_configs": [...]}`. A
+/// config is named by its own id or by the SKU it is sold as.
+pub fn find(sku: &str, configs: &Value) -> Option<Effect> {
+    let list = configs["profile_effect_configs"]
+        .as_array()
+        .or_else(|| configs.as_array())?;
+    let named = |config: &&Value| {
+        ["id", "sku_id", "skuId"]
+            .into_iter()
+            .any(|key| config[key].as_str() == Some(sku))
+    };
+    parse_config(sku, list.iter().find(named)?)
+}
+
+/// An effect from its config, the object that holds `effects`.
+pub fn parse_config(sku: &str, item: &Value) -> Option<Effect> {
     let mut layers: Vec<Layer> = item["effects"]
         .as_array()?
         .iter()
@@ -105,7 +125,13 @@ pub fn parse(sku: &str, product: &Value) -> Option<Effect> {
             let position = &layer["position"];
             Some(Layer {
                 src: address(layer["src"].as_str()?),
-                start: millis(&layer["start"]),
+                // Discord's client calls the delay before a layer starts
+                // `start`; the API has also sent it as `start_delay`.
+                start: millis(if layer.get("start").is_some() {
+                    &layer["start"]
+                } else {
+                    field(layer, "startDelay", "start_delay")
+                }),
                 duration: millis(&layer["duration"]),
                 looped: layer["loop"].as_bool().unwrap_or(false),
                 loop_delay: millis(field(layer, "loopDelay", "loop_delay")),
@@ -134,6 +160,7 @@ pub fn parse(sku: &str, product: &Value) -> Option<Effect> {
         layers,
         still: field(item, "staticFrameSrc", "static_frame_src")
             .as_str()
+            .or_else(|| field(item, "thumbnailPreviewSrc", "thumbnail_preview_src").as_str())
             .map(address),
     })
 }
@@ -194,5 +221,28 @@ mod tests {
         assert_eq!((looping.looped, looping.y, looping.z), (true, 12, 102));
         assert!(effect.still.unwrap().ends_with("/petals/still.png"));
         assert_eq!(parse("9", &json!({"items": [{"type": 1}]})), None);
+    }
+
+    #[test]
+    fn finds_an_effect_in_the_list_by_its_id_or_sku() {
+        let list = json!({"profile_effect_configs": [
+            {"type": 1, "id": "5", "sku_id": "6", "accessibility_label": "Confetti",
+             "animation_type": 1,
+             "thumbnail_preview_src": "https://cdn.discordapp.com/assets/c/thumb.png",
+             "effects": [
+                {"src": "https://cdn.discordapp.com/assets/c/a.png", "loop": false,
+                 "start_delay": 300, "duration": 2000, "position": {"x": 0, "y": 0}, "z_index": 1}
+             ]},
+            {"id": "7", "sku_id": "8", "effects": []},
+        ]});
+        for sku in ["5", "6"] {
+            let effect = find(sku, &list).unwrap();
+            assert_eq!(effect.sku, sku);
+            assert_eq!(effect.layers.len(), 1);
+            assert_eq!(effect.layers[0].start, 300);
+            assert!(effect.still.unwrap().ends_with("/thumb.png"));
+        }
+        assert_eq!(find("9", &list), None);
+        assert!(find("7", &list).unwrap().layers.is_empty());
     }
 }
