@@ -2303,7 +2303,7 @@ export component YapfastWindow inherits Window {
                                 clicked => { root.retry-sync(); }
                             }
                             cog := IconButton {
-                                icon: @image-url("icons/settings.svg"); label: "Settings";
+                                icon: @image-url("icons/settings.svg"); label: "Settings"; radius: 4px;
                                 clicked => { root.settings-open = true; root.refresh-devices(); }
                             }
                         }

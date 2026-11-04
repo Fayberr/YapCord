@@ -167,14 +167,14 @@ export component DeviceToggle inherits Rectangle {
     // The ground is the visible pair only, centred in the row like IconButton's face.
     Rectangle {
         y: (parent.height - self.height) / 2; height: 32px;
-        border-radius: 6px;
+        border-radius: 4px;
         // Only the open pair keeps a fill; each half lights itself when hovered.
         background: root.open ? Theme.overlay.with-alpha(0.12) : transparent;
         animate background { duration: Theme.quick; }
     }
     HorizontalLayout {
         toggle := IconButton {
-            icon: root.icon; label: root.label; alert: root.alert; enabled: root.enabled;
+            icon: root.icon; label: root.label; alert: root.alert; enabled: root.enabled; radius: 4px;
             clicked => { root.clicked(); }
         }
         Rectangle {
@@ -183,14 +183,14 @@ export component DeviceToggle inherits Rectangle {
             accessible-label: root.menu-label;
             accessible-action-default => { root.menu(); }
             Rectangle {
-                y: (parent.height - self.height) / 2; width: 20px; height: 32px; border-radius: 6px;
+                y: (parent.height - self.height) / 2; width: 20px; height: 32px; border-radius: 4px;
                 background: caret.has-hover ? Theme.overlay.with-alpha(0.1) : transparent;
                 animate background { duration: Theme.quick; }
                 border-width: caret-focus.has-focus ? 2px : 0px;
                 border-color: Theme.accent;
                 Image {
-                    source: @image-url("icons/chevron-down.svg"); width: 14px; height: 14px;
-                    colorize: caret.has-hover || root.open ? Theme.text : Theme.muted;
+                    source: @image-url("icons/chevron-down.svg"); width: 16px; height: 16px;
+                    colorize: caret.has-hover || root.open ? Theme.text : Theme.secondary;
                     transform-rotation: root.open ? 180deg : 0deg;
                     animate transform-rotation { duration: Theme.quick; }
                 }
