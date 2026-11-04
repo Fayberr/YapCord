@@ -644,7 +644,6 @@ pub(super) fn message_row(message: &ChatMessage, revealed: &HashSet<String>) -> 
         picture_url: SharedString::default(),
         reply_picture_url: SharedString::default(),
         decoration_url: SharedString::default(),
-        name_style: name_style::row(message.style, &message.author),
         id: message.id.clone().into(),
         item: message.item.clone().into(),
         author: message.author.clone().into(),

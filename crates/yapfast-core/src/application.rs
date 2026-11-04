@@ -509,9 +509,6 @@ pub struct AppState {
     /// The decoration around the account's avatar and its nameplate, which
     /// the account card at the bottom of the sidebar shows; Discord's.
     pub account_decoration: Option<String>,
-    /// The profile effects fetched lately, oldest first, which the profiles
-    /// shown name.
-    pub profile_effects: Vec<Arc<crate::chat::ProfileEffect>>,
     pub account_nameplate: Option<crate::chat::Nameplate>,
     pub account_status: Option<String>,
     pub preview: bool,
@@ -2268,12 +2265,6 @@ fn pictures_on_screen<'a>(
                 .chain(&state.panel_profile)
                 .flat_map(|view| {
                     let profile = &view.profile;
-                    let effect = profile.effect.as_deref().and_then(|sku| {
-                        state
-                            .profile_effects
-                            .iter()
-                            .find(|effect| effect.sku == sku)
-                    });
                     [&profile.avatar, &profile.decoration, &profile.banner]
                         .into_iter()
                         .chain(
@@ -2290,7 +2281,6 @@ fn pictures_on_screen<'a>(
                                 .iter()
                                 .map(|emoji| emoji.picture.as_str()),
                         )
-                        .chain(effect.into_iter().flat_map(|effect| effect.pictures()))
                 }),
         )
         .chain(
@@ -3417,15 +3407,6 @@ impl Application {
             Event::Profile { user, result } => self.show_fetched_profile(user, result),
             Event::KeptProfile { user, profile } => self.show_kept_profile(user, profile),
             Event::BadgeLevels { user, badges } => self.show_badge_levels(&user, badges),
-            Event::ProfileEffect(effect) => {
-                // The few of the cards seen lately.
-                let profile_effects = &mut self.state.profile_effects;
-                profile_effects.retain(|kept| kept.sku != effect.sku);
-                profile_effects.push(effect);
-                if profile_effects.len() > 8 {
-                    profile_effects.remove(0);
-                }
-            }
             Event::Members { room, members } => {
                 // A list that came stays when a later check finds none came.
                 let listed = members.is_err() && matches!(self.state.members, Some(Ok(_)));

@@ -255,7 +255,6 @@ pub(super) fn profile_data(
         tint: tint(&profile.name),
         picture: avatar.clone(),
         decoration_url: profile.decoration.as_deref().unwrap_or_default().into(),
-        name_style: super::name_style::row(profile.style, &profile.name),
         handle: profile.handle.as_str().into(),
         pronouns: profile.pronouns.as_str().into(),
         tag: profile
