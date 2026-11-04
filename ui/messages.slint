@@ -1380,10 +1380,36 @@ export component HistoryEdge inherits HorizontalLayout {
     /// A Discord thread, named as one rather than as a channel.
     in property <bool> room-thread;
     in property <string> room-name;
+    /// Discord's welcome block, in place of the one line: "server" for a
+    /// server's first channel, "channel" for another, empty for neither.
+    in property <string> intro;
+    in property <string> intro-welcome;
+    in property <string> intro-title;
+    in property <string> intro-text;
     callback earlier;
     property <string> which: root.newer ? "newer" : "earlier";
-    alignment: center; height: 42px; padding-top: 4px; padding-bottom: 8px;
-    if root.start: Text {
+    property <bool> welcome: ClientStyle.enabled && root.start && !root.newer && root.intro != "";
+    out property <length> block: !root.welcome ? 42px : root.intro == "server" ? ClientStyle.intro-server-height : ClientStyle.intro-channel-height;
+    alignment: center; height: root.block; padding-top: root.welcome ? 0px : 4px; padding-bottom: root.welcome ? 0px : 8px;
+    if root.welcome: VerticalLayout {
+        alignment: center; spacing: 0px; padding-top: 24px; padding-bottom: 24px;
+        // A server's: its welcome over its name, in two lines.
+        if root.intro == "server": Text { text: root.intro-welcome; color: Theme.text; font-size: 32px; font-weight: 600; horizontal-alignment: center; overflow: elide; height: 40px; }
+        if root.intro == "server": Text { text: root.intro-title; color: Theme.text; font-size: 32px; font-weight: 600; horizontal-alignment: center; overflow: elide; height: 40px; }
+        // A channel's: a hash in a circle, then its welcome.
+        if root.intro == "channel": HorizontalLayout {
+            alignment: center; height: 68px;
+            Rectangle {
+                width: 68px; height: 68px; border-radius: 34px; background: Theme.field;
+                Image { source: @image-url("icons/hash.svg"); width: 40px; height: 40px; colorize: Theme.text; }
+            }
+        }
+        if root.intro == "channel": Rectangle { height: 8px; }
+        if root.intro == "channel": Text { text: root.intro-title; color: Theme.text; font-size: 32px; font-weight: 700; horizontal-alignment: center; overflow: elide; height: 40px; }
+        Rectangle { height: 8px; }
+        Text { text: root.intro-text; color: Theme.secondary; font-size: root.intro == "server" ? 14px : 16px; horizontal-alignment: center; overflow: elide; height: 20px; }
+    }
+    if root.start && !root.welcome: Text {
         text: root.room-direct ? "This is the beginning of your messages with " + root.room-name + "."
             : root.room-thread ? "This is the start of the " + root.room-name + " thread."
             : "This is the start of #" + root.room-name + ".";

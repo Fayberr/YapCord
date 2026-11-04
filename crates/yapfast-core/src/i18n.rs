@@ -135,6 +135,10 @@ pub(crate) const KEYS: &[&str] = &[
     "clock_weekday_at",
     "clock_day_at",
     "composer_no_permission",
+    "intro_welcome_server",
+    "intro_server_start",
+    "intro_welcome_channel",
+    "intro_channel_start",
 ];
 
 fn english(key: &str) -> Option<&'static str> {
@@ -193,6 +197,10 @@ fn english(key: &str) -> Option<&'static str> {
         "clock_weekday_at" => "{weekday} at {time}",
         "clock_day_at" => "{day} at {time}",
         "composer_no_permission" => "You do not have permission to send messages in this channel.",
+        "intro_welcome_server" => "Welcome to",
+        "intro_server_start" => "This is the beginning of this server.",
+        "intro_welcome_channel" => "Welcome to #{name}!",
+        "intro_channel_start" => "This is the start of the #{name} channel.",
         _ => return None,
     })
 }
@@ -253,6 +261,10 @@ fn german(key: &str) -> Option<&'static str> {
         "clock_weekday_at" => "{weekday} um {time} Uhr",
         "clock_day_at" => "{day} um {time} Uhr",
         "composer_no_permission" => "Du hast keine Berechtigung, in diesem Kanal Nachrichten zu versenden.",
+        "intro_welcome_server" => "Willkommen bei",
+        "intro_server_start" => "Das ist der Anfang dieses Servers.",
+        "intro_welcome_channel" => "Willkommen in #{name}!",
+        "intro_channel_start" => "Das ist der Anfang des Kanals #{name}.",
         _ => return None,
     })
 }

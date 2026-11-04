@@ -492,6 +492,12 @@ export component YapfastWindow inherits Window {
     in property <int> unread-index: -1;
     in property <string> unread-label;
     in property <string> composer-hint;
+    /// The welcome block that opens a channel's history in Discord: its kind
+    /// ("server", "channel" or empty) and its texts.
+    in property <string> intro-kind;
+    in property <string> intro-welcome;
+    in property <string> intro-title;
+    in property <string> intro-text;
     /// This account may not write here: Discord swaps the composer for one
     /// disabled bar with `composer-locked-text` in it.
     in property <bool> composer-locked;
@@ -2861,7 +2867,7 @@ export component YapfastWindow inherits Window {
                                             property <length> tail: index == root.messages.length - 1 ? (root.detached ? 74px : 20px) : 0px;
                                             // Where the message itself starts: its tint, hover bar and edge
                                             // leave out the history notice and the dividers above it.
-                                            property <length> head: (index == 0 && root.room-ready ? 42px : 0px)
+                                            property <length> head: (index == 0 && root.room-ready ? (ClientStyle.enabled && root.history-start && root.intro-kind != "" ? (root.intro-kind == "server" ? ClientStyle.intro-server-height : ClientStyle.intro-channel-height) : 42px) : 0px)
                                                 + (message.day != "" || message.unread-start ? 26px : 0px);
                                             property <length> body: self.top + (self.head > 0px ? col.padding-top + self.head : 0px);
                                             Rectangle {
@@ -2918,6 +2924,7 @@ export component YapfastWindow inherits Window {
                                                         loading: root.loading-history; failed: root.history-failed; start: root.history-start;
                                                         enabled: !root.busy && !root.preview; room-direct: root.room-direct; room-name: root.room-name;
                                                         room-thread: root.room-parent != "";
+                                                        intro: root.intro-kind; intro-welcome: root.intro-welcome; intro-title: root.intro-title; intro-text: root.intro-text;
                                                         earlier => { root.earlier(); }
                                                     }
                                                     // A new day's date, and the "New" divider in marigold above
