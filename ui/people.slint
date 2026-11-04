@@ -596,17 +596,17 @@ export component ProfileCard inherits Rectangle {
     property <length> avatar-size: root.side ? 96px : root.large ? 120px : 80px;
     property <length> pad: root.side ? 20px : root.large ? 24px : 16px;
     // A profile theme, as Discord draws it: the card's gradient runs from
-    // the first colour to the second under a 60% black wash, flat down to the
-    // banner's end, inside a 1px border that is the same two colours,
-    // washed out into the card's own ground.
+    // the first colour to the second under a black wash, flat down to the
+    // banner's end, inside a 2px border that is the same two colours at
+    // full strength.
     property <bool> themed: root.data.has-theme;
     property <color> plain-ground: root.docked && ClientStyle.enabled ? Theme.panel : Theme.sidebar;
-    property <color> theme-start: root.data.theme-primary.mix(#000000, 0.4);
-    property <color> theme-end: root.data.theme-secondary.mix(#000000, 0.4);
+    property <color> theme-start: root.data.theme-primary.mix(#000000, 0.3);
+    property <color> theme-end: root.data.theme-secondary.mix(#000000, 0.55);
     /// What lies behind the avatar's ring, where the banner ends.
     property <color> ground: root.themed ? root.theme-start : root.plain-ground;
     height: min(body.preferred-height, root.limit);
-    background: root.themed ? @linear-gradient(180deg, root.data.theme-primary.mix(root.plain-ground, 0.2) 0%, root.data.theme-secondary.mix(root.plain-ground, 0.6) 100%) : root.plain-ground;
+    background: root.themed ? @linear-gradient(180deg, root.data.theme-primary 0%, root.data.theme-secondary 100%) : root.plain-ground;
     border-radius: root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px; border-width: root.docked || root.themed ? 0px : 1px; border-color: Theme.edge;
     drop-shadow-blur: root.docked ? 0px : 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: root.docked ? 0px : 8px;
     accessible-role: groupbox;
@@ -614,9 +614,9 @@ export component ProfileCard inherits Rectangle {
     // Clicks on the card stay on it, instead of closing it.
     TouchArea { }
     Rectangle {
-        x: root.themed ? 1px : 0px; y: root.themed ? 1px : 0px;
-        width: parent.width - (root.themed ? 2px : 0px); height: parent.height - (root.themed ? 2px : 0px);
-        border-radius: (root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px) - (root.themed ? 1px : 0px); clip: true;
+        x: root.themed ? 2px : 0px; y: root.themed ? 2px : 0px;
+        width: parent.width - (root.themed ? 4px : 0px); height: parent.height - (root.themed ? 4px : 0px);
+        border-radius: (root.docked ? (ClientStyle.enabled ? 8px : 0px) : 12px) - (root.themed ? 2px : 0px); clip: true;
         if root.themed: Rectangle {
             background: @linear-gradient(180deg, root.theme-start 0%, root.theme-start root.banner-height / parent.height * 100%, root.theme-end 100%);
         }
@@ -685,15 +685,21 @@ export component ProfileCard inherits Rectangle {
                     if root.data.badges.length > 0: HorizontalLayout {
                         alignment: start;
                         Rectangle {
-                            width: root.data.badges.length * 22px + 6px; height: 24px;
+                            width: min(root.data.badges.length, 6) * 22px + (root.data.badges.length > 6 ? 26px : 0px) + 6px; height: 24px;
                             background: pill-hover.has-hover ? #97979f33 : #97979f1f;
                             border-radius: 8px; border-width: 1px; border-color: #97979f0a;
                             pill-hover := TouchArea { mouse-cursor: MouseCursor.default; }
-                            HorizontalLayout {
-                                padding-left: 3px; padding-right: 3px; padding-top: 1px; padding-bottom: 1px; spacing: 2px;
-                                for badge in root.data.badges: ProfileBadge {
+                            Rectangle {
+                                x: 3px; y: 1px; width: parent.width - 6px; height: 20px;
+                                for badge[index] in root.data.badges: ProfileBadge {
+                                    x: index * 22px; width: 20px; height: 20px; visible: index < 6;
                                     badge: badge;
                                     open-link(url) => { root.open-link(url); }
+                                }
+                                if root.data.badges.length > 6: Text {
+                                    x: 6 * 22px; width: 24px; height: 20px;
+                                    text: "+" + (root.data.badges.length - 6); color: Theme.secondary;
+                                    font-size: 12px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center;
                                 }
                             }
                         }
@@ -705,12 +711,13 @@ export component ProfileCard inherits Rectangle {
                     // The card names what is shared, with a few of the faces; the
                     // full profile lists it.
                     if !root.full && (root.data.friends.length > 0 || root.data.servers.length > 0): Rectangle {
-                        height: 24px;
+                        height: 32px;
                         accessible-role: button;
                         accessible-label: "Show mutual friends and servers in the full profile";
                         accessible-action-default => { root.enlarge(); }
                         HorizontalLayout {
-                            spacing: 8px; alignment: start;
+                            y: 8px; height: 24px;
+                            spacing: 6px; alignment: start;
                             if root.data.friends.length > 0: HorizontalLayout {
                                 spacing: 6px;
                                 Middle {
@@ -723,7 +730,7 @@ export component ProfileCard inherits Rectangle {
                                         }
                                     }
                                 }
-                                Text { text: root.data.friends.length + (root.data.friends.length == 1 ? " mutual friend" : " mutual friends"); color: Theme.secondary; font-size: 12px; font-weight: 500; vertical-alignment: center; }
+                                Text { text: root.data.friends.length + (root.data.friends.length == 1 ? " mutual friend" : " mutual friends"); color: Theme.secondary; font-size: 11px; font-weight: 500; vertical-alignment: center; }
                             }
                             if root.data.friends.length > 0 && root.data.servers.length > 0: Text { text: "\u{b7}"; color: Theme.muted; font-size: 12px; vertical-alignment: center; }
                             if root.data.servers.length > 0: HorizontalLayout {
@@ -745,25 +752,36 @@ export component ProfileCard inherits Rectangle {
                     }
                     if root.data.has-bio: VerticalLayout {
                         spacing: 6px;
-                        ProfileHeading { text: "ABOUT ME"; }
-                        // The card shows the start; the full profile shows it all.
-                        // A fixed height, since the text would otherwise stretch it past its limit.
+                        if root.large: ProfileHeading { text: "ABOUT ME"; }
+                        // The card shows three lines and an ellipsis; the full profile
+                        // shows it all. A fixed height, since the text would otherwise
+                        // stretch the card past its limit.
                         Rectangle {
                             clip: true;
-                            height: root.full ? bio-text.preferred-height : min(110px, bio-text.preferred-height);
+                            height: bio-text.preferred-height;
                             VerticalLayout {
                                 bio-text := StyledText {
                                     text: root.data.bio; default-color: Theme.text; link-color: Theme.link;
+                                    max-lines: root.full ? 0 : 3;
                                     link-clicked(link) => { root.open-link(link); }
                                 }
+                            }
+                        }
+                        // The same text, unclamped and out of the layout, to tell
+                        // whether the card cut it short.
+                        Rectangle {
+                            height: 0px;
+                            bio-whole := StyledText {
+                                y: 0px; width: parent.width; visible: false;
+                                text: root.data.bio; default-color: Theme.text;
                             }
                         }
                         // Only where the card cut the text short; its height, not
                         // its presence, follows that, so the layout's width does not.
                         Text {
-                            property <bool> cut: !root.full && !root.preview && bio-text.preferred-height > 110px;
-                            height: self.cut ? 20px : 0px; visible: self.cut;
-                            text: Strings.view-full-bio; color: Theme.link; font-size: 14px; font-weight: 500;
+                            property <bool> cut: !root.full && !root.preview && bio-whole.preferred-height > bio-text.preferred-height + 2px;
+                            height: self.cut ? 16px : 0px; visible: self.cut;
+                            text: Strings.view-full-bio; color: Theme.text.mix(Theme.muted, 0.35); font-size: 12px; font-weight: 500;
                             TouchArea { enabled: parent.cut; mouse-cursor: MouseCursor.pointer; clicked => { root.enlarge(); } }
                         }
                     }
@@ -790,7 +808,8 @@ export component ProfileCard inherits Rectangle {
                         for row in (root.large && !root.side ? root.data.role-rows-large : root.data.role-rows): HorizontalLayout {
                             spacing: 4px; alignment: start;
                             for role in row.roles: Rectangle {
-                                height: 24px; border-radius: 4px; background: Theme.raised;
+                                height: 24px; border-radius: 8px; background: transparent;
+                                border-width: 1px; border-color: Theme.text.transparentize(0.8);
                                 HorizontalLayout {
                                     padding-left: 8px; padding-right: 8px; spacing: 6px;
                                     Middle { Rectangle { width: 10px; height: 10px; border-radius: 5px; background: role.has-color ? role.color : Theme.faint; } }
@@ -837,7 +856,7 @@ export component ProfileCard inherits Rectangle {
                         }
                         message-field := TextField {
                             placeholder: root.data.message-hint; label: root.data.message-hint;
-                            text-size: 14px; border-radius: 8px; fill: root.themed ? #0000004d : Theme.sunken;
+                            text-size: 14px; border-radius: 8px; fill: root.themed ? #ffffff1f : Theme.text.transparentize(0.92);
                             accepted => {
                                 if self.text != "" {
                                     root.send-message(self.text);

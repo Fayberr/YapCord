@@ -3,6 +3,31 @@
 
 use super::*;
 
+/// A bio with each custom emoji tag, `<:name:id>`, as its glyph where the
+/// emoji's picture has arrived already, and as `:name:` where it has not.
+fn bio_with_emoji(bio: &str) -> String {
+    #[cfg(not(feature = "discord"))]
+    return bio.to_owned();
+    #[cfg(feature = "discord")]
+    bio_with_emoji_tags(bio)
+}
+
+#[cfg(feature = "discord")]
+fn bio_with_emoji_tags(bio: &str) -> String {
+    let mut out = bio.to_owned();
+    for emoji in yapfast_discord::message::custom_emoji(bio) {
+        let shown = crate::custom_emoji::glyph(&emoji.id)
+            .map_or_else(|| format!(":{}:", emoji.name), String::from);
+        for tag in [
+            format!("<:{}:{}>", emoji.name, emoji.id),
+            format!("<a:{}:{}>", emoji.name, emoji.id),
+        ] {
+            out = out.replace(&tag, &shown);
+        }
+    }
+    out
+}
+
 /// Only mentions get a number; plain unread activity is a dot, because sync
 /// does not deliver every message of a room that isn't open.
 /// "Ann is", "Ann and Bob are", or "Ann, Bob and 3 others are".
@@ -325,7 +350,7 @@ pub(super) fn profile_data(
                 })
                 .collect::<Vec<_>>(),
         )),
-        bio: markdown(&profile.bio),
+        bio: markdown(&bio_with_emoji(&profile.bio)),
         has_bio: !profile.bio.trim().is_empty(),
         role_rows: role_rows(&profile.roles, PROFILE_CARD_WIDTH),
         role_rows_large: role_rows(&profile.roles, PROFILE_LARGE_WIDTH),
