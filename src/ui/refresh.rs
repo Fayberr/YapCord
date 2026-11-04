@@ -1510,6 +1510,10 @@ impl Adapter {
             Some(Ok(members)) => members.as_slice(),
             _ => &[],
         };
+        let owner = state
+            .selected
+            .as_deref()
+            .and_then(|room| self.app.server_owner(room));
         window.set_roster_note(
             match &state.members {
                 None => "Loading members...",
@@ -1555,6 +1559,8 @@ impl Adapter {
                             member.nameplate.as_ref().map(|plate| plate.color),
                         ),
                         timed_out: member.timed_out_until.is_some_and(|until| until > now),
+                        bot: member.bot,
+                        owner: owner.as_deref() == Some(member.id.as_str()),
                         presence: presence_name(member.presence).into(),
                         color: role_color(member.color),
                         has_color: member.color.is_some(),

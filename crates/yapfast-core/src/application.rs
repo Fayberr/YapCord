@@ -904,6 +904,7 @@ impl AppState {
         };
         if let Some(message) = self.messages.iter().rev().find(sender) {
             return Some(ChatMember {
+                bot: false,
                 id: user.to_owned(),
                 name: message.author.clone(),
                 username: None,
@@ -932,6 +933,7 @@ impl AppState {
             .find(|person| person.id == user)
         {
             return Some(ChatMember {
+                bot: false,
                 id: user.to_owned(),
                 name: person.name.clone(),
                 username: None,
@@ -960,6 +962,7 @@ impl AppState {
         // Matrix links name no one; their id does.
         let name = mentioned.or_else(|| user.starts_with('@').then(|| user.to_owned()))?;
         Some(ChatMember {
+            bot: false,
             id: user.to_owned(),
             name,
             username: None,

@@ -3,6 +3,7 @@ import { ScrollView, ListView } from "scrollview.slint";
 import { Theme, Middle, Label, Tip, BadgeTip, Strings } from "theme.slint";
 import { ActionButton, IconButton, Avatar, Nameplate, StatusText, StyledName, NameStyleRow, EffectLayer, ProfileEffect, PictureStore, TextField, ServerTagChip } from "controls.slint";
 import { StatusDot } from "rail.slint";
+import { BotTag } from "messages.slint";
 
 /// A member of the open room. A heading starts each role's group.
 export struct MemberRow {
@@ -23,6 +24,8 @@ export struct MemberRow {
     name-style: NameStyleRow,
     /// Timed out in their Discord server, marked with a clock by the name.
     timed-out: bool,
+    /// An application's account, marked APP, and the server's owner, marked with a crown.
+    bot: bool, owner: bool,
     /// The server tag they wear by their name, and its badge's address.
     tag: string, tag-badge: string,
 }
@@ -113,6 +116,14 @@ export component MemberPanel inherits Rectangle {
                             if member.tag != "": Middle {
                                 ServerTagChip { text: member.tag; badge: member.tag-badge; opacity: member.presence == "offline" ? 0.5 : 1; }
                             }
+                            if member.owner: Middle {
+                                Image {
+                                    source: @image-url("icons/crown.svg"); width: 14px; height: 14px; image-fit: contain;
+                                    colorize: #f0b232; opacity: member.presence == "offline" ? 0.5 : 1;
+                                    accessible-role: image; accessible-label: "Server owner";
+                                }
+                            }
+                            if member.bot: Middle { BotTag { app: true; opacity: member.presence == "offline" ? 0.5 : 1; } }
                             if member.timed-out: Image {
                                 source: @image-url("icons/clock.svg"); width: 14px; image-fit: contain;
                                 colorize: Theme.danger;
