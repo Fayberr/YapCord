@@ -1431,6 +1431,8 @@ struct Models {
     /// The messages of the thread beside the open channel.
     aside_messages: Rc<VecModel<MessageRow>>,
     roster: Rc<VecModel<MemberRow>>,
+    /// What the members are doing, in the panel above the member list.
+    roster_activity: Rc<VecModel<MemberActivityRow>>,
     mentions: Rc<VecModel<MentionRow>>,
     new_dm_people: Rc<VecModel<ContactRow>>,
     /// The open DM's pinned messages, what its search found, and the
@@ -1505,6 +1507,7 @@ impl Models {
         window.set_messages(ModelRc::from(self.messages.clone()));
         window.set_aside_messages(ModelRc::from(self.aside_messages.clone()));
         window.set_roster(ModelRc::from(self.roster.clone()));
+        window.set_roster_activity(ModelRc::from(self.roster_activity.clone()));
         window.set_mentions(ModelRc::from(self.mentions.clone()));
         window.set_new_dm_people(ModelRc::from(self.new_dm_people.clone()));
         window.set_pins(ModelRc::from(self.pins.clone()));

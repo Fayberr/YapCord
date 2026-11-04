@@ -1510,6 +1510,9 @@ impl Adapter {
             Some(Ok(members)) => members.as_slice(),
             _ => &[],
         };
+        let (activity_rows, activity_total) = activity_panel(members, now);
+        update_model(&self.models.roster_activity, activity_rows);
+        window.set_roster_activity_total(activity_total);
         let owner = state
             .selected
             .as_deref()
