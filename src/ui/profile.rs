@@ -52,6 +52,13 @@ pub(super) fn activity_panel(
                     initial: initial(&member.name),
                     tint: tint(&member.name),
                     picture_url: member.avatar.as_deref().unwrap_or_default().into(),
+                    icon: i32::from(
+                        yapfast_core::yapfast_discord::activity::subline(
+                            std::slice::from_ref(activity),
+                            None,
+                        )
+                        .icon,
+                    ),
                     game: activity.name.to_string().into(),
                     since: if started > 0 {
                         running_for(started, now_ms)
@@ -76,6 +83,25 @@ pub(super) fn activity_panel(
         found.into_iter().map(|(_, row)| row).take(8).collect(),
         total,
     )
+}
+
+/// The icon, bullet and replacing words of the line under a name for what
+/// someone is doing; see `yapfast_discord::activity::subline`.
+#[cfg(feature = "discord")]
+pub(super) fn subline(
+    activities: &yapfast_core::chat::Activities,
+    line: Option<&str>,
+) -> (i32, bool, Option<String>) {
+    let subline = yapfast_core::yapfast_discord::activity::subline(activities, line);
+    (i32::from(subline.icon), subline.bullet, subline.name)
+}
+
+#[cfg(not(feature = "discord"))]
+pub(super) fn subline(
+    _activities: &yapfast_core::chat::Activities,
+    _line: Option<&str>,
+) -> (i32, bool, Option<String>) {
+    (0, false, None)
 }
 
 #[cfg(not(feature = "discord"))]
