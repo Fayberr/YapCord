@@ -1398,13 +1398,8 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
     let row = |name: &str, checked, disabled| (name.to_owned(), checked, disabled);
     assert_eq!(
         shown,
-        [
-            row("Leads", false, true),
-            row("Staff", false, true),
-            row("Crew", true, false),
-            row("Bot", false, true),
-            row("Wardens", false, false),
-        ]
+        // Only the roles within reach are listed, as Discord's menu does.
+        [row("Crew", true, false), row("Wardens", false, false)]
     );
     assert!(roles.iter().all(|row| row.checkbox));
     window.invoke_choose_menu("4".into(), true, "role:20".into());
