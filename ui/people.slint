@@ -93,7 +93,7 @@ export component MemberPanel inherits Rectangle {
                 accessible-action-default => { root.activity-open = !root.activity-open; }
                 HorizontalLayout {
                     padding-left: 8px; padding-right: 8px; spacing: 4px;
-                    Text { text: "ACTIVITY \u{2014} " + root.activity-total; color: #81828a; font-size: 12px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                    Text { text: Strings.tab-activity + " \u{2014} " + root.activity-total; color: #81828a; font-size: 14px; font-weight: 500; vertical-alignment: center; horizontal-stretch: 1; }
                     if root.activity-total > 3: Middle {
                         Image {
                             source: @image-url("icons/chevron-down.svg"); width: 14px; height: 14px; colorize: #81828a;

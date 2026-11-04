@@ -1573,7 +1573,7 @@ impl Adapter {
                         // Discord names its groups; Matrix members group by role.
                         heading: if let Some(group) = &member.group {
                             if index == 0 || members[index - 1].group.as_ref() != Some(group) {
-                                group.to_uppercase().into()
+                                group.as_str().into()
                             } else {
                                 SharedString::default()
                             }
