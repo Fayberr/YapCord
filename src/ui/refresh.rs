@@ -1600,13 +1600,8 @@ impl Adapter {
                 .iter()
                 .enumerate()
                 .map(|(index, member)| {
-                    let (activity_icon, activity_bullet, named) =
-                        subline(&member.activities, member.activity.as_deref());
-                    let (activity, activity_emoji) =
-                        activity_line(named.as_deref().or(member.activity.as_deref()));
+                    let (activity, activity_emoji) = activity_line(member.activity.as_deref());
                     MemberRow {
-                        activity_icon,
-                        activity_bullet,
                         id: member.id.clone().into(),
                         name: member.name.clone().into(),
                         initial: initial(&member.name),
