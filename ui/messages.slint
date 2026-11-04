@@ -906,7 +906,9 @@ export component MessageGallery inherits HorizontalLayout {
         width: root.gallery-width * 1px; height: root.gallery-height * 1px;
         for cell in root.images: Rectangle {
             x: cell.x * 1px; y: cell.y * 1px; width: cell.width * 1px; height: cell.height * 1px;
-            border-radius: 8px; clip: true; background: Theme.sunken;
+            border-radius: 8px; clip: true;
+            // Discord draws a transparent picture straight on the message background.
+            background: ClientStyle.enabled && !cell.loading ? transparent : Theme.sunken;
             if cell.loading: Skeleton { width: parent.width; height: parent.height; }
             if !cell.loading: Picture { still: cell.image; frames: cell.frames; delays: cell.delays; width: parent.width; height: parent.height; image-fit: cover; accessible-role: image; accessible-label: cell.spoiler ? "Spoiler" : cell.name; }
             if cell.spoiler: SpoilerCover {}
@@ -1167,7 +1169,7 @@ export component EmbedView inherits HorizontalLayout {
                         width: root.embed.gallery-width * 1px; height: root.embed.gallery-height * 1px;
                         for cell in root.embed.images: Rectangle {
                             x: cell.x * 1px; y: cell.y * 1px; width: cell.width * 1px; height: cell.height * 1px;
-                            border-radius: 4px; clip: true; background: Theme.sunken;
+                            border-radius: 4px; clip: true; background: ClientStyle.enabled && !cell.loading ? transparent : Theme.sunken;
                             if cell.loading: Skeleton { width: parent.width; height: parent.height; }
                             if !cell.loading: Picture { still: cell.image; frames: cell.frames; delays: cell.delays; width: parent.width; height: parent.height; image-fit: cover; accessible-role: image; accessible-label: cell.spoiler ? "Spoiler" : cell.name; }
                             if cell.spoiler: SpoilerCover {}
@@ -1277,7 +1279,7 @@ export component CardView inherits HorizontalLayout {
                     if row.has-thumbnail: VerticalLayout {
                         alignment: start;
                         Rectangle {
-                            width: 85px; height: 85px; border-radius: 8px; clip: true; background: Theme.sunken;
+                            width: 85px; height: 85px; border-radius: 8px; clip: true; background: ClientStyle.enabled && !row.thumbnail-loading ? transparent : Theme.sunken;
                             if row.thumbnail-loading: Skeleton { width: parent.width; height: parent.height; }
                             if !row.thumbnail-spoiler: Image {
                                 source: row.thumbnail; width: parent.width; height: parent.height; image-fit: cover;
