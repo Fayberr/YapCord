@@ -169,8 +169,6 @@ pub(super) fn command(
                             profile: chat_profile(&discord, &guild, profile),
                         });
                     };
-                    // The badges' levels are asked for beside the profile.
-                    let early = discord.start_badge_levels(&user);
                     let result = discord.profile(&guild, &user, kept).await;
                     let Ok(mut profile) = result else {
                         let error = result.err().map(|error| error.to_string());
@@ -187,7 +185,7 @@ pub(super) fn command(
                     });
                     // The badges' levels come after the card is on screen.
                     let badges_task = async {
-                        if discord.badge_levels(&guild, &user, &mut profile, Some(early)).await {
+                        if discord.badge_levels(&guild, &user, &mut profile).await {
                             let badges = chat_profile(&discord, &guild, profile).badges;
                             let _ = events.send(Event::BadgeLevels {
                                 user: user.clone(),

@@ -2384,7 +2384,7 @@ async fn shows_profiles() {
     // The levels come after the profile, from /users/{id}/badges, and only the
     // badge that levels up has one.
     assert!(in_server.badges.iter().all(|badge| badge.level.is_none()));
-    assert!(discord.badge_levels(&guild, &bob, &mut in_server, None).await);
+    assert!(discord.badge_levels(&guild, &bob, &mut in_server).await);
     assert!(in_server.badges[..2].iter().all(|badge| badge.level.is_none()));
     let level = in_server.badges[2].level.as_ref().expect("playing time has a level");
     assert_eq!(level.kind.as_deref(), Some("Spielzeit"));
