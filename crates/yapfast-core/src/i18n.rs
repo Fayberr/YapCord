@@ -68,6 +68,7 @@ pub fn mutual_servers(count: usize) -> String {
 }
 
 pub(crate) const KEYS: &[&str] = &[
+    "invite_people",
     "show_mutual",
     "roles",
     "connections",
@@ -119,6 +120,7 @@ fn english(key: &str) -> Option<&'static str> {
         "mutual_friend_many" => "{n} mutual friends",
         "mutual_server_one" => "{n} mutual server",
         "mutual_server_many" => "{n} mutual servers",
+        "invite_people" => "Invite people",
         "message_hint" => "Message @{name}",
         "view_full_bio" => "View full bio",
         "member_since" => "Member since",
@@ -158,6 +160,7 @@ fn german(key: &str) -> Option<&'static str> {
         "mutual_friend_many" => "{n} gemeinsame Freunde",
         "mutual_server_one" => "{n} gemeinsamer Server",
         "mutual_server_many" => "{n} gemeinsame Server",
+        "invite_people" => "Mitglieder einladen",
         "message_hint" => "Nachricht an @{name}",
         "view_full_bio" => "Vollständige Bio anzeigen",
         "member_since" => "Mitglied seit",

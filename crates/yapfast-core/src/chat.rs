@@ -37,6 +37,17 @@ pub enum Activity {}
 #[cfg(not(feature = "discord"))]
 pub type Activities = Arc<[Activity]>;
 
+/// The icons of [`ChatRoom::symbol`].
+pub mod symbol {
+    pub const TEXT: u8 = 0;
+    pub const RULES: u8 = 1;
+    pub const ANNOUNCEMENT: u8 = 2;
+    pub const STAGE: u8 = 3;
+    pub const MEDIA: u8 = 4;
+    /// A text channel that is age-restricted.
+    pub const AGE_RESTRICTED: u8 = 5;
+}
+
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ChatRoom {
     pub id: String,
@@ -113,6 +124,9 @@ pub struct ChatRoom {
     /// Show All Channels off for one this account doesn't follow; or a
     /// thread of one.
     pub unlisted: bool,
+    /// Which icon the channel list draws for it, one of [`symbol`], by its
+    /// kind: a rules channel, an announcement channel, a stage and so on.
+    pub symbol: u8,
     /// A Discord message request's latest message, when it's known.
     pub preview: Option<Box<RequestPreview>>,
 }

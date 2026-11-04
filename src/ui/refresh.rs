@@ -202,15 +202,29 @@ impl Icons {
         if room.locked {
             self.lock.clone()
         } else if room.voice {
-            self.voice.clone()
+            if room.symbol == yapfast_core::chat::symbol::STAGE {
+                self.stage.clone()
+            } else {
+                self.voice.clone()
+            }
         } else if room.forum {
-            self.forum.clone()
+            if room.symbol == yapfast_core::chat::symbol::MEDIA {
+                self.media.clone()
+            } else {
+                self.forum.clone()
+            }
         } else if room.direct {
             self.dm.clone()
         } else if room.parent.is_some() {
             self.thread.clone()
         } else {
-            self.text.clone()
+            use yapfast_core::chat::symbol;
+            match room.symbol {
+                symbol::RULES => self.rules.clone(),
+                symbol::ANNOUNCEMENT => self.announcement.clone(),
+                symbol::AGE_RESTRICTED => self.age_restricted.clone(),
+                _ => self.text.clone(),
+            }
         }
     }
 }
@@ -492,6 +506,13 @@ impl Adapter {
         });
         window.set_header_invite(match &state.navigation {
             Navigation::Server(id) => self.app.header_choices(id).contains(&MenuChoice::Invite),
+            Navigation::DirectMessages => false,
+        });
+        window.set_header_community(match &state.navigation {
+            Navigation::Server(id) => state
+                .servers
+                .iter()
+                .any(|server| &server.id == id && server.community),
             Navigation::DirectMessages => false,
         });
         window.set_filter_placeholder(

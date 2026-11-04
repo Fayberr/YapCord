@@ -1,200 +1,27 @@
-import { DmHeading } from "yapfast/dm-heading.slint";
-import { ClientStyle } from "yapfast/style.slint";
-import { ListView } from "scrollview.slint";
-import { Theme, Tip, Middle, Label } from "theme.slint";
-import { Avatar, PictureStore, StatusText, StyledName, NameStyleRow, VoiceSpot } from "controls.slint";
-import { DiscordBadge } from "discord.slint";
-import { PersonRow, LivePill } from "voice.slint";
-
-/// A server in a closed folder's tile: its icon, or its initial.
-export struct FolderServer { initial: string, picture-url: string }
-
-export struct ServerRow {
-    id: string, name: string, initial: string, picture: image, selected: bool, unread: bool, discord: bool,
-    /// A Discord server out of reach in an outage, shown as last known.
-    unavailable: bool,
-    /// Mentions waiting in its channels, such as "3" or "99+"; empty for none.
-    badge: string,
-    /// This account is in a call in one of its voice channels; on a closed
-    /// folder, in one of its servers'.
-    call: bool,
-    picture-url: string,
-    /// A folder of servers rather than a server: `id` is the folder's, `name`
-    /// its tooltip, and `selected`, `unread` and `badge` sum up its servers.
-    /// Open, its servers follow it, `nested`, the last of them `last`.
-    folder: bool, open: bool, nested: bool, last: bool,
-    /// The folder's colour, on a folder and its servers.
-    tint: color,
-    /// A closed folder's first four servers.
-    preview: [FolderServer],
-    /// An unread DM above the servers, as in Discord: `id` is its room's,
-    /// `picture-url` its avatar or group icon, and `badge` its unread messages.
-    dm: bool,
-    /// The line between those DMs and the servers.
-    divider: bool,
-}
-
-export struct RoomRow {
-    id: string, name: string, heading: string, icon: image, selected: bool, unread: bool, badge: string,
-    voice: bool, direct: bool, initial: string, tint: color,
-    /// A voice channel with a chat to open.
-    chat: bool,
-    /// A DM's avatar or group icon, and whether it's a Discord DM.
-    picture: image, discord: bool,
-    picture-url: string,
-    /// The address of the decoration around a one-to-one DM's avatar, and how
-    /// its person's name is drawn.
-    decoration-url: string, name-style: NameStyleRow,
-    /// Listed but not open to join, such as a Discord channel the account's roles keep it out of.
-    locked: bool,
-    /// A one-to-one DM, whose other person has a profile.
-    person: bool,
-    /// Who is in a Discord voice channel, shown without joining it.
-    people: [PersonRow],
-    /// A DM with a call going on.
-    call: bool,
-    /// A one-to-one Discord DM's other person: "online", "mobile", "idle",
-    /// "dnd" or "offline", empty when unknown; and their custom status or what
-    /// they're doing, or a group DM's size, and the address of the picture of
-    /// the status's custom emoji.
-    presence: string,
-    detail: string, detail-emoji: string,
-    /// The server voice channel a one-to-one Discord DM's other person is
-    /// in, by room id, with its name and its server's; the room is empty
-    /// when they're in none.
-    voice-room: string, voice-channel: string, voice-server: string,
-    /// Its heading's category is collapsed; and the row is only that heading,
-    /// for a category with nothing left showing.
-    collapsed: bool,
-    hidden: bool,
-    /// What its heading folds by: a Discord category's room id, which tells
-    /// apart categories of the same name, or else the heading.
-    category: string,
-    /// A DM pinned to the top of the list, or a Discord channel, or its
-    /// thread, among its server's pinned channels; and a DM or channel whose
-    /// notifications are muted.
-    pinned: bool,
-    muted: bool,
-    /// A Discord thread, listed under its channel, and whether another of
-    /// that channel's threads follows it.
-    thread: bool,
-    thread-continues: bool,
-    /// Where its channel, and its heading's category, come among the rows
-    /// a Discord channel list drags and drops, counting from 1; 0 for
-    /// neither, such as a thread or a pinned channel.
-    place: int, heading-place: int,
-}
-
-// A call going on in a server: a white speaker on green, on a thin ring of
-// the rail's colour, at the top right of its icon. The speaker is drawn bold,
-// and a dark copy of it a pixel lower is its shadow, which the light green
-// needs at this size.
-component CallBubble inherits Rectangle {
-    width: 20px; height: 20px; border-radius: self.width / 2;
-    background: Theme.rail;
-    Rectangle {
-        width: 16px; height: 16px; border-radius: self.width / 2;
-        background: Theme.live;
-        Image {
-            x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2 + 1px;
-            source: @image-url("icons/volume-2-bold.svg"); width: 12px; height: 12px;
-            colorize: #000000; opacity: 0.45;
-        }
-        Image { source: @image-url("icons/volume-2-bold.svg"); width: 12px; height: 12px; colorize: #ffffff; }
-    }
-}
-
-// A server or the DM home: a circle that becomes a squircle, with a pill at the rail edge.
-export component RailItem inherits Rectangle {
-    in property <string> label;
-    /// The tooltip; the accessible label may add state such as "unread".
-    in property <string> tip: root.label;
-    in property <string> initial;
-    in property <image> icon;
-    /// The icon's colour and size while the item isn't lit.
-    in property <color> icon-color: Theme.text;
-    in property <length> icon-size: 24px;
-    /// The server's own icon, filling the item instead of the initial.
-    in property <image> picture;
-    in property <string> picture-url;
-    property <image> shown-picture: root.picture-url != "" ? PictureStore.picture(root.picture-url, PictureStore.revision) : root.picture;
-    function request-picture() {
-        if root.picture-url != "" && root.shown-picture.width == 0 {
-            PictureStore.request(root.picture-url);
-        }
-    }
-    init => { root.request-picture(); }
-    changed picture-url => { root.request-picture(); }
-    changed shown-picture => { root.request-picture(); }
-    in property <bool> selected;
-    in property <bool> unread;
-    /// Mentions waiting, at the bottom right as in Discord; empty for none.
-    in property <string> badge;
-    /// In a call here, shown at the top right.
-    in property <bool> call;
-    /// Marks a Discord server.
-    in property <bool> discord;
-    callback clicked;
-    /// A right click, or the Menu key or Shift+F10 when focused: where to open
-    /// a menu in the window.
-    callback context-menu(length, length);
-    property <length> tile-size: ClientStyle.rail-tile;
-    property <length> tile-left: (root.width - root.tile-size) / 2;
-    width: 72px; height: root.tile-size;
+    // Discord keeps 16px above a category, then 24px for its line.
+    height: 40px;
     accessible-role: button;
-    accessible-label: root.label;
-    accessible-action-default => { root.clicked(); }
+    accessible-label: root.text + (root.collapsed ? ", collapsed" : ", expanded");
+    accessible-action-default => { root.toggled(); }
     forward-focus: focus;
-    property <bool> lit: root.selected || pointer.has-hover;
-    Rectangle {
-        x: 0px; y: (parent.height - self.height) / 2; width: 4px;
-        height: root.selected ? (ClientStyle.enabled ? 32px : 40px) : pointer.has-hover ? 20px : root.unread ? 8px : 0px;
-        border-top-right-radius: 4px; border-bottom-right-radius: 4px;
-        background: Theme.text;
-        animate height { duration: 160ms; easing: ease-out; }
-    }
-    // A picture only changes shape when lit, as in Discord.
-    tile := Rectangle {
-        x: root.tile-left; width: root.tile-size; height: root.tile-size;
-        border-radius: ClientStyle.enabled ? 12px : root.lit ? 16px : 24px;
-        background: root.lit && root.shown-picture.width == 0 ? Theme.accent : Theme.raised;
-        animate border-radius, background { duration: 160ms; easing: ease-out; }
-        clip: true;
-        if root.shown-picture.width > 0: Image {
-            source: root.shown-picture; width: root.tile-size; height: root.tile-size; image-fit: cover;
+    /// This account may create a channel in it, which a "+" offers while the
+    /// pointer is over it.
+    in property <bool> can-create;
+    callback create;
+    property <color> ink: touch.has-hover ? Theme.secondary : Theme.muted;
+    HorizontalLayout {
+        padding-left: 16px; padding-right: 8px; padding-top: 16px; spacing: 4px;
+        Text {
+            text: root.text; color: root.ink; font-size: 14px; font-weight: 500; letter-spacing: 0.3px;
+            vertical-alignment: center; overflow: elide; horizontal-stretch: 0;
         }
-        if root.icon.width > 0: Image {
-            source: root.icon; width: root.icon-size; height: root.icon-size;
-            colorize: root.lit ? Theme.on-accent : root.icon-color;
+        Image {
+            source: @image-url("icons/chevron-down.svg");
+            width: 12px; image-fit: contain; colorize: root.ink;
+            transform-rotation: root.collapsed ? -90deg : 0deg;
+            animate transform-rotation { duration: 120ms; easing: ease-out; }
         }
-        if root.icon.width == 0 && root.shown-picture.width == 0: Text {
-            text: root.initial; font-size: 17px; font-weight: 700;
-            color: root.lit ? Theme.on-accent : Theme.text;
-        }
-        // The focus ring, drawn over the picture.
-        Rectangle {
-            width: root.tile-size; height: root.tile-size; border-radius: tile.border-radius;
-            border-width: focus.has-focus ? 2px : 0px;
-            border-color: Theme.text;
-        }
-    }
-    // Discord's logo on its blurple, at the top left on a ring of the rail's
-    // colour so it reads as a tag.
-    if root.discord: DiscordBadge {
-        x: root.tile-left - 2px; y: (parent.height - root.tile-size) / 2 - 2px;
-        size: 16px; ring: Theme.rail;
-    }
-    if root.call: CallBubble { x: root.tile-left + root.tile-size + 3px - self.width; y: (parent.height - root.tile-size) / 2 - 3px; }
-    // The mention count, on a ring of the rail's colour.
-    if root.badge != "": Rectangle {
-        x: root.tile-left + root.tile-size + 4px - self.width; y: (parent.height + root.tile-size) / 2 + 4px - self.height;
-        width: max(16px, badge-text.preferred-width + 8px) + 6px; height: 16px + 6px; border-radius: self.height / 2;
-        background: Theme.rail;
-        Rectangle {
-            width: parent.width - 6px; height: parent.height - 6px; border-radius: self.height / 2;
-            background: Theme.danger;
-            badge-text := Text { text: root.badge; color: Theme.on-danger; font-size: 12px; font-weight: 700; }
-        }
+        Rectangle { horizontal-stretch: 1; }
     }
     focus := FocusScope {
         key-pressed(event) => {
@@ -669,6 +496,21 @@ component CategoryHeading inherits Rectangle {
             }
         }
     }
+    // Discord's "+", at the right while the pointer is over the heading.
+    add := Rectangle {
+        x: parent.width - self.width - 8px; y: 16px; width: 24px; height: 24px;
+        opacity: root.can-create && (touch.has-hover || add-touch.has-hover) ? 1 : 0;
+        Image {
+            source: @image-url("icons/plus.svg"); width: 16px; height: 16px;
+            x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+            colorize: add-touch.has-hover ? Theme.text : Theme.muted; accessible-role: none;
+        }
+        add-touch := TouchArea {
+            enabled: root.can-create;
+            mouse-cursor: MouseCursor.pointer;
+            clicked => { root.create(); }
+        }
+    }
     Rectangle {
         border-radius: 4px; border-width: focus.has-focus ? 2px : 0px; border-color: Theme.accent;
     }
@@ -680,6 +522,8 @@ component CategoryHeading inherits Rectangle {
 export component ServerHeader inherits Rectangle {
     in property <string> name;
     in property <bool> open;
+    /// A Community server, whose header starts with Discord's badge.
+    in property <bool> community;
     callback clicked;
     border-radius: 6px;
     background: touch.has-hover || root.open ? Theme.hover : transparent;
@@ -697,12 +541,16 @@ export component ServerHeader inherits Rectangle {
     }
     HorizontalLayout {
         padding-left: 8px; padding-right: 8px; spacing: 6px; alignment: start;
+        if root.community: VerticalLayout {
+            alignment: center;
+            Image { source: @image-url("icons/community.svg"); width: 20px; height: 20px; colorize: Theme.text; accessible-role: none; }
+        }
         Text {
             text: root.name; font-size: ClientStyle.text-size; font-weight: 700; color: Theme.text;
             vertical-alignment: center; overflow: elide;
         }
         Image {
-            source: @image-url("icons/chevron-down.svg"); width: 16px; height: 16px; y: (parent.height - self.height) / 2;
+            source: @image-url("icons/chevron-down.svg"); width: 20px; height: 20px; y: (parent.height - self.height) / 2;
             colorize: Theme.muted; transform-rotation: root.open ? 180deg : 0deg;
             animate transform-rotation { duration: 120ms; easing: ease-out; }
         }
@@ -898,6 +746,9 @@ export component RoomList inherits Rectangle {
     /// A category's heading was clicked, by the row's category: collapse or
     /// open it.
     callback toggle-category(string);
+    /// Whether this account may create a channel in a category heading's category, by room id, and a "+" asking to.
+    pure callback may-create(string) -> bool;
+    callback create-channel(string);
     /// A category's menu was asked for, by its first channel's id.
     callback open-category-menu(string, length, length);
     /// Dragging a Discord server's channels and categories, by their rows'
@@ -1019,6 +870,8 @@ export component RoomList inherits Rectangle {
                 }
                 if room.heading != "" && !(room.pinned && !room.direct): CategoryHeading {
                     text: room.heading; collapsed: room.collapsed;
+                    can-create: root.may-create(room.id);
+                    create => { root.create-channel(room.id); }
                     toggled => { root.toggle-category(room.category); }
                     context-menu(x, y) => { root.open-category-menu(room.id, x, y); }
                     draggable: room.heading-place > 0; tracking: root.arranging > 0;

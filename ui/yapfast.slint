@@ -168,6 +168,8 @@ export component YapfastWindow inherits Window {
     /// account may invite to it.
     in property <string> header-server;
     in property <bool> header-invite;
+    /// The server in the header is a Community server.
+    in property <bool> header-community;
     // A Discord server's or channel's invite dialog: the link, and the
     // choices for another, as indices into each list it offers.
     in property <bool> invite-open;
@@ -641,6 +643,8 @@ export component YapfastWindow inherits Window {
     /// The room id of the category a channel, by its room id, is listed
     /// under, whose heading's menu is asked for; empty for none.
     pure callback category-of(string) -> string;
+    /// Whether a category, by its room id, may have a channel created in it.
+    pure callback may-create-channel(string) -> bool;
     /// Show a mutual friend's profile, by Discord user id: as a card, or large.
     callback show-friend-profile(string, bool);
     /// A mutual server's card, beside the profile that lists it.
@@ -2104,13 +2108,13 @@ export component YapfastWindow inherits Window {
                                 height: 48px;
                                 if root.header-server == "" && !(ClientStyle.enabled && root.dms-selected): Text { x: 16px; width: parent.width - (root.dms-selected && !root.preview ? (root.discord-linked ? 88px : 56px) : 32px); text: root.sidebar-title; font-size: 16px; font-weight: 700; color: Theme.text; vertical-alignment: center; overflow: elide; }
                                 if root.header-server != "": server-header := ServerHeader {
-                                    x: 8px; y: 8px; width: parent.width - 16px - (root.header-invite ? 32px : 0px); height: 32px;
-                                    name: root.sidebar-title; open: root.header-menu-open;
+                                    x: 8px; y: 8px; width: parent.width - 16px - (root.header-invite ? 40px : 0px); height: 32px;
+                                    name: root.sidebar-title; open: root.header-menu-open; community: root.header-community;
                                     clicked => { root.open-header-menu(self.absolute-position.x, self.absolute-position.y + self.height + 6px); }
                                 }
                                 if root.header-server != "" && root.header-invite: IconButton {
-                                    x: parent.width - self.width - 10px;
-                                    icon: @image-url("icons/user-plus.svg"); label: "Invite to server"; size: 28px; glyph: 18px; tip-side: 2;
+                                    x: parent.width - self.width - 8px; y: 8px;
+                                    icon: @image-url("icons/user-plus.svg"); label: Strings.invite-people; size: 32px; glyph: 20px; tip-side: 2;
                                     clicked => { root.open-invite(root.header-server); }
                                 }
                                 if !ClientStyle.enabled && root.dms-selected && !root.preview && root.discord-linked: IconButton {
@@ -2131,7 +2135,8 @@ export component YapfastWindow inherits Window {
                                 }
                                 Rectangle { y: parent.height - 1px; height: 1px; background: ClientStyle.enabled ? Theme.line : Theme.edge; }
                             }
-                            if !(ClientStyle.enabled && root.dms-selected): HorizontalLayout {
+                            // Discord's channel list starts at its first category: Ctrl+K finds channels.
+                            if !ClientStyle.enabled: HorizontalLayout {
                                 padding: 10px; padding-bottom: 6px;
                                 TextField {
                                     min-height: 30px; text-size: 14px; pad: 8px; fill: Theme.sunken; ring: false;
@@ -2144,7 +2149,7 @@ export component YapfastWindow inherits Window {
                                 open-new-dm => { root.open-new-dm(); }
                                 rooms: root.rooms; dms-selected: root.dms-selected; discord-linked: root.discord-linked; preview: root.preview;
                                 friends-open: root.friends-open; requests-current: root.requests-current; requests-badge: root.requests-badge;
-                                browse-offered: root.browse-offered; browsing: root.browse-open;
+                                browse-offered: root.browse-offered && !ClientStyle.enabled; browsing: root.browse-open;
                                 open-browse => { root.open-browse(); }
                                 voice-channel: root.voice-channel; participants: root.participants; sidebar-empty: root.sidebar-empty;
                                 select-room(id) => { root.select-room(id); }
@@ -2167,6 +2172,10 @@ export component YapfastWindow inherits Window {
                                 arrange(place) => { root.arrange-room(place); }
                                 stop-arranging => { root.stop-arranging(); }
                                 toggle-category(category) => { root.toggle-category(category); }
+                                may-create(id) => { return root.may-create-channel(root.category-of(id)); }
+                                create-channel(id) => {
+                                    if root.category-of(id) != "" { root.choose-menu(root.category-of(id), false, "create-channel"); }
+                                }
                                 open-category-menu(id, x, y) => {
                                     if root.category-of(id) != "" { root.open-context-menu(root.category-of(id), false, x, y); }
                                 }

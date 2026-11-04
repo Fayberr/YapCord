@@ -213,6 +213,7 @@ pub(super) fn preview_room(id: &str, name: &str, direct: bool, members: u64) -> 
         parent: None,
         forum: false,
         unlisted: false,
+        symbol: 0,
         preview: None,
     }
 }

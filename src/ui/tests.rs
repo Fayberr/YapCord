@@ -3543,6 +3543,7 @@ fn friends_in_a_servers_voice_channel_show_where() {
         parent: None,
         forum: false,
         unlisted: false,
+        symbol: 0,
         preview: None,
     };
     let mut state = AppState::default();
@@ -6223,6 +6224,7 @@ fn requests_list_someone_once_with_their_message() {
         parent: None,
         forum: false,
         unlisted: false,
+        symbol: 0,
         preview: Some(Box::new(RequestPreview {
             text: format!("Hi from {person}"),
             at: 1_700_000_000_000,

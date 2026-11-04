@@ -168,6 +168,10 @@ pub struct Server {
     /// [`crate::marked::MarkedServer::follows_only`].
     #[serde(default)]
     pub community: bool,
+    /// The channel Discord asks new members to read first, which wears the
+    /// rules icon in the channel list.
+    #[serde(default)]
+    pub rules_channel: Option<String>,
     /// This account's timeout here while it lasts, set on a copy of the
     /// server when the service publishes it; see [`crate::marked`] for the
     /// rest of what's this account's.
@@ -255,6 +259,12 @@ pub struct Channel {
     /// A stage channel, among the voice channels, where no join sound plays.
     #[serde(default)]
     pub stage: bool,
+    /// A media channel, which is a forum of pictures and videos.
+    #[serde(default)]
+    pub media: bool,
+    /// Age-restricted, which Discord marks with a warning on its icon.
+    #[serde(default)]
+    pub nsfw: bool,
 }
 
 /// What a thread has that a channel doesn't; see
@@ -1240,6 +1250,10 @@ pub fn server(guild: &Value) -> Option<Server> {
         forwarding_disabled: has("FORWARDING_DISABLED"),
         verified: has("VERIFIED") || has("PARTNERED"),
         community: has("COMMUNITY"),
+        rules_channel: guild["rules_channel_id"]
+            .as_str()
+            .or_else(|| guild["properties"]["rules_channel_id"].as_str())
+            .map(str::to_owned),
         ..Default::default()
     };
     for role in guild["roles"].as_array().into_iter().flatten() {
@@ -1369,6 +1383,8 @@ fn parse_channel(channel: &Value) -> Option<Channel> {
         overwrites: Arc::new(overwrites(channel)),
         announcement: channel["type"].as_u64() == Some(GUILD_ANNOUNCEMENT),
         stage: channel["type"].as_u64() == Some(GUILD_STAGE_VOICE),
+        media: channel["type"].as_u64() == Some(GUILD_MEDIA),
+        nsfw: channel["nsfw"].as_bool().unwrap_or(false),
         archive_after: channel["default_auto_archive_duration"]
             .as_u64()
             .and_then(|minutes| u16::try_from(minutes).ok())

@@ -1098,6 +1098,7 @@ enum Animate {
 fn set_strings(window: &YapfastWindow) {
     use i18n::tr;
     let strings = window.global::<Strings>();
+    strings.set_invite_people(tr("invite_people").into());
     strings.set_show_mutual(tr("show_mutual").into());
     strings.set_roles(tr("roles").into());
     strings.set_connections(tr("connections").into());
@@ -1568,6 +1569,12 @@ struct Icons {
     id: slint::Image,
     thread: slint::Image,
     forum: slint::Image,
+    /// The rules, announcement, stage, media and age-restricted channels' icons.
+    rules: slint::Image,
+    announcement: slint::Image,
+    stage: slint::Image,
+    media: slint::Image,
+    age_restricted: slint::Image,
     voice: slint::Image,
     lock: slint::Image,
     read: slint::Image,
@@ -1805,6 +1812,15 @@ impl Adapter {
             thread: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/thread.svg"))?,
             forum: slint::Image::load_from_svg_data(include_bytes!(
                 "../ui/icons/message-square-text.svg"
+            ))?,
+            rules: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/rules.svg"))?,
+            announcement: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/megaphone.svg"
+            ))?,
+            stage: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/stage.svg"))?,
+            media: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/image.svg"))?,
+            age_restricted: slint::Image::load_from_svg_data(include_bytes!(
+                "../ui/icons/hash-warning.svg"
             ))?,
             voice: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/volume-2.svg"))?,
             lock: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/lock.svg"))?,

@@ -1205,6 +1205,7 @@ async fn room_index(client: &Client) -> RoomIndex {
             parent: None,
             forum: false,
             unlisted: false,
+            symbol: 0,
             preview: None,
         });
     }

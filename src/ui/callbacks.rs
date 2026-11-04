@@ -400,6 +400,12 @@ pub(super) fn bind_callbacks(window: &YapfastWindow, adapter: &Rc<RefCell<Adapte
     }
     {
         let adapter = adapter.clone();
+        window.on_may_create_channel(move |category| {
+            adapter.borrow().app.may_create_channel(&category)
+        });
+    }
+    {
+        let adapter = adapter.clone();
         // An empty category's heading names the category itself.
         window.on_category_of(move |room| {
             let app = &adapter.borrow().app;

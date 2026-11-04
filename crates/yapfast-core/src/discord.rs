@@ -687,6 +687,7 @@ fn dm_room(snapshot: &Snapshot, dm: &Conversation, premium: u8, me: &str) -> Cha
         parent: None,
         forum: false,
         unlisted: false,
+        symbol: chat::symbol::TEXT,
         preview: dm.preview.as_ref().map(|preview| {
             Box::new(chat::RequestPreview {
                 text: match (preview.text.trim(), preview.files) {
@@ -833,6 +834,11 @@ fn server_rooms(
                 parent: None,
                 forum: false,
                 unlisted: false,
+                symbol: if channel.stage {
+                    chat::symbol::STAGE
+                } else {
+                    chat::symbol::TEXT
+                },
                 preview: None,
             }
         } else {
@@ -881,6 +887,17 @@ fn server_rooms(
                 parent: None,
                 forum: channel.forum.is_some(),
                 unlisted: unlisted(channel),
+                symbol: if server.rules_channel.as_deref() == Some(channel.id.as_str()) {
+                    chat::symbol::RULES
+                } else if channel.announcement {
+                    chat::symbol::ANNOUNCEMENT
+                } else if channel.media {
+                    chat::symbol::MEDIA
+                } else if channel.nsfw {
+                    chat::symbol::AGE_RESTRICTED
+                } else {
+                    chat::symbol::TEXT
+                },
                 preview: None,
             }
         });
@@ -956,6 +973,7 @@ fn thread_room(
         parent: Some(parent.id.clone()),
         forum: false,
         unlisted: parent.unlisted,
+        symbol: chat::symbol::TEXT,
         preview: None,
     }
 }
