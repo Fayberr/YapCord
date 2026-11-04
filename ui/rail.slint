@@ -452,7 +452,7 @@ export component ChannelRow inherits Rectangle {
     callback context-menu(length, length);
     property <bool> in-voice: root.voice-channel != "";
     property <bool> has-detail: root.detail != "" || root.detail-emoji != "";
-    property <bool> offers-wave: root.wave != "" && (pointer.has-hover || root.selected);
+    property <bool> offers-wave: root.wave != "" && (pointer.has-hover || root.selected || wave-touch.has-hover);
     height: root.person ? ClientStyle.dm-row-height : ClientStyle.channel-row-height;
     border-radius: 6px;
     background: root.selected ? Theme.active : pointer.has-hover ? Theme.hover : transparent;
