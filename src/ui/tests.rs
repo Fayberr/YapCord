@@ -1406,9 +1406,9 @@ fn a_server_members_menu_follows_permissions_and_ticks_roles() {
     assert!(
         !window
             .get_menu_submenus()
-            .row_data(10)
+            .row_data(11)
             .unwrap()
-            .row_data(2)
+            .row_data(0)
             .unwrap()
             .checked,
         "Crew unticks at once, and the menu stays open"
