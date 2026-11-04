@@ -781,11 +781,13 @@ export component ServerHeader inherits Rectangle {
         }
     }
     HorizontalLayout {
-        padding-left: ClientStyle.enabled && root.verified ? 10px : 8px; padding-right: 8px;
+        padding-left: ClientStyle.enabled && (root.verified || root.community) ? 10px : 8px; padding-right: 8px;
         spacing: ClientStyle.enabled ? 10px : 6px; alignment: start;
-        if !ClientStyle.enabled && root.community: VerticalLayout {
+        // Discord marks a verified server with its green badge, and one that is
+        // only a Community server with the Community badge.
+        if root.community && !(ClientStyle.enabled && root.verified): VerticalLayout {
             alignment: center;
-            Image { source: @image-url("icons/community.svg"); width: 20px; height: 20px; colorize: Theme.text; accessible-role: none; }
+            Image { source: @image-url("icons/community.svg"); width: ClientStyle.enabled ? 16px : 20px; height: ClientStyle.enabled ? 16px : 20px; colorize: Theme.text; accessible-role: none; }
         }
         if ClientStyle.enabled && root.verified: VerticalLayout {
             alignment: center;
