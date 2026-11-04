@@ -2380,7 +2380,7 @@ async fn shows_profiles() {
     assert_eq!(tag.guild, guild);
     assert!(
         tag.badge_url()
-            .is_some_and(|url| url.contains("/clan-badges/"))
+            .is_some_and(|url| url.contains("/guild-tag-badges/"))
     );
     assert_eq!(
         discord.server_tag(&bob).map(|tag| tag.text),

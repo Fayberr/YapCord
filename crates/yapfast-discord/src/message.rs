@@ -2403,7 +2403,7 @@ mod tests {
         assert!(
             tag.badge_url()
                 .unwrap()
-                .ends_with("/clan-badges/10/abc123.png?size=64")
+                .ends_with("/guild-tag-badges/10/abc123.png?size=64")
         );
         assert_eq!(names.server_tag("3"), None);
 
