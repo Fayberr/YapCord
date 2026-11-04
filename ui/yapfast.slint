@@ -38,7 +38,6 @@ import "fonts/DisplayName-Journal.ttf";
 // settings.slint, people.slint, friends.slint, dialogs.slint and sign-in.slint.
 import { Theme, Tip, BadgeTip, ReactionHover, Middle, Popup, PopupMotion } from "theme.slint";
 import { TitleBar, ResizeEdges } from "title_bar.slint";
-import { InboxRow, InboxPopout } from "yapfast/inbox.slint";
 import { GifPicker, GifTile, PickerTab } from "gifs.slint";
 import { ActionButton, IconButton, PingToggle, DeviceToggle, Avatar, TextField, MessagesSkeleton, ContextMenu, MenuItem, MenuRow, DeviceMenu, HeaderToggle, Banner, StatusText, Nameplate, AccountLook, PictureStore } from "controls.slint";
 import { PersonRow, CallLink, CallLinkCard, LinkTouch, SignalIcon, VoiceDock, StreamPip, CallInvite, JoinVoice, ParticipantGrid, CallControls, IncomingCall, SwitchDialog, InputLevel, ShareMenu, ShareScreen, VolumeMenu, Soundboard, SoundRow } from "voice.slint";
@@ -63,7 +62,6 @@ import { BrowseRow, BrowseScreen } from "browse.slint";
 
 // Rust sees these, besides YapfastWindow.
 export { ClientStyle } from "yapfast/style.slint";
-export { InboxRow } from "yapfast/inbox.slint";
 export { Theme, Badges, Popup, Strings } from "theme.slint";
 export { Autoscroll } from "scrollview.slint";
 export { PersonRow, CallLink, ShareScreen } from "voice.slint";
@@ -879,19 +877,6 @@ export component YapfastWindow inherits Window {
     in property <string> dm-person;
     /// A Discord DM is open, whose call can be started or joined from its header.
     in property <bool> can-call;
-    /// The title bar's back and forward arrows have somewhere to go.
-    in property <bool> can-go-back;
-    in property <bool> can-go-forward;
-    callback go-back;
-    callback go-forward;
-    /// The inbox popout: what is waiting, and which of its tabs have rows.
-    in-out property <bool> inbox-open;
-    in property <[InboxRow]> inbox-rows;
-    in property <bool> inbox-has-for-you;
-    in property <bool> inbox-has-unreads;
-    in property <bool> inbox-has-mentions;
-    /// The inbox opened: the rows are made only while it shows.
-    callback inbox-opened;
     /// Someone is in the open DM's call, so the header joins rather than starts it.
     in property <bool> call-going;
     callback start-call;
@@ -4246,37 +4231,9 @@ export component YapfastWindow inherits Window {
         maximize-window => { root.maximize-window(); }
         close-window => { root.close-window(); }
     }
-    if root.title-height > 0 && ClientStyle.enabled && root.inbox-open: TouchArea {
-        x: 0px; y: root.title-height; width: root.width; height: root.height - root.title-height;
-        clicked => { root.inbox-open = false; }
-    }
-    if root.title-height > 0 && ClientStyle.enabled && root.inbox-open: InboxPopout {
-        x: root.width - self.width - 8px; y: root.title-height + 4px;
-        rows: root.inbox-rows;
-        title: Strings.inbox; for-you-label: Strings.inbox-for-you; unreads-label: Strings.inbox-unreads;
-        mentions-label: Strings.inbox-mentions; empty-label: Strings.inbox-empty;
-        has-for-you: root.inbox-has-for-you; has-unreads: root.inbox-has-unreads; has-mentions: root.inbox-has-mentions;
-        open(id, kind) => {
-            root.inbox-open = false;
-            if kind == 2 { root.open-requests(); } else { root.switch-to(id); }
-        }
-        close => { root.inbox-open = false; }
-    }
     if root.title-height > 0 && ClientStyle.enabled: WindowBar {
         x: 0px; y: 0px; width: root.width;
         place: root.workspace ? (root.dms-selected ? "Direct Messages" : root.sidebar-title) : "Yapfast";
-        can-go-back: root.workspace && root.can-go-back; can-go-forward: root.workspace && root.can-go-forward;
-        inbox-open: root.inbox-open;
-        back-label: Strings.nav-back; forward-label: Strings.nav-forward; inbox-label: Strings.inbox;
-        help-label: Strings.help; download-label: Strings.download-apps;
-        go-back => { root.go-back(); }
-        go-forward => { root.go-forward(); }
-        toggle-inbox => {
-            root.inbox-open = !root.inbox-open;
-            if root.inbox-open { root.inbox-opened(); }
-        }
-        open-help => { root.open-link("https://support.discord.com"); }
-        open-download => { root.open-link("https://discord.com/download"); }
         focused: root.window-focused; maximized: root.window-maximized;
         move-window => { root.move-window(); }
         minimize-window => { root.minimize-window(); }

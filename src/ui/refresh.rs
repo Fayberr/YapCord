@@ -301,11 +301,6 @@ impl Adapter {
             .set_revision(self.app.state.picture_changes as i32);
         self.show_viewer(window);
         self.show_profile(window);
-        window.set_can_go_back(self.app.state.can_go_back());
-        window.set_can_go_forward(self.app.state.can_go_forward());
-        if window.get_inbox_open() {
-            self.show_inbox(window);
-        }
         let changes = Changes::read(self, window);
         if changes.reset || self.navigation != self.app.state.navigation {
             window.set_filter(SharedString::default());
@@ -1003,74 +998,6 @@ impl Adapter {
         window.set_discord_status(state.discord_presence.as_deref().unwrap_or("online").into());
         window.set_storage(state.storage.unwrap_or_default().into());
         window.set_notice(state.notice.as_deref().unwrap_or_default().into());
-    }
-
-    /// The inbox popout's rows, from what the client already knows: friend
-    /// requests for You, channels and conversations with unread messages, and
-    /// those that mention this account.
-    fn show_inbox(&mut self, window: &YapfastWindow) {
-        let state = &self.app.state;
-        let mut rows = Vec::new();
-        for request in state
-            .friend_requests
-            .iter()
-            .filter(|request| request.incoming && !request.spam)
-        {
-            rows.push(InboxRow {
-                id: request.id.as_str().into(),
-                name: request.name.as_str().into(),
-                place: yapfast_core::i18n::tr("inbox_friend_request").into(),
-                initial: initial(&request.name),
-                tint: tint(&request.id),
-                picture_url: request.avatar.as_deref().unwrap_or_default().into(),
-                count: 0,
-                kind: 2,
-                direct: true,
-            });
-        }
-        for room in state.rooms.iter().filter(|room| !room.request && !room.unlisted) {
-            let (count, kind) = if room.mentions > 0 {
-                (room.mentions, 0)
-            } else if room.unread > 0 && !room.muted {
-                (room.unread, 1)
-            } else {
-                continue;
-            };
-            let place = if room.direct {
-                String::new()
-            } else {
-                state
-                    .servers
-                    .iter()
-                    .find(|server| server.channels.contains(&room.id))
-                    .map(|server| server.name.clone())
-                    .unwrap_or_default()
-            };
-            rows.push(InboxRow {
-                id: room.id.as_str().into(),
-                name: if room.direct {
-                    room.name.clone()
-                } else {
-                    format!("#{}", room.name)
-                }
-                .into(),
-                place: place.into(),
-                initial: initial(&room.name),
-                tint: tint(&room.id),
-                picture_url: if room.direct {
-                    room.avatar.as_deref().unwrap_or_default().into()
-                } else {
-                    SharedString::default()
-                },
-                count: i32::try_from(count).unwrap_or(i32::MAX),
-                kind,
-                direct: room.direct,
-            });
-        }
-        window.set_inbox_has_for_you(rows.iter().any(|row| row.kind == 2));
-        window.set_inbox_has_unreads(rows.iter().any(|row| row.kind == 1));
-        window.set_inbox_has_mentions(rows.iter().any(|row| row.kind == 0));
-        update_model(&self.models.inbox, rows);
     }
 
     /// Starting a thread: what the open channel offers, and the "New

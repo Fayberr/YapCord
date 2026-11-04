@@ -494,17 +494,6 @@ pub(super) fn bind_callbacks(window: &YapfastWindow, adapter: &Rc<RefCell<Adapte
     bind!(on_open_new_dm, Action::OpenNewDm);
     bind!(on_open_add_friend, Action::OpenAddFriend);
     bind!(on_open_requests, Action::OpenDmScreen(DmScreen::Requests));
-    {
-        let adapter = adapter.clone();
-        let weak = window.as_weak();
-        window.on_inbox_opened(move || {
-            if let Some(window) = weak.upgrade() {
-                adapter.borrow_mut().refresh(&window);
-            }
-        });
-    }
-    bind!(on_go_back, Action::NavigateBack);
-    bind!(on_go_forward, Action::NavigateForward);
     bind!(on_open_friends, Action::OpenDmScreen(DmScreen::Friends));
     bind!(on_open_browse, Action::BrowseChannels);
     bind_item!(on_message_friend, Action::MessagePerson);
