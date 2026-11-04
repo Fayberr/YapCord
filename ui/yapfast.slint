@@ -2423,7 +2423,9 @@ export component YapfastWindow inherits Window {
                         }
                         // A server channel's topic, after a rule, as Discord shows it:
                         // one line, cut short, and in full once clicked.
-                        if root.has-topic: Middle { Rectangle { width: 1px; height: 24px; background: Theme.line; } }
+                        if root.has-topic && !ClientStyle.enabled: Middle { Rectangle { width: 1px; height: 24px; background: Theme.line; } }
+                        // Discord's is a small round dot, with room either side.
+                        if root.has-topic && ClientStyle.enabled: Middle { Rectangle { width: 12px; height: 4px; Rectangle { width: 4px; height: 4px; x: 4px; border-radius: 2px; background: Theme.faint; } } }
                         if root.has-topic: topic-area := Rectangle {
                             horizontal-stretch: 1; min-width: 40px;
                             accessible-role: button;
