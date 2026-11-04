@@ -1619,11 +1619,6 @@ pub fn splash(guild: &str, hash: &str) -> String {
     format!("{}/splashes/{guild}/{hash}.png?size=600", cdn())
 }
 
-/// A role's icon, as its settings show it.
-pub fn role_icon(role: &str, hash: &str) -> String {
-    format!("{}/role-icons/{role}/{hash}.png?size=64", cdn())
-}
-
 /// An application's icon, as authorizing it shows it.
 pub fn application_icon(application: &str, hash: &str) -> String {
     format!(
