@@ -1,25 +1,281 @@
-//! Interface strings in the chosen language: a small catalog, English complete
-//! and other languages as far as translated, with English where a key has no
-//! translation.
+//! The interface's languages: the 32 Discord offers, and the words Rust
+//! writes in them.
+//!
+//! Every text is its English wording; a translation is looked up by that
+//! wording in `translations/<locale>/LC_MESSAGES/yapfast-ui.po`, the file the
+//! Slint interface's `@tr` texts are translated from too (see
+//! `docs/i18n.md`). A text with no translation reads in English.
 
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::{
+    collections::HashMap,
+    sync::{
+        OnceLock,
+        atomic::{AtomicU8, Ordering},
+    },
+};
 
-/// A language the interface can speak.
+use crate::clock::DateFormat;
+
+/// How a language counts: which of its plural forms a number takes. The
+/// forms are gettext's, so that Slint and Rust agree (`Plural-Forms` in each
+/// `.po` file says the same).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Language {
-    English,
-    German,
+pub enum Plural {
+    /// One form: Chinese, Japanese, Korean, Thai, Vietnamese, Indonesian.
+    One,
+    /// "1" and the rest: English, German, Spanish, Italian, ...
+    OneOther,
+    /// 0 and 1 and the rest: French, Brazilian Portuguese.
+    ZeroOneOther,
+    /// Russian, Ukrainian, Croatian: 1, 2 to 4 and the rest, with the teens.
+    Slavic,
+    /// Polish: 1, 2 to 4 and the rest, with the teens.
+    Polish,
+    /// Czech: 1, 2 to 4 and the rest.
+    Czech,
+    /// Lithuanian: 1, 2 to 9 and the rest, with the teens.
+    Lithuanian,
+    /// Romanian: 1, few and the rest.
+    Romanian,
 }
 
+impl Plural {
+    /// The index of the form a count takes.
+    pub fn index(self, n: u64) -> usize {
+        let (m10, m100) = (n % 10, n % 100);
+        match self {
+            Self::One => 0,
+            Self::OneOther => usize::from(n != 1),
+            Self::ZeroOneOther => usize::from(n > 1),
+            Self::Slavic => {
+                if m10 == 1 && m100 != 11 {
+                    0
+                } else if (2..=4).contains(&m10) && !(10..20).contains(&m100) {
+                    1
+                } else {
+                    2
+                }
+            }
+            Self::Polish => {
+                if n == 1 {
+                    0
+                } else if (2..=4).contains(&m10) && !(10..20).contains(&m100) {
+                    1
+                } else {
+                    2
+                }
+            }
+            Self::Czech => {
+                if n == 1 {
+                    0
+                } else if (2..=4).contains(&n) {
+                    1
+                } else {
+                    2
+                }
+            }
+            Self::Lithuanian => {
+                if m10 == 1 && !(11..20).contains(&m100) {
+                    0
+                } else if (2..=9).contains(&m10) && !(11..20).contains(&m100) {
+                    1
+                } else {
+                    2
+                }
+            }
+            Self::Romanian => {
+                if n == 1 {
+                    0
+                } else if n == 0 || (1..20).contains(&m100) {
+                    1
+                } else {
+                    2
+                }
+            }
+        }
+    }
+
+    /// gettext's `Plural-Forms` header for the language's `.po` file.
+    pub fn header(self) -> &'static str {
+        match self {
+            Self::One => "nplurals=1; plural=0;",
+            Self::OneOther => "nplurals=2; plural=(n != 1);",
+            Self::ZeroOneOther => "nplurals=2; plural=(n > 1);",
+            Self::Slavic => {
+                "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+            }
+            Self::Polish => {
+                "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+            }
+            Self::Czech => "nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);",
+            Self::Lithuanian => {
+                "nplurals=3; plural=(n%10==1 && (n%100<11 || n%100>19) ? 0 : n%10>=2 && n%10<=9 && (n%100<11 || n%100>19) ? 1 : 2);"
+            }
+            Self::Romanian => {
+                "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2);"
+            }
+        }
+    }
+}
+
+/// A language Discord offers, and what Yapfast knows of it.
+#[derive(Debug)]
+pub struct Locale {
+    /// Discord's code for it, such as `pt-BR`; the folder in `translations/` too.
+    pub code: &'static str,
+    /// The language's name in itself, for the settings page.
+    pub native: &'static str,
+    /// Its name in English.
+    pub english: &'static str,
+    pub plural: Plural,
+    /// The order of day, month and year where the language is spoken.
+    pub dates: DateFormat,
+    /// The translations, as a `.po` file; none for the English they are keyed by.
+    po: &'static str,
+}
+
+macro_rules! locale {
+    ($code:literal, $native:literal, $english:literal, $plural:ident, $dates:ident) => {
+        Locale {
+            code: $code,
+            native: $native,
+            english: $english,
+            plural: Plural::$plural,
+            dates: DateFormat::$dates,
+            po: include_str!(concat!(
+                "../../../translations/",
+                $code,
+                "/LC_MESSAGES/yapfast-ui.po"
+            )),
+        }
+    };
+}
+
+/// How many languages there are.
+const COUNT: usize = 32;
+
+/// The languages, in the order the settings page lists them. A language's
+/// place here is what the settings page shows as chosen, not what is saved.
+pub static LOCALES: [Locale; COUNT] = [
+    Locale {
+        code: "en-US",
+        native: "English (US)",
+        english: "English (US)",
+        plural: Plural::OneOther,
+        dates: DateFormat::MonthDayYear,
+        po: "",
+    },
+    locale!("en-GB", "English (UK)", "English (UK)", OneOther, DayMonthYear),
+    locale!("bg", "Български", "Bulgarian", OneOther, DayMonthYear),
+    locale!("zh-CN", "中文", "Chinese (China)", One, YearMonthDay),
+    locale!("zh-TW", "繁體中文", "Chinese (Taiwan)", One, YearMonthDay),
+    locale!("hr", "Hrvatski", "Croatian", Slavic, DayMonthYear),
+    locale!("cs", "Čeština", "Czech", Czech, DayMonthYear),
+    locale!("da", "Dansk", "Danish", OneOther, DayMonthYear),
+    locale!("nl", "Nederlands", "Dutch", OneOther, DayMonthYear),
+    locale!("fi", "Suomi", "Finnish", OneOther, DayMonthYear),
+    locale!("fr", "Français", "French", ZeroOneOther, DayMonthYear),
+    locale!("de", "Deutsch", "German", OneOther, DayMonthYear),
+    locale!("el", "Ελληνικά", "Greek", OneOther, DayMonthYear),
+    locale!("hi", "हिन्दी", "Hindi", OneOther, DayMonthYear),
+    locale!("hu", "Magyar", "Hungarian", OneOther, YearMonthDay),
+    locale!("id", "Bahasa Indonesia", "Indonesian", One, DayMonthYear),
+    locale!("it", "Italiano", "Italian", OneOther, DayMonthYear),
+    locale!("ja", "日本語", "Japanese", One, YearMonthDay),
+    locale!("ko", "한국어", "Korean", One, YearMonthDay),
+    locale!("lt", "Lietuvių", "Lithuanian", Lithuanian, YearMonthDay),
+    locale!("no", "Norsk", "Norwegian", OneOther, DayMonthYear),
+    locale!("pl", "Polski", "Polish", Polish, DayMonthYear),
+    locale!("pt-BR", "Português (Brasil)", "Portuguese (Brazil)", ZeroOneOther, DayMonthYear),
+    locale!("ro", "Română", "Romanian", Romanian, DayMonthYear),
+    locale!("ru", "Русский", "Russian", Slavic, DayMonthYear),
+    locale!("es-ES", "Español", "Spanish", OneOther, DayMonthYear),
+    locale!("es-419", "Español (Latinoamérica)", "Spanish (Latin America)", OneOther, DayMonthYear),
+    locale!("sv-SE", "Svenska", "Swedish", OneOther, YearMonthDay),
+    locale!("th", "ไทย", "Thai", One, DayMonthYear),
+    locale!("tr", "Türkçe", "Turkish", OneOther, DayMonthYear),
+    locale!("uk", "Українська", "Ukrainian", Slavic, DayMonthYear),
+    locale!("vi", "Tiếng Việt", "Vietnamese", One, DayMonthYear),
+];
+
+/// One of [`LOCALES`], by its place there.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Language(u8);
+
 impl Language {
-    pub const ALL: [Language; 2] = [Language::English, Language::German];
+    pub const ENGLISH: Language = Language(0);
+
+    /// Every language, in the settings page's order.
+    pub const ALL: [Language; COUNT] = {
+        let mut all = [Language(0); COUNT];
+        let mut i = 0;
+        while i < all.len() {
+            all[i] = Language(i as u8);
+            i += 1;
+        }
+        all
+    };
+
+    pub fn locale(self) -> &'static Locale {
+        &LOCALES[usize::from(self.0).min(COUNT - 1)]
+    }
+
+    /// Discord's code for it, such as `de`.
+    pub fn code(self) -> &'static str {
+        self.locale().code
+    }
 
     /// The language's name in itself, for the settings page.
     pub fn name(self) -> &'static str {
-        match self {
-            Self::English => "English",
-            Self::German => "Deutsch",
-        }
+        self.locale().native
+    }
+
+    /// Its place in [`Language::ALL`].
+    pub fn index(self) -> usize {
+        usize::from(self.0)
+    }
+
+    pub fn is_english(self) -> bool {
+        self.locale().po.is_empty()
+    }
+
+    /// The language with Discord's `code`, such as `pt-BR`; case does not matter.
+    pub fn from_code(code: &str) -> Option<Language> {
+        Self::ALL
+            .into_iter()
+            .find(|language| language.code().eq_ignore_ascii_case(code))
+    }
+
+    /// The language a locale tag such as `en_AU.UTF-8`, `pt-PT` or `zh-Hant-HK`
+    /// is closest to, if Discord offers one for its language.
+    pub fn from_tag(tag: &str) -> Option<Language> {
+        let tag = tag.split(['.', '@']).next()?.replace('_', "-");
+        let mut parts = tag.split('-').map(str::to_ascii_lowercase);
+        let language = parts.next()?;
+        let rest: Vec<String> = parts.collect();
+        let has = |part: &str| rest.iter().any(|p| p == part);
+        let code = match language.as_str() {
+            "en" if has("gb") || has("au") || has("nz") || has("ie") || has("za") || has("in") => {
+                "en-GB"
+            }
+            "en" => "en-US",
+            "zh" if has("hant") || has("tw") || has("hk") || has("mo") => "zh-TW",
+            "zh" => "zh-CN",
+            "pt" => "pt-BR",
+            "es" if rest.is_empty() || has("es") => "es-ES",
+            "es" => "es-419",
+            "nb" | "nn" | "no" => "no",
+            "sv" => "sv-SE",
+            other => return Self::from_code(other),
+        };
+        Self::from_code(code)
+    }
+
+    /// The language of the system, English when Discord has none for it.
+    pub fn system() -> Language {
+        sys_locale::get_locale()
+            .and_then(|tag| Self::from_tag(&tag))
+            .unwrap_or(Self::ENGLISH)
     }
 }
 
@@ -27,291 +283,382 @@ static CURRENT: AtomicU8 = AtomicU8::new(0);
 
 /// Switches the language every [`tr`] answers in.
 pub fn set_language(language: Language) {
-    let index = Language::ALL.iter().position(|&l| l == language).unwrap_or(0);
-    CURRENT.store(index as u8, Ordering::Relaxed);
+    CURRENT.store(language.0, Ordering::Relaxed);
 }
 
 pub fn language() -> Language {
-    Language::ALL[usize::from(CURRENT.load(Ordering::Relaxed)).min(Language::ALL.len() - 1)]
+    Language(CURRENT.load(Ordering::Relaxed).min(COUNT as u8 - 1))
 }
 
-/// The text for `key` in the current language.
-pub fn tr(key: &str) -> &'static str {
-    tr_in(language(), key)
+/// A language's translations: what its `.po` file gives, by English text.
+struct Catalog {
+    /// The forms of each text, by `context\x04text` or just the text.
+    forms: HashMap<String, Vec<String>>,
 }
 
-/// The text for `key` in `language`, in English when it has none there; an
-/// unknown key gives an empty text.
-pub fn tr_in(language: Language, key: &str) -> &'static str {
-    let found = match language {
-        Language::English => None,
-        Language::German => german(key),
-    };
-    found.or_else(|| english(key)).unwrap_or_default()
+/// The catalogs, each read when its language is first needed and kept.
+static CATALOGS: [OnceLock<Catalog>; COUNT] = [const { OnceLock::new() }; COUNT];
+
+fn catalog(language: Language) -> &'static Catalog {
+    CATALOGS[language.index()].get_or_init(|| Catalog {
+        forms: parse_po(language.locale().po),
+    })
 }
 
-/// `message_hint` for `name`, such as `Message @sam`.
+fn key(context: Option<&str>, text: &str) -> String {
+    match context {
+        Some(context) => format!("{context}\x04{text}"),
+        None => text.to_owned(),
+    }
+}
+
+fn lookup(language: Language, context: Option<&str>, text: &str) -> Option<&'static [String]> {
+    if language.is_english() {
+        return None;
+    }
+    catalog(language)
+        .forms
+        .get(&key(context, text))
+        .map(Vec::as_slice)
+}
+
+/// `text` in the current language; in English when it has no translation.
+pub fn tr(text: &'static str) -> &'static str {
+    tr_in(language(), text)
+}
+
+/// `text` in `language`.
+pub fn tr_in(language: Language, text: &'static str) -> &'static str {
+    lookup(language, None, text)
+        .and_then(|forms| forms.first())
+        .map_or(text, String::as_str)
+}
+
+/// `text` as `context` tells it apart from the same words elsewhere, in the
+/// current language.
+pub fn tr_ctx(context: &'static str, text: &'static str) -> &'static str {
+    tr_ctx_in(language(), context, text)
+}
+
+pub fn tr_ctx_in(language: Language, context: &'static str, text: &'static str) -> &'static str {
+    lookup(language, Some(context), text)
+        .and_then(|forms| forms.first())
+        .map_or(text, String::as_str)
+}
+
+/// A counted text, `one` for 1 and `other` for the rest in English, in the
+/// form the current language gives `n`, with `{n}` replaced by the count.
+pub fn trn(one: &'static str, other: &'static str, n: usize) -> String {
+    trn_in(language(), one, other, n)
+}
+
+pub fn trn_in(language: Language, one: &'static str, other: &'static str, n: usize) -> String {
+    let index = language.locale().plural.index(n as u64);
+    let english = if n == 1 { one } else { other };
+    let form = lookup(language, None, one)
+        .and_then(|forms| forms.get(index))
+        .map_or(english, String::as_str);
+    form.replace("{n}", &n.to_string())
+}
+
+/// `Message @sam`, for `name`.
 pub fn message_hint(name: &str) -> String {
-    tr("message_hint").replace("{name}", name)
+    tr("Message @{name}").replace("{name}", name)
 }
 
 /// The composer's hint for a conversation: `Message @sam` in a DM, `Message
-/// Group` in a group DM and `Message #general` in a channel; `named` is a
-/// thread's or other room's own name, shown as it is.
+/// Group` in a group DM and `Message #general` in a channel; a thread's or
+/// other room's own name is shown as it is.
 pub fn composer_hint(name: &str, direct: bool, person: bool, channel: bool) -> String {
-    let key = match (direct, person, channel) {
-        (true, true, _) => "message_hint",
-        (true, false, _) => "message_hint_group",
-        (false, _, true) => "message_hint_channel",
-        (false, _, false) => "message_hint_group",
+    let text = match (direct, person, channel) {
+        (true, true, _) => tr("Message @{name}"),
+        (true, false, _) => tr("Message {name}"),
+        (false, _, true) => tr("Message #{name}"),
+        (false, _, false) => tr("Message {name}"),
     };
-    tr(key).replace("{name}", name)
+    text.replace("{name}", name)
 }
 
 /// "1 mutual friend" or "5 mutual friends", in the current language.
 pub fn mutual_friends(count: usize) -> String {
-    let key = if count == 1 { "mutual_friend_one" } else { "mutual_friend_many" };
-    tr(key).replace("{n}", &count.to_string())
+    trn("{n} mutual friend", "{n} mutual friends", count)
 }
 
 /// "1 mutual server" or "2 mutual servers", in the current language.
 pub fn mutual_servers(count: usize) -> String {
-    let key = if count == 1 { "mutual_server_one" } else { "mutual_server_many" };
-    tr(key).replace("{n}", &count.to_string())
+    trn("{n} mutual server", "{n} mutual servers", count)
 }
 
-pub(crate) const KEYS: &[&str] = &[
-    "official_badge",
-    "official_message",
-    "wave",
-    "inbox",
-    "help",
-    "download_apps",
-    "nav_back",
-    "nav_forward",
-    "inbox_for_you",
-    "inbox_unreads",
-    "inbox_mentions",
-    "inbox_empty",
-    "inbox_friend_request",
-    "inbox_mentioned",
-    "start_voice_call",
-    "start_video_call",
-    "join_call",
-    "message_hint_group",
-    "message_hint_channel",
-    "invite_people",
-    "show_mutual",
-    "roles",
-    "connections",
-    "note_title",
-    "note_hint",
-    "add_friend",
-    "friends",
-    "friend_sent",
-    "accept_friend",
-    "view_full_profile",
-    "mutual_friend_one",
-    "mutual_friend_many",
-    "mutual_server_one",
-    "mutual_server_many",
-    "message_hint",
-    "view_full_bio",
-    "member_since",
-    "tab_activity",
-    "tab_mutual_friends",
-    "tab_mutual_servers",
-    "setting_date_format",
-    "setting_time_zone",
-    "setting_language",
-    "date_dmy",
-    "date_mdy",
-    "date_ymd",
-    "zone_system",
-    "clock_today_at",
-    "clock_yesterday_at",
-    "clock_tomorrow_at",
-    "clock_last_at",
-    "clock_weekday_at",
-    "clock_day_at",
-    "composer_no_permission",
-    "intro_welcome_server",
-    "intro_server_start",
-    "intro_welcome_channel",
-    "intro_channel_start",
-];
+/// The entries of a `.po` file, by English text (after the context and a
+/// `\x04` when it has one), each with its forms. Entries marked fuzzy or left
+/// untranslated are left out, so those read in English.
+fn parse_po(po: &str) -> HashMap<String, Vec<String>> {
+    #[derive(Clone, Copy, PartialEq)]
+    enum Field {
+        None,
+        Context,
+        Id,
+        Plural,
+        Str(usize),
+    }
+    let mut entries = HashMap::new();
+    let mut context = None::<String>;
+    let mut id = String::new();
+    let mut forms: Vec<String> = Vec::new();
+    let mut field = Field::None;
+    let mut fuzzy = false;
+    let mut has_id = false;
 
-fn english(key: &str) -> Option<&'static str> {
-    Some(match key {
-        "show_mutual" => "Show mutual friends and servers in the full profile",
-        "roles" => "Roles",
-        "connections" => "Connections",
-        "note_title" => "Note (only visible to you)",
-        "note_hint" => "Click to add a note",
-        "add_friend" => "Add Friend",
-        "friends" => "Friends",
-        "friend_sent" => "Friend Request Sent",
-        "accept_friend" => "Accept Friend Request",
-        "view_full_profile" => "View Full Profile",
-        "mutual_friend_one" => "{n} mutual friend",
-        "mutual_friend_many" => "{n} mutual friends",
-        "mutual_server_one" => "{n} mutual server",
-        "mutual_server_many" => "{n} mutual servers",
-        "invite_people" => "Invite people",
-        "message_hint_group" => "Message {name}",
-        "message_hint_channel" => "Message #{name}",
-        "start_voice_call" => "Start Voice Call",
-        "start_video_call" => "Start Video Call",
-        "join_call" => "Join the call",
-        "inbox" => "Inbox",
-        "help" => "Help",
-        "download_apps" => "Download Apps",
-        "nav_back" => "Back",
-        "nav_forward" => "Forward",
-        "inbox_for_you" => "For You",
-        "inbox_unreads" => "Unreads",
-        "inbox_mentions" => "Mentions",
-        "inbox_empty" => "Nothing here right now.",
-        "inbox_friend_request" => "sent you a friend request",
-        "inbox_mentioned" => "mentions waiting",
-        "official_badge" => "OFFICIAL",
-        "official_message" => "Official Discord Message",
-        "wave" => "Wave",
-        "message_hint" => "Message @{name}",
-        "view_full_bio" => "View full bio",
-        "member_since" => "Member since",
-        "tab_activity" => "Activity",
-        "tab_mutual_friends" => "Mutual friends",
-        "tab_mutual_servers" => "Mutual servers",
-        "setting_date_format" => "DATE FORMAT",
-        "setting_time_zone" => "TIME ZONE",
-        "setting_language" => "LANGUAGE",
-        "date_dmy" => "Day/Month/Year",
-        "date_mdy" => "Month/Day/Year",
-        "date_ymd" => "Year-Month-Day",
-        "zone_system" => "System default",
-        "clock_today_at" => "Today at {time}",
-        "clock_yesterday_at" => "Yesterday at {time}",
-        "clock_tomorrow_at" => "Tomorrow at {time}",
-        "clock_last_at" => "Last {weekday} at {time}",
-        "clock_weekday_at" => "{weekday} at {time}",
-        "clock_day_at" => "{day} at {time}",
-        "composer_no_permission" => "You do not have permission to send messages in this channel.",
-        "intro_welcome_server" => "Welcome to",
-        "intro_server_start" => "This is the beginning of this server.",
-        "intro_welcome_channel" => "Welcome to #{name}!",
-        "intro_channel_start" => "This is the start of the #{name} channel.",
-        _ => return None,
-    })
+    let mut finish = |context: &mut Option<String>,
+                      id: &mut String,
+                      forms: &mut Vec<String>,
+                      fuzzy: &mut bool,
+                      has_id: &mut bool| {
+        if *has_id && !id.is_empty() && !*fuzzy && forms.iter().any(|form| !form.is_empty()) {
+            let key = key(context.as_deref(), id);
+            entries.insert(key, std::mem::take(forms));
+        }
+        *context = None;
+        id.clear();
+        forms.clear();
+        *fuzzy = false;
+        *has_id = false;
+    };
+
+    for line in po.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            finish(&mut context, &mut id, &mut forms, &mut fuzzy, &mut has_id);
+            field = Field::None;
+        } else if let Some(flags) = line.strip_prefix("#,") {
+            fuzzy |= flags.contains("fuzzy");
+        } else if line.starts_with('#') {
+        } else if let Some(rest) = line.strip_prefix("msgctxt ") {
+            if field != Field::None && has_id {
+                finish(&mut context, &mut id, &mut forms, &mut fuzzy, &mut has_id);
+            }
+            context = Some(unquote(rest));
+            field = Field::Context;
+        } else if let Some(rest) = line.strip_prefix("msgid_plural ") {
+            let _ = rest;
+            field = Field::Plural;
+        } else if let Some(rest) = line.strip_prefix("msgid ") {
+            if field != Field::Context && has_id {
+                finish(&mut context, &mut id, &mut forms, &mut fuzzy, &mut has_id);
+            }
+            id = unquote(rest);
+            has_id = true;
+            field = Field::Id;
+        } else if let Some(rest) = line.strip_prefix("msgstr[") {
+            let Some((index, text)) = rest.split_once("] ") else {
+                continue;
+            };
+            let index: usize = index.parse().unwrap_or(0);
+            if forms.len() <= index {
+                forms.resize(index + 1, String::new());
+            }
+            forms[index] = unquote(text);
+            field = Field::Str(index);
+        } else if let Some(rest) = line.strip_prefix("msgstr ") {
+            forms = vec![unquote(rest)];
+            field = Field::Str(0);
+        } else if line.starts_with('"') {
+            let more = unquote(line);
+            match field {
+                Field::Context => context.get_or_insert_with(String::new).push_str(&more),
+                Field::Id => id.push_str(&more),
+                Field::Str(index) => {
+                    if let Some(form) = forms.get_mut(index) {
+                        form.push_str(&more);
+                    }
+                }
+                Field::Plural | Field::None => {}
+            }
+        }
+    }
+    finish(&mut context, &mut id, &mut forms, &mut fuzzy, &mut has_id);
+    entries
 }
 
-fn german(key: &str) -> Option<&'static str> {
-    Some(match key {
-        "show_mutual" => "Gemeinsame Freunde und Server im vollständigen Profil anzeigen",
-        "roles" => "Rollen",
-        "connections" => "Verknüpfungen",
-        "note_title" => "Notiz (nur für dich sichtbar)",
-        "note_hint" => "Hier klicken, um eine Notiz hinzuzufügen",
-        "add_friend" => "Freund hinzufügen",
-        "friends" => "Freunde",
-        "friend_sent" => "Freundschaftsanfrage gesendet",
-        "accept_friend" => "Freundschaftsanfrage annehmen",
-        "view_full_profile" => "Vollständiges Profil anzeigen",
-        "mutual_friend_one" => "{n} gemeinsamer Freund",
-        "mutual_friend_many" => "{n} gemeinsame Freunde",
-        "mutual_server_one" => "{n} gemeinsamer Server",
-        "mutual_server_many" => "{n} gemeinsame Server",
-        "invite_people" => "Mitglieder einladen",
-        "message_hint_group" => "Nachricht an {name}",
-        "message_hint_channel" => "Nachricht an #{name}",
-        "start_voice_call" => "Sprachanruf starten",
-        "start_video_call" => "Videoanruf starten",
-        "join_call" => "Dem Anruf beitreten",
-        "inbox" => "Posteingang",
-        "help" => "Hilfe",
-        "download_apps" => "Apps herunterladen",
-        "nav_back" => "Zurück",
-        "nav_forward" => "Vorwärts",
-        "inbox_for_you" => "Für dich",
-        "inbox_unreads" => "Ungelesen",
-        "inbox_mentions" => "Erwähnungen",
-        "inbox_empty" => "Gerade nichts zu sehen.",
-        "inbox_friend_request" => "hat dir eine Freundschaftsanfrage gesendet",
-        "inbox_mentioned" => "Erwähnungen warten",
-        "official_badge" => "OFFIZIELL",
-        "official_message" => "Offizielle Discord-Nachricht",
-        "wave" => "Winken",
-        "message_hint" => "Nachricht an @{name}",
-        "view_full_bio" => "Vollständige Bio anzeigen",
-        "member_since" => "Mitglied seit",
-        "tab_activity" => "Aktivität",
-        "tab_mutual_friends" => "Gemeinsame Freunde",
-        "tab_mutual_servers" => "Gemeinsame Server",
-        "setting_date_format" => "DATUMSFORMAT",
-        "setting_time_zone" => "ZEITZONE",
-        "setting_language" => "SPRACHE",
-        "date_dmy" => "Tag/Monat/Jahr",
-        "date_mdy" => "Monat/Tag/Jahr",
-        "date_ymd" => "Jahr-Monat-Tag",
-        "zone_system" => "Systemstandard",
-        "clock_today_at" => "Heute um {time} Uhr",
-        "clock_yesterday_at" => "Gestern um {time} Uhr",
-        "clock_tomorrow_at" => "Morgen um {time} Uhr",
-        "clock_last_at" => "Letzten {weekday} um {time} Uhr",
-        "clock_weekday_at" => "{weekday} um {time} Uhr",
-        "clock_day_at" => "{day} um {time} Uhr",
-        "composer_no_permission" => "Du hast keine Berechtigung, in diesem Kanal Nachrichten zu versenden.",
-        "intro_welcome_server" => "Willkommen bei",
-        "intro_server_start" => "Das ist der Anfang dieses Servers.",
-        "intro_welcome_channel" => "Willkommen in #{name}!",
-        "intro_channel_start" => "Das ist der Anfang des Kanals #{name}.",
-        _ => return None,
-    })
+/// A `.po` string literal's text: the quoted part with its escapes undone.
+fn unquote(literal: &str) -> String {
+    let literal = literal.trim();
+    let inner = literal
+        .strip_prefix('"')
+        .and_then(|rest| rest.strip_suffix('"'))
+        .unwrap_or(literal);
+    let mut text = String::with_capacity(inner.len());
+    let mut chars = inner.chars();
+    while let Some(c) = chars.next() {
+        if c != '\\' {
+            text.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some('n') => text.push('\n'),
+            Some('t') => text.push('\t'),
+            Some('r') => text.push('\r'),
+            Some('"') => text.push('"'),
+            Some('\\') => text.push('\\'),
+            Some(other) => {
+                text.push('\\');
+                text.push(other);
+            }
+            None => text.push('\\'),
+        }
+    }
+    text
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn every_german_key_exists_in_english() {
-        for key in KEYS {
-            assert!(english(key).is_some(), "English lacks {key}");
-            if let Some(text) = german(key) {
-                assert!(!text.is_empty(), "German {key} is empty");
-            }
-        }
+    fn german() -> Language {
+        Language::from_code("de").unwrap()
     }
 
     #[test]
-    fn missing_translations_fall_back_to_english() {
-        assert_eq!(tr_in(Language::German, "no_such_key"), "");
-        assert_eq!(
-            tr_in(Language::German, "view_full_bio"),
-            "Vollständige Bio anzeigen"
-        );
-        assert_eq!(tr_in(Language::English, "tab_activity"), "Activity");
+    fn there_are_discords_thirty_two_languages() {
+        let mut codes: Vec<&str> = LOCALES.iter().map(|l| l.code).collect();
+        codes.sort_unstable();
+        codes.dedup();
+        assert_eq!(codes.len(), 32);
+        assert_eq!(Language::ALL.len(), 32);
+        assert_eq!(Language::ENGLISH.code(), "en-US");
+        assert!(Language::ENGLISH.is_english());
+        assert_eq!(german().name(), "Deutsch");
+        assert_eq!(Language::from_code("PT-br").unwrap().code(), "pt-BR");
     }
 
     #[test]
-    fn language_is_process_wide_and_fills_names_in() {
+    fn locale_tags_find_the_closest_language() {
+        let code = |tag| Language::from_tag(tag).map(Language::code);
+        assert_eq!(code("en_US.UTF-8"), Some("en-US"));
+        assert_eq!(code("en-AU"), Some("en-GB"));
+        assert_eq!(code("de_AT"), Some("de"));
+        assert_eq!(code("pt-PT"), Some("pt-BR"));
+        assert_eq!(code("es"), Some("es-ES"));
+        assert_eq!(code("es-MX"), Some("es-419"));
+        assert_eq!(code("zh-Hant-HK"), Some("zh-TW"));
+        assert_eq!(code("zh_CN"), Some("zh-CN"));
+        assert_eq!(code("nb_NO"), Some("no"));
+        assert_eq!(code("sv"), Some("sv-SE"));
+        assert_eq!(code("xx"), None);
+    }
+
+    #[test]
+    fn plural_forms_count_as_each_language_does() {
+        assert_eq!(Plural::OneOther.index(1), 0);
+        assert_eq!(Plural::OneOther.index(0), 1);
+        assert_eq!(Plural::ZeroOneOther.index(0), 0);
+        assert_eq!(Plural::ZeroOneOther.index(2), 1);
+        assert_eq!(Plural::One.index(7), 0);
+        // Russian: 1 file, 2 files, 5 files, 11 files, 21 file, 22 files.
+        let ru: Vec<usize> = [1, 2, 5, 11, 21, 22].map(|n| Plural::Slavic.index(n)).into();
+        assert_eq!(ru, [0, 1, 2, 2, 0, 1]);
+        let pl: Vec<usize> = [1, 2, 5, 12, 22, 25].map(|n| Plural::Polish.index(n)).into();
+        assert_eq!(pl, [0, 1, 2, 2, 1, 2]);
+        let cs: Vec<usize> = [1, 3, 5, 0].map(|n| Plural::Czech.index(n)).into();
+        assert_eq!(cs, [0, 1, 2, 2]);
+        let lt: Vec<usize> = [1, 2, 10, 11, 21].map(|n| Plural::Lithuanian.index(n)).into();
+        assert_eq!(lt, [0, 1, 2, 2, 0]);
+        let ro: Vec<usize> = [1, 0, 7, 20, 21].map(|n| Plural::Romanian.index(n)).into();
+        assert_eq!(ro, [0, 1, 1, 2, 1]);
+    }
+
+    #[test]
+    fn a_po_file_gives_texts_forms_and_contexts() {
+        let po = r#"
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ui/x.slint:1
+msgid "Hello"
+msgstr "Hallo"
+
+msgctxt "month"
+msgid "May"
+msgstr "Mai"
+
+#, fuzzy
+msgid "Fuzzy"
+msgstr "Unsicher"
+
+msgid "Untranslated"
+msgstr ""
+
+msgid "{n} file"
+msgid_plural "{n} files"
+msgstr[0] "{n} Datei"
+msgstr[1] "{n} Dateien"
+
+msgid "Two "
+"lines \"quoted\"\n"
+msgstr "Zwei "
+"Zeilen"
+"#;
+        let entries = parse_po(po);
+        assert_eq!(entries["Hello"], ["Hallo"]);
+        assert_eq!(entries["month\x04May"], ["Mai"]);
+        assert!(!entries.contains_key("Fuzzy"));
+        assert!(!entries.contains_key("Untranslated"));
+        assert_eq!(entries["{n} file"], ["{n} Datei", "{n} Dateien"]);
+        assert_eq!(entries["Two lines \"quoted\"\n"], ["Zwei Zeilen"]);
+        assert_eq!(entries.len(), 4);
+    }
+
+    #[test]
+    fn untranslated_texts_read_in_english() {
+        assert_eq!(tr_in(german(), "No such text anywhere"), "No such text anywhere");
+        assert_eq!(tr_in(Language::ENGLISH, "Activity"), "Activity");
+        assert_eq!(trn_in(Language::ENGLISH, "{n} mutual friend", "{n} mutual friends", 1), "1 mutual friend");
+        assert_eq!(trn_in(Language::ENGLISH, "{n} mutual friend", "{n} mutual friends", 5), "5 mutual friends");
+    }
+
+    #[test]
+    fn names_and_counts_fill_in() {
         // The process-wide language is left alone, since other tests read it.
-        assert_eq!(
-            tr_in(Language::German, "message_hint").replace("{name}", "sam"),
-            "Nachricht an @sam"
-        );
         assert_eq!(message_hint("sam"), "Message @sam");
         assert_eq!(composer_hint("sam", true, true, false), "Message @sam");
         assert_eq!(composer_hint("Crew", true, false, false), "Message Crew");
         assert_eq!(composer_hint("dev", false, false, true), "Message #dev");
-        assert_eq!(
-            tr_in(Language::German, "message_hint_channel").replace("{name}", "dev"),
-            "Nachricht an #dev"
-        );
-        assert_eq!(
-            tr_in(Language::German, "mutual_friend_many").replace("{n}", "5"),
-            "5 gemeinsame Freunde"
-        );
-        assert_eq!(tr_in(Language::English, "mutual_server_one").replace("{n}", "1"), "1 mutual server");
+        assert_eq!(mutual_servers(1), "1 mutual server");
+        assert_eq!(mutual_servers(2), "2 mutual servers");
+    }
+
+    #[test]
+    fn every_translation_file_reads() {
+        for locale in LOCALES.iter().filter(|l| !l.po.is_empty()) {
+            let entries = parse_po(locale.po);
+            for (text, forms) in &entries {
+                let english = text.rsplit('\x04').next().unwrap_or(text);
+                let placeholders = |s: &str| {
+                    let mut found: Vec<String> = s
+                        .split('{')
+                        .skip(1)
+                        .filter_map(|rest| rest.split_once('}').map(|(name, _)| name.to_owned()))
+                        .collect();
+                    found.sort();
+                    found
+                };
+                // A counted text's forms may leave the count out ("one file").
+                let counted = forms.len() > 1;
+                for form in forms.iter().filter(|form| !form.is_empty()) {
+                    let (found, wanted) = (placeholders(form), placeholders(english));
+                    let fine = if counted {
+                        found.iter().all(|name| wanted.contains(name))
+                    } else {
+                        found == wanted
+                    };
+                    assert!(
+                        fine,
+                        "{}: placeholders of {english:?} differ in {form:?}",
+                        locale.code
+                    );
+                }
+            }
+        }
     }
 }

@@ -56,7 +56,7 @@ component InboxLine inherits Rectangle {
                 width: max(16px, count-text.preferred-width + 10px); height: 16px; border-radius: 8px;
                 background: root.entry.kind == 0 ? Theme.danger : Theme.accent;
                 count-text := Text {
-                    text: root.entry.count > 99 ? "99+" : "\{root.entry.count}"; font-size: 11px; font-weight: 700;
+                    text: root.entry.count > 99 ? "99+" : @tr("\{root.entry.count}"); font-size: 11px; font-weight: 700;
                     color: Theme.on-accent; horizontal-alignment: center; vertical-alignment: center;
                 }
             }

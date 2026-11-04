@@ -70,11 +70,11 @@ export component WindowBar inherits Rectangle {
     in property <bool> can-go-back;
     in property <bool> can-go-forward;
     in property <bool> inbox-open;
-    in property <string> back-label: "Back";
-    in property <string> forward-label: "Forward";
-    in property <string> inbox-label: "Inbox";
-    in property <string> help-label: "Help";
-    in property <string> download-label: "Download Apps";
+    in property <string> back-label: @tr("Back");
+    in property <string> forward-label: @tr("Forward");
+    in property <string> inbox-label: @tr("Inbox");
+    in property <string> help-label: @tr("Help");
+    in property <string> download-label: @tr("Download Apps");
     callback go-back;
     callback go-forward;
     callback toggle-inbox;
@@ -130,12 +130,12 @@ export component WindowBar inherits Rectangle {
                 BarButton { icon: @image-url("../icons/download.svg"); label: root.download-label; clicked => { root.open-download(); } }
             }
         }
-        CaptionButton { icon: @image-url("../icons/minus.svg"); label: "Minimize"; clicked => { root.minimize-window(); } }
+        CaptionButton { icon: @image-url("../icons/minus.svg"); label: @tr("Minimize"); clicked => { root.minimize-window(); } }
         CaptionButton {
             icon: root.maximized ? @image-url("../icons/restore.svg") : @image-url("../icons/square.svg");
-            label: root.maximized ? "Restore" : "Maximize";
+            label: root.maximized ? @tr("Restore") : @tr("Maximize");
             clicked => { root.maximize-window(); }
         }
-        CaptionButton { icon: @image-url("../icons/x.svg"); label: "Close"; close: true; clicked => { root.close-window(); } }
+        CaptionButton { icon: @image-url("../icons/x.svg"); label: @tr("Close"); close: true; clicked => { root.close-window(); } }
     }
 }
