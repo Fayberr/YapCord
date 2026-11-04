@@ -13,6 +13,14 @@ fn message_row_plain(message: &ChatMessage) -> MessageRow {
 }
 
 #[test]
+fn a_server_without_a_picture_shows_its_initials_in_capitals() {
+    assert_eq!(initials("Co-op crew"), "CC");
+    assert_eq!(initials("the secret empire"), "TSE");
+    assert_eq!(initials("a b c d"), "ABC");
+    assert_eq!(initials("   "), "?");
+}
+
+#[test]
 fn a_notice_is_a_group_of_its_own_with_an_icon() {
     use yapfast_core::chat::{Notice, NoticeKind};
     let said = ChatMessage {

@@ -4961,7 +4961,8 @@ mod tests {
         let large = decode_view(&png(3840, 1200)).unwrap();
         assert_eq!((large.width, large.height), (1920, 600));
         let preview = decode_preview(&png(800, 500)).unwrap();
-        assert_eq!((preview.width, preview.height), (360, 225));
+        // Discord's previews go up to 550 by 400.
+        assert_eq!((preview.width, preview.height), (550, 344));
     }
 
     #[test]
