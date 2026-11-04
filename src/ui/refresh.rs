@@ -3094,6 +3094,15 @@ impl Adapter {
                     super::menus::until(until / 1000, self.layout.twelve_hour_clock)
                 )
             });
+        // Discord swaps the composer for one disabled bar saying so, with no
+        // buttons and no caption.
+        let no_permission = window.global::<ClientStyle>().get_enabled()
+            && timed_out.is_none()
+            && !state.preview
+            && discord_room
+            && room.is_some_and(|room| !room.request && (room.read_only || room.locked));
+        window.set_composer_locked(no_permission);
+        window.set_composer_locked_text(yapfast_core::i18n::tr("composer_no_permission").into());
         window.set_composer_hint(
             if room.is_none() {
                 "Choose a DM or server channel to write a message."
@@ -3107,6 +3116,8 @@ impl Adapter {
                 }
             } else if let Some(timed_out) = &timed_out {
                 timed_out
+            } else if no_permission {
+                ""
             } else if discord_room && room.is_some_and(|room| room.read_only || room.locked) {
                 "You can't send messages in this Discord channel."
             } else if discord_room && !state.discord_online {

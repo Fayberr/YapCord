@@ -134,6 +134,7 @@ pub(crate) const KEYS: &[&str] = &[
     "clock_last_at",
     "clock_weekday_at",
     "clock_day_at",
+    "composer_no_permission",
 ];
 
 fn english(key: &str) -> Option<&'static str> {
@@ -191,6 +192,7 @@ fn english(key: &str) -> Option<&'static str> {
         "clock_last_at" => "Last {weekday} at {time}",
         "clock_weekday_at" => "{weekday} at {time}",
         "clock_day_at" => "{day} at {time}",
+        "composer_no_permission" => "You do not have permission to send messages in this channel.",
         _ => return None,
     })
 }
@@ -250,6 +252,7 @@ fn german(key: &str) -> Option<&'static str> {
         "clock_last_at" => "Letzten {weekday} um {time} Uhr",
         "clock_weekday_at" => "{weekday} um {time} Uhr",
         "clock_day_at" => "{day} um {time} Uhr",
+        "composer_no_permission" => "Du hast keine Berechtigung, in diesem Kanal Nachrichten zu versenden.",
         _ => return None,
     })
 }

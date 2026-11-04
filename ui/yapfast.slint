@@ -492,6 +492,10 @@ export component YapfastWindow inherits Window {
     in property <int> unread-index: -1;
     in property <string> unread-label;
     in property <string> composer-hint;
+    /// This account may not write here: Discord swaps the composer for one
+    /// disabled bar with `composer-locked-text` in it.
+    in property <bool> composer-locked;
+    in property <string> composer-locked-text;
     /// The composer's hint for the open conversation: "Message @sam", "Message #general".
     in property <string> composer-placeholder;
     // Who else is typing in the open conversation; it takes the hint's place.
@@ -3131,9 +3135,19 @@ export component YapfastWindow inherits Window {
                                     IconButton { icon: @image-url("icons/x.svg"); label: root.is-editing ? "Cancel editing" : "Cancel reply"; size: 28px; glyph: 16px; clicked => { root.cancel-compose(); } }
                                 }
                             }
+                            if root.composer-locked && !root.room-request: Rectangle {
+                                height: ClientStyle.composer-height;
+                                background: Theme.field; border-width: 1px; border-color: Theme.outline-field; border-radius: 10px;
+                                accessible-role: text; accessible-label: root.composer-locked-text;
+                                Text {
+                                    x: 16px; width: parent.width - 32px; height: parent.height;
+                                    text: root.composer-locked-text; color: Theme.muted; font-size: 16px;
+                                    vertical-alignment: center; overflow: elide;
+                                }
+                            }
                             composer-box := Rectangle {
-                                visible: !root.room-request;
-                                min-height: root.room-request ? 0px : ClientStyle.composer-height; max-height: root.room-request ? 0px : 100000px;
+                                visible: !root.room-request && !root.composer-locked;
+                                min-height: root.room-request || root.composer-locked ? 0px : ClientStyle.composer-height; max-height: root.room-request || root.composer-locked ? 0px : 100000px;
                                 background: Theme.field;
                                 // Discord's outline: faint, and a notch lighter with the keys.
                                 border-width: 1px;
