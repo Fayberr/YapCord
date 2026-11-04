@@ -4166,6 +4166,7 @@ export component YapfastWindow inherits Window {
     }
     if root.title-height > 0 && ClientStyle.enabled && root.inbox-open: InboxPopout {
         x: root.width - self.width - 8px; y: root.title-height + 4px;
+        height: min(560px, root.height - root.title-height - 16px);
         rows: root.inbox-rows;
         title: Strings.inbox; for-you-label: Strings.inbox-for-you; unreads-label: Strings.inbox-unreads;
         mentions-label: Strings.inbox-mentions; empty-label: Strings.inbox-empty;
