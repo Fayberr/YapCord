@@ -1828,7 +1828,7 @@ fn decorations_and_nameplates_reach_the_member_list_and_the_account_card() {
     use yapfast_core::chat::{ChatMember, Nameplate, Role};
     i_slint_backend_testing::init_no_event_loop();
     let directory = tempfile::tempdir().unwrap();
-    let window = classic_window();
+    let window = upstream_window();
     let adapter = Adapter::new(
         Arc::new(BackgroundRuntime::new().unwrap()),
         directory.path().into(),
@@ -1851,7 +1851,6 @@ fn decorations_and_nameplates_reach_the_member_list_and_the_account_card() {
         decoration: None,
         nameplate: None,
         style: None,
-        tag: None,
         group: Some("Online — 2".into()),
         presence: None,
         color: None,
