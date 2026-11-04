@@ -15,8 +15,8 @@ use crate::{
 pub const MAX_MESSAGE_BYTES: usize = 16_000;
 /// Larger downloads only get a file card, never an inline preview.
 pub(crate) const MAX_PREVIEW_DOWNLOAD_BYTES: usize = 20 * 1024 * 1024;
-pub const PREVIEW_WIDTH: u32 = 360;
-pub const PREVIEW_HEIGHT: u32 = 270;
+pub const PREVIEW_WIDTH: u32 = 550;
+pub const PREVIEW_HEIGHT: u32 = 400;
 /// The pictures a pinned message's or a search result's card shows at
 /// most; it names the rest.
 pub const FOUND_PICTURES: usize = 4;

@@ -844,9 +844,10 @@ fn spoils_links(content: &str) -> bool {
         .any(|inside| inside.contains("http"))
 }
 
-/// The size Yapfast shows image previews at, at most.
-pub const PREVIEW_WIDTH: u64 = 360;
-pub const PREVIEW_HEIGHT: u64 = 270;
+/// The size Yapfast shows image previews at, at most: Discord's own cap for
+/// an attached picture, scaled by its aspect ratio.
+pub const PREVIEW_WIDTH: u64 = 550;
+pub const PREVIEW_HEIGHT: u64 = 400;
 
 /// The image viewer's largest size.
 pub const VIEW_WIDTH: u64 = 1920;
@@ -2159,7 +2160,7 @@ mod tests {
         assert!(message.attachments[0].image);
         assert_eq!(
             message.attachments[0].preview_url.as_deref(),
-            Some("https://media/cat.png?ex=1&animated=true&format=webp&width=360&height=135")
+            Some("https://media/cat.png?ex=1&animated=true&format=webp&width=550&height=206")
         );
         assert_eq!(
             message.attachments[0].view_url.as_deref(),
@@ -2172,7 +2173,7 @@ mod tests {
         assert_eq!(video.video_url.as_deref(), Some("https://cdn/clip.mp4"));
         assert_eq!(
             video.preview_url.as_deref(),
-            Some("https://media/clip.mp4?format=webp&width=360&height=203")
+            Some("https://media/clip.mp4?format=webp&width=550&height=309")
         );
         assert_eq!(video.dimensions, Some((1920, 1080)));
         assert_eq!(message.attachments[0].video_url, None);
