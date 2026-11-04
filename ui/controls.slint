@@ -944,8 +944,8 @@ export component MenuItem inherits Rectangle {
             }
         }
         if root.submenu: Image {
-            width: 20px; image-fit: contain;
-            source: @image-url("icons/chevron-right.svg"); colorize: root.danger && root.highlighted ? Theme.on-danger : Theme.secondary;
+            width: 24px; image-fit: contain;
+            source: @image-url("icons/chevron-right.svg"); colorize: root.danger && root.highlighted ? Theme.on-danger : Theme.text;
         }
     }
     focus := FocusScope {
