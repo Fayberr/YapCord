@@ -31,6 +31,27 @@ export struct MemberRow {
     bot: bool, owner: bool,
     /// The server tag they wear by their name, and its badge's address.
     tag: string, tag-badge: string,
+    /// The pictures of the role their group is and of their highest role that
+    /// has one, which Discord draws by the group's heading and their name.
+    group-icon: string, role-icon: string,
+}
+
+/// A role's picture, asked for as it shows.
+export component RoleIcon inherits Rectangle {
+    in property <string> url;
+    in property <length> size: 16px;
+    property <image> picture: root.url != "" ? PictureStore.picture(root.url, PictureStore.revision) : @image-url("");
+    function request() {
+        if root.url != "" && root.picture.width == 0 {
+            PictureStore.request(root.url);
+        }
+    }
+    init => { root.request(); }
+    changed url => { root.request(); }
+    changed picture => { root.request(); }
+    width: root.size; height: root.size;
+    accessible-role: none;
+    Image { source: root.picture; width: root.size; height: root.size; image-fit: contain; }
 }
 
 // An activity's picture: square with rounded corners, asked for as it shows.
@@ -174,7 +195,8 @@ export component MemberPanel inherits Rectangle {
                 spacing: 2px;
                 // Discord's group heading: 14px medium in the channel grey, 20px above and 4px below.
                 if member.heading != "": HorizontalLayout {
-                    padding-left: 8px; padding-top: 20px; padding-bottom: 4px; height: 42px;
+                    padding-left: 8px; padding-top: 20px; padding-bottom: 4px; height: 42px; spacing: 8px;
+                    if member.group-icon != "": Middle { RoleIcon { url: member.group-icon; size: 20px; } }
                     Text { text: member.heading; color: #81828a; font-size: 14px; font-weight: 500; vertical-alignment: center; }
                 }
                 Rectangle {
@@ -227,6 +249,9 @@ export component MemberPanel inherits Rectangle {
                             if member.name-style.effect > 0: StyledName {
                                 text: member.name; style: member.name-style; ink: member.has-color ? member.color : Theme.secondary; font-size: 16px; font-weight: 500;
                                 opacity: member.presence == "offline" ? 0.5 : 1;
+                            }
+                            if member.role-icon != "": Middle {
+                                RoleIcon { url: member.role-icon; size: 16px; opacity: member.presence == "offline" ? 0.5 : 1; }
                             }
                             if member.tag != "": Middle {
                                 ServerTagChip { text: member.tag; badge: member.tag-badge; opacity: member.presence == "offline" ? 0.5 : 1; }

@@ -724,6 +724,8 @@ pub(super) fn chat_member(member: ListedMember) -> ChatMember {
         nameplate: member.nameplate.map(Into::into),
         style: member.style.map(Into::into),
         group: Some(member.group),
+        group_icon: member.group_icon,
+        role_icon: member.role_icon,
         presence: Some(discord::presence(member.presence)),
         color: member.color,
         activity: member.activity,

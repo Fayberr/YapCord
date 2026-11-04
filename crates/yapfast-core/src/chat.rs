@@ -924,6 +924,11 @@ pub struct ChatMember {
     /// The heading Discord lists them under, with its size, such as
     /// `Online — 12`. Matrix members are grouped by `role` instead.
     pub group: Option<String>,
+    /// The address of the picture of the role their group is, and of the
+    /// highest of their roles that has one, which a member list draws by
+    /// the group's heading and by their name.
+    pub group_icon: Option<String>,
+    pub role_icon: Option<String>,
     /// Whether they're around; Matrix members have no presence here.
     pub presence: Option<Presence>,
     /// The RGB colour of their name, from their highest coloured Discord role.

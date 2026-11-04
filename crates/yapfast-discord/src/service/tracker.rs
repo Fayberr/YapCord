@@ -1149,6 +1149,8 @@ impl Tracker {
                     activities: known.activities,
                     roles: Arc::default(),
                     timed_out_until: None,
+                    group_icon: None,
+                    role_icon: None,
                 }
             })
             .collect();

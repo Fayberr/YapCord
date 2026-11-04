@@ -93,6 +93,8 @@ pub(super) fn command(
                     timed_out_until: None,
                     tag: None,
                     id: user,
+                    group_icon: None,
+                    role_icon: None,
                 })
                 .collect();
             members.sort_by_key(|member| member.name.to_lowercase());
@@ -153,6 +155,8 @@ pub(super) fn command(
                         timed_out_until: None,
                         tag: None,
                         id: user,
+                        group_icon: None,
+                        role_icon: None,
                     })
                     .collect();
                 let _ = events.send(Event::MemberMatches {

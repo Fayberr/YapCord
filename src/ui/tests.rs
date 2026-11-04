@@ -1856,6 +1856,8 @@ fn decorations_and_nameplates_reach_the_member_list_and_the_account_card() {
         activities: Default::default(),
         roles: Default::default(),
         timed_out_until: None,
+        group_icon: None,
+        role_icon: None,
     };
     {
         let mut adapter = adapter.borrow_mut();

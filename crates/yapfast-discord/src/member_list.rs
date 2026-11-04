@@ -36,6 +36,10 @@ pub struct ListedMember {
     pub style: Option<Style>,
     /// The heading they're listed under, with its size, such as `Mods — 2`.
     pub group: String,
+    /// The address of the picture of the role their group is, and of the
+    /// highest of their roles that has one.
+    pub group_icon: Option<String>,
+    pub role_icon: Option<String>,
     /// The server tag they wear by their name.
     pub tag: Option<Tag>,
     pub presence: Presence,
@@ -327,6 +331,10 @@ impl MemberList {
                             .as_ref()
                             .map(|(_, heading)| heading.clone())
                             .unwrap_or_default(),
+                        group_icon: group
+                            .as_ref()
+                            .and_then(|(id, _)| server?.role_icons.get(*id).cloned()),
+                        role_icon: server.and_then(|server| server.role_icon(&person.roles)),
                         tag: names.server_tag(user).cloned(),
                         presence: person.presence,
                         color: server.and_then(|server| server.color(&person.roles)),

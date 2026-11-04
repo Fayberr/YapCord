@@ -1695,6 +1695,8 @@ impl Adapter {
                         tint: tint(&member.name),
                         picture: slint::Image::default(),
                         picture_url: member.avatar.as_deref().unwrap_or_default().into(),
+                        group_icon: member.group_icon.as_deref().unwrap_or_default().into(),
+                        role_icon: member.role_icon.as_deref().unwrap_or_default().into(),
                         tag: member
                             .tag
                             .as_ref()

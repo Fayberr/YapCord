@@ -144,6 +144,10 @@ pub struct Server {
     pub role_names: Arc<HashMap<String, String>>,
     /// The position and RGB colour of each coloured role, by id.
     pub role_colors: Arc<HashMap<String, (i64, u32)>>,
+    /// The address of the picture of each role that has one, which a member
+    /// list draws by the role's name.
+    #[serde(default)]
+    pub role_icons: Arc<HashMap<String, String>>,
     /// Each role's position, by id: higher roles list first.
     pub role_positions: Arc<HashMap<String, i64>>,
     /// Roles anyone may mention, by id.
@@ -1196,6 +1200,14 @@ impl Server {
             } else {
                 Arc::make_mut(&mut self.mentionable_roles).remove(&id);
             }
+            match value["icon"].as_str().filter(|hash| !hash.is_empty()) {
+                Some(hash) => {
+                    Arc::make_mut(&mut self.role_icons).insert(id.clone(), role_icon(&id, hash));
+                }
+                None => {
+                    Arc::make_mut(&mut self.role_icons).remove(&id);
+                }
+            }
             Arc::make_mut(&mut self.role_positions)
                 .insert(id.clone(), value["position"].as_i64().unwrap_or_default());
             match value["color"].as_u64().filter(|color| *color != 0) {
@@ -1217,6 +1229,7 @@ impl Server {
         Arc::make_mut(&mut self.roles).remove(id);
         Arc::make_mut(&mut self.role_names).remove(id);
         Arc::make_mut(&mut self.role_colors).remove(id);
+        Arc::make_mut(&mut self.role_icons).remove(id);
         Arc::make_mut(&mut self.role_positions).remove(id);
         Arc::make_mut(&mut self.mentionable_roles).remove(id);
         Arc::make_mut(&mut self.managed_roles).remove(id);
@@ -1266,6 +1279,16 @@ impl Server {
             .into_iter()
             .map(|(_, name, color)| (name, color))
             .collect()
+    }
+
+    /// The picture of a member's highest role that has one, as Discord draws
+    /// it by their name.
+    pub fn role_icon(&self, roles: &[String]) -> Option<String> {
+        roles
+            .iter()
+            .filter(|role| self.role_icons.contains_key(*role))
+            .max_by_key(|role| self.role_positions.get(*role).copied().unwrap_or_default())
+            .and_then(|role| self.role_icons.get(role).cloned())
     }
 
     /// The colour Discord gives a member's name: their highest coloured role's.
@@ -1579,6 +1602,11 @@ pub fn avatar(user: &str, hash: Option<&str>) -> String {
             format!("{}/embed/avatars/{index}.png", cdn())
         }
     }
+}
+
+/// A role's picture, at twice the size a member list draws it.
+pub fn role_icon(role: &str, hash: &str) -> String {
+    format!("{}/role-icons/{role}/{hash}.png?size=64", cdn())
 }
 
 /// A profile or server banner, at the profile card's widest.
