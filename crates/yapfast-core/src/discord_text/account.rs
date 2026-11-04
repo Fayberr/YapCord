@@ -177,22 +177,21 @@ pub(super) fn command(
                             tracing::warn!(%error, "could not fetch a Discord profile");
                             error.to_string()
                         });
-                        return;
-                    };
+                    let failed = result.is_err();
                     let _ = events.send(Event::Profile {
                         user: user.clone(),
-                        result: Ok(chat_profile(&discord, &guild, profile)),
+                        result,
                     });
+                    if failed {
+                        return;
+                    }
                     // The note this account keeps on them fills the full profile's.
-                    let note_task = async {
-                        if let Ok(note) = discord.note(&user).await {
-                            let _ = events.send(Event::Note {
-                                user: user.clone(),
-                                result: Ok(note),
-                            });
-                        }
-                    };
-                    note_task.await;
+                    if let Ok(note) = discord.note(&user).await {
+                        let _ = events.send(Event::Note {
+                            user: user.clone(),
+                            result: Ok(note),
+                        });
+                    }
                 });
             }
             (discord, _) => {
