@@ -538,8 +538,8 @@ pub(super) fn chat_profile(
             .into_iter()
             .map(|(name, color)| ProfileRole { name, color })
             .collect(),
-        created: Some(yapfast_discord::message::date(profile.created)),
-        joined: profile.joined.map(yapfast_discord::message::date),
+        created: Some(crate::clock::day(profile.created / 1000)),
+        joined: profile.joined.map(|ms| crate::clock::day(ms / 1000)),
         servers: profile
             .mutual_servers
             .into_iter()

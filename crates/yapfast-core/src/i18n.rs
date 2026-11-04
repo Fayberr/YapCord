@@ -69,6 +69,12 @@ pub(crate) const KEYS: &[&str] = &[
     "date_mdy",
     "date_ymd",
     "zone_system",
+    "clock_today_at",
+    "clock_yesterday_at",
+    "clock_tomorrow_at",
+    "clock_last_at",
+    "clock_weekday_at",
+    "clock_day_at",
 ];
 
 fn english(key: &str) -> Option<&'static str> {
@@ -86,6 +92,12 @@ fn english(key: &str) -> Option<&'static str> {
         "date_mdy" => "Month/Day/Year",
         "date_ymd" => "Year-Month-Day",
         "zone_system" => "System default",
+        "clock_today_at" => "Today at {time}",
+        "clock_yesterday_at" => "Yesterday at {time}",
+        "clock_tomorrow_at" => "Tomorrow at {time}",
+        "clock_last_at" => "Last {weekday} at {time}",
+        "clock_weekday_at" => "{weekday} at {time}",
+        "clock_day_at" => "{day} at {time}",
         _ => return None,
     })
 }
@@ -105,6 +117,12 @@ fn german(key: &str) -> Option<&'static str> {
         "date_mdy" => "Monat/Tag/Jahr",
         "date_ymd" => "Jahr-Monat-Tag",
         "zone_system" => "Systemstandard",
+        "clock_today_at" => "Heute um {time} Uhr",
+        "clock_yesterday_at" => "Gestern um {time} Uhr",
+        "clock_tomorrow_at" => "Morgen um {time} Uhr",
+        "clock_last_at" => "Letzten {weekday} um {time} Uhr",
+        "clock_weekday_at" => "{weekday} um {time} Uhr",
+        "clock_day_at" => "{day} um {time} Uhr",
         _ => return None,
     })
 }
@@ -135,9 +153,11 @@ mod tests {
 
     #[test]
     fn language_is_process_wide_and_fills_names_in() {
-        set_language(Language::German);
-        assert_eq!(message_hint("sam"), "Nachricht an @sam");
-        set_language(Language::English);
+        // The process-wide language is left alone, since other tests read it.
+        assert_eq!(
+            tr_in(Language::German, "message_hint").replace("{name}", "sam"),
+            "Nachricht an @sam"
+        );
         assert_eq!(message_hint("sam"), "Message @sam");
     }
 }

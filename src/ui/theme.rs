@@ -781,7 +781,14 @@ impl Theme {
     pub fn apply(&self, window: &YapfastWindow) -> bool {
         self.set(&window.global::<yapfast_ui::Theme>());
         let rgb = |colour: Color| colour.as_argb_encoded() & 0xff_ffff;
-        let mention = MENTION.replace(rgb(self.link)) != rgb(self.link);
+        // Bonfire draws a mention's text as Discord's dark theme does, a light
+        // blurple; the other themes use their link colour.
+        let mention_colour = if self.dark && rgb(self.link) == rgb(BONFIRE.link) {
+            0xc9cdfb
+        } else {
+            rgb(self.link)
+        };
+        let mention = MENTION.replace(mention_colour) != mention_colour;
         let text = TEXT.replace(rgb(self.text)) != rgb(self.text);
         let muted = MUTED.replace(rgb(self.muted)) != rgb(self.muted);
         mention || text || muted
