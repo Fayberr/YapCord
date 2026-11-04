@@ -1392,7 +1392,7 @@ export component HistoryEdge inherits HorizontalLayout {
     out property <length> block: !root.welcome ? 42px : root.intro == "server" ? ClientStyle.intro-server-height : ClientStyle.intro-channel-height;
     alignment: center; height: root.block; padding-top: root.welcome ? 0px : 4px; padding-bottom: root.welcome ? 0px : 8px;
     if root.welcome: VerticalLayout {
-        alignment: center; spacing: 0px; padding-top: 24px; padding-bottom: 24px;
+        alignment: start; spacing: 0px; padding-top: 47px; padding-bottom: 12px;
         // A server's: its welcome over its name, in two lines.
         if root.intro == "server": Text { text: root.intro-welcome; color: Theme.text; font-size: 32px; font-weight: 600; horizontal-alignment: center; overflow: elide; height: 40px; }
         if root.intro == "server": Text { text: root.intro-title; color: Theme.text; font-size: 32px; font-weight: 600; horizontal-alignment: center; overflow: elide; height: 40px; }

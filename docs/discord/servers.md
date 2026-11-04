@@ -272,9 +272,10 @@ channel's symbol.
 ## A chat's first message
 
 At the start of a channel's history Discord writes a welcome block, which
-Yapfast now draws as well. In a server's first channel: "Welcome to {server}!"
-and "This is the start of the {server} server." in 32px semibold, then a
-14px line. In any other channel: a 68px circle with a hash, "Welcome to
+Yapfast now draws as well. In a server's first channel: "Welcome to" over the server's name
+in 32px semibold, then "This is the beginning of this server." in 14px, all
+centred, measured against Discord to 12px between the text and the date
+divider. In any other channel: a 68px circle with a hash, "Welcome to
 #{name}!" in 32px bold and "This is the start of the #{name} channel." under
 it. DMs and rooms outside Discord keep the one-line text.
 
