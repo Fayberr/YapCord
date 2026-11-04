@@ -973,6 +973,23 @@ impl Tracker {
         for user in channel["recipients"].as_array().into_iter().flatten() {
             self.learn_user(user);
         }
+        if !private.group {
+            // Diagnostic for the empty-DM wave: what an empty DM looks like.
+            tracing::info!(
+                "dm shape: user={} last_message_id={} type={} keys={}",
+                channel["recipients"][0]["username"].as_str().unwrap_or("?"),
+                match channel["last_message_id"].as_str() {
+                    None => "none".to_owned(),
+                    Some(last) if last == private.id => "same-as-channel".to_owned(),
+                    Some(last) => format!("set({})", last.len()),
+                },
+                channel["type"],
+                channel
+                    .as_object()
+                    .map(|keys| keys.keys().cloned().collect::<Vec<_>>().join(","))
+                    .unwrap_or_default()
+            );
+        }
         self.private.retain(|known| known.id != private.id);
         self.private.push(private);
     }
