@@ -845,6 +845,8 @@ export component MenuItem inherits Rectangle {
     in property <bool> danger;
     /// Shown, greyed, but not to be chosen; a ContextMenu doesn't report it.
     in property <bool> disabled;
+    /// No room for an icon when it has none, so the text starts at the edge.
+    in property <bool> plain;
     /// Drawn as the pointer's choice; a ContextMenu moves it with the keys too.
     in property <bool> highlighted: pointer.has-hover;
     callback clicked;
@@ -852,7 +854,7 @@ export component MenuItem inherits Rectangle {
     property <bool> current: root.checked && !root.checkbox;
     height: root.subtitle != "" ? 44px : 32px;
     border-radius: 4px;
-    background: root.highlighted ? (root.danger ? Theme.danger.with-alpha(0.16) : Theme.active) : transparent;
+    background: root.highlighted ? (root.danger ? Theme.danger.with-alpha(0.16) : Theme.overlay.with-alpha(0.09)) : transparent;
     border-width: focus.has-focus ? 2px : 0px;
     border-color: Theme.accent;
     accessible-role: button;
@@ -866,7 +868,7 @@ export component MenuItem inherits Rectangle {
     HorizontalLayout {
         padding-left: 8px; padding-right: 8px; spacing: 8px;
         opacity: root.disabled ? 0.45 : 1;
-        Image {
+        if !root.plain || root.current || root.icon.width > 0: Image {
             source: root.current ? @image-url("icons/check.svg") : root.icon;
             width: 16px; image-fit: contain;
             colorize: root.current ? Theme.accent : root.danger ? Theme.danger : root.highlighted ? Theme.text : Theme.muted;
@@ -875,7 +877,7 @@ export component MenuItem inherits Rectangle {
             alignment: center; horizontal-stretch: 1;
             Text {
                 text: root.text; color: root.danger ? Theme.danger : root.current || root.highlighted ? Theme.text : Theme.secondary;
-                font-size: 15px; font-weight: root.current ? 700 : 400;
+                font-size: 14px; font-weight: root.current ? 700 : 500;
                 overflow: elide;
             }
             if root.subtitle != "": Text {
@@ -935,6 +937,9 @@ export struct MenuRow {
     /// Greyed, and not to be chosen, such as a role this account may not
     /// give.
     disabled: bool,
+    /// Without room for an icon, unless the row has one, as Discord's person
+    /// menu has none on most rows.
+    plain: bool,
 }
 
 // The rows of a ContextMenu or of a submenu.
@@ -959,7 +964,7 @@ component MenuRows inherits VerticalLayout {
         }
         MenuItem {
             text: row.text; subtitle: row.subtitle; icon: row.icon; danger: row.danger;
-            checkbox: row.checkbox; checked: row.checked; disabled: row.disabled;
+            checkbox: row.checkbox; checked: row.checked; disabled: row.disabled; plain: row.plain;
             submenu: root.submenus[index].length > 0;
             highlighted: root.current == index || root.holding == index;
             hovered => { root.hovered(index); }
@@ -993,7 +998,7 @@ export component ContextMenu inherits Rectangle {
     /// The room below the menu's top; the rest of `tallest` is above it.
     in property <length> room-below: 100000px;
     // A menu and a submenu are as wide as their rows, within these.
-    in property <length> narrowest: 188px;
+    in property <length> narrowest: 220px;
     property <length> widest: 320px;
     out property <length> menu-width: max(root.narrowest, min(root.widest, main.preferred-width));
     property <length> submenu-width: max(root.narrowest, min(root.widest, sub.preferred-width));
@@ -1092,7 +1097,7 @@ export component ContextMenu inherits Rectangle {
         main-panel := Rectangle {
             x: root.flip ? root.content-width - root.menu-width : 0px; y: root.lift;
             width: root.menu-width; height: root.main-height;
-            background: Theme.raised; border-color: Theme.edge; border-width: 1px; border-radius: 8px;
+            background: Theme.menu; border-color: Theme.line; border-width: 1px; border-radius: 8px;
             drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
             clip: true;
             TouchArea { }
@@ -1134,7 +1139,7 @@ export component ContextMenu inherits Rectangle {
             x: root.flip ? root.widest - root.submenu-width : root.menu-width + 4px;
             y: root.lift + root.sub-top;
             width: root.submenu-width; height: root.sub-height;
-            background: Theme.raised; border-color: Theme.edge; border-width: 1px; border-radius: 8px;
+            background: Theme.menu; border-color: Theme.line; border-width: 1px; border-radius: 8px;
             drop-shadow-blur: 24px; drop-shadow-color: #00000080; drop-shadow-offset-y: 8px;
             clip: true;
             TouchArea { }

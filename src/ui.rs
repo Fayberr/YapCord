@@ -1551,6 +1551,8 @@ struct Icons {
     dm: slint::Image,
     chat: slint::Image,
     text: slint::Image,
+    /// A boxed ID, for Copy ID.
+    id: slint::Image,
     thread: slint::Image,
     forum: slint::Image,
     voice: slint::Image,
@@ -1786,6 +1788,7 @@ impl Adapter {
                 "../ui/icons/message-square-text.svg"
             ))?,
             text: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/hash.svg"))?,
+            id: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/id.svg"))?,
             thread: slint::Image::load_from_svg_data(include_bytes!("../ui/icons/thread.svg"))?,
             forum: slint::Image::load_from_svg_data(include_bytes!(
                 "../ui/icons/message-square-text.svg"

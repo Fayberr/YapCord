@@ -18,6 +18,8 @@ export global Theme {
     in-out property <color> row-hover: #1a1b20;
     in-out property <color> line: #2c2d34;
     in-out property <color> edge: #0c0d0f;
+    /// The ground of a context menu: Discord's near black panel on a dark theme.
+    out property <color> menu: self.dark ? self.sunken.mix(#000000, 0.88) : self.raised;
     in-out property <color> text: #eef0f4;
     in-out property <color> secondary: #b5b8c1;
     in-out property <color> muted: #8d919c;

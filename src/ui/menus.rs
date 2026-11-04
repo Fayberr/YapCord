@@ -47,7 +47,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     let state = &app.state;
     let in_voice = voice_target(id);
     let thread = thread_more(id);
-    let choices = if let Some((room, user)) = in_voice {
+    let mut choices = if let Some((room, user)) = in_voice {
         app.voice_person_choices(room, user)
     } else if let Some((room, _)) = thread {
         app.thread_more_choices(room)
@@ -58,6 +58,11 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
     } else {
         app.menu_choices(id)
     };
+    // A person's menu is Discord's: its order, without row icons.
+    let plain = person && thread.is_none();
+    if plain {
+        discord_order(&mut choices);
+    }
     let id = match (in_voice, thread) {
         (Some((_, user)), _) => user,
         (None, Some((room, _))) => room,
@@ -86,11 +91,12 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
         .rooms
         .iter()
         .any(|found| found.id == id && found.voice);
+    let blank = slint::Image::default();
     let mut group = None;
     let mut rows: Vec<MenuRow> = choices
         .into_iter()
         .map(|choice| {
-            let (text, icon) = match choice {
+            let (text, mut icon) = match choice {
                 MenuChoice::Timeout => (format!("Time out {}", name()), &icons.timeout),
                 MenuChoice::Kick => (format!("Kick {}", name()), &icons.kick),
                 MenuChoice::Ban => (format!("Ban {}", name()), &icons.ban),
@@ -110,7 +116,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
             // account stands with someone, then notifications, roles,
             // copying, and moderation; a channel's management, then deleting it.
             let starts = match choice {
-                MenuChoice::ServerNickname
+                MenuChoice::Apps
                 | MenuChoice::InviteToServer
                 | MenuChoice::AddFriend
                 | MenuChoice::AcceptFriend
@@ -139,7 +145,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
                 | MenuChoice::AddToChannelList
                 | MenuChoice::RemoveFromChannelList
                 | MenuChoice::UnfollowCategory => 3,
-                MenuChoice::Roles | MenuChoice::MoveTo => 4,
+                MenuChoice::ServerNickname | MenuChoice::Roles | MenuChoice::MoveTo => 4,
                 MenuChoice::LocalMute
                 | MenuChoice::SoundboardMute
                 | MenuChoice::SelfMute
@@ -162,9 +168,14 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
                 MenuChoice::DeleteChannel | MenuChoice::LeaveServer | MenuChoice::LeaveGroup => 7,
                 _ => 0,
             };
+            // Discord's person menu has an icon on Copy ID alone.
+            if plain && choice != MenuChoice::CopyId {
+                icon = &blank;
+            }
             let separated = group.replace(starts).is_some_and(|last| last != starts);
             let notifications = || app.server_notifications(id);
             let subtitle = match choice {
+                MenuChoice::AddNote => "Only visible to you".into(),
                 MenuChoice::UnmuteServer => notifications()
                     .and_then(|notifications| notifications.own.muted_until)
                     .map(|until| muted_until(until / 1000, adapter.layout.twelve_hour_clock))
@@ -226,6 +237,7 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
                 separated,
                 checkbox,
                 checked,
+                plain,
                 ..Default::default()
             }
         })
@@ -246,6 +258,14 @@ pub(super) fn menu(adapter: &Adapter, id: &str, person: bool) -> Menu {
                 notification_rows(app, id)
             } else if row.id == choice_id(MenuChoice::Roles) {
                 role_rows(adapter, id)
+            } else if row.id == choice_id(MenuChoice::Apps) {
+                vec![MenuRow {
+                    id: "no-apps".into(),
+                    text: "No apps".into(),
+                    disabled: true,
+                    plain: true,
+                    ..Default::default()
+                }]
             } else if row.id == choice_id(MenuChoice::InviteToServer) {
                 invite_rows(app, user.as_deref())
             } else if let (true, Some((room, user))) =
@@ -283,6 +303,7 @@ fn label(icons: &Icons, choice: MenuChoice, in_call: bool) -> (&'static str, &sl
         MenuChoice::CloseDm => ("Close DM", &icons.cancel),
         MenuChoice::LeaveGroup => ("Leave group", &icons.leave),
         MenuChoice::InviteToServer => ("Invite to server", &icons.befriend),
+        MenuChoice::Apps => ("Apps", &icons.befriend),
         MenuChoice::Unfriend => ("Remove friend", &icons.unfriend),
         MenuChoice::Ignore => ("Ignore", &icons.ignore),
         MenuChoice::Unignore => ("Stop ignoring", &icons.ignore),
@@ -291,7 +312,7 @@ fn label(icons: &Icons, choice: MenuChoice, in_call: bool) -> (&'static str, &sl
         MenuChoice::Mute => ("Mute", &icons.mute),
         MenuChoice::Unmute => ("Unmute", &icons.unmute),
         MenuChoice::CopyLink => ("Copy link", &icons.copy),
-        MenuChoice::CopyId => ("Copy ID", &icons.text),
+        MenuChoice::CopyId => ("Copy ID", &icons.id),
         MenuChoice::Mention => ("Mention", &icons.mention),
         MenuChoice::ServerNickname => ("Change nickname", &icons.rename),
         MenuChoice::Roles => ("Roles", &icons.roles),
@@ -335,6 +356,49 @@ fn label(icons: &Icons, choice: MenuChoice, in_call: bool) -> (&'static str, &sl
         MenuChoice::EditServerProfile => ("Edit server profile", &icons.rename),
         MenuChoice::ServerSettings => ("Server settings", &icons.settings),
     }
+}
+
+/// Where a choice goes in Discord's member menu: Profile, Mention, Message,
+/// Start call and Add note; then Apps, Invite to server and how this account
+/// stands with them; then the server's nickname and roles; then what the call
+/// and moderation offer; Copy ID last. What a DM adds as a conversation comes
+/// before them all.
+fn discord_rank(choice: MenuChoice) -> u8 {
+    match choice {
+        MenuChoice::MarkRead | MenuChoice::JoinVoice | MenuChoice::OpenChat => 0,
+        MenuChoice::Profile => 1,
+        MenuChoice::Mention => 2,
+        MenuChoice::Message => 3,
+        MenuChoice::Call => 4,
+        MenuChoice::AddNote => 5,
+        MenuChoice::AddNickname | MenuChoice::EditNickname => 6,
+        MenuChoice::EditServerProfile => 7,
+        MenuChoice::Apps => 10,
+        MenuChoice::InviteToServer => 11,
+        MenuChoice::AddFriend
+        | MenuChoice::AcceptFriend
+        | MenuChoice::CancelFriendRequest
+        | MenuChoice::Unfriend => 12,
+        MenuChoice::Ignore | MenuChoice::Unignore => 13,
+        MenuChoice::Block | MenuChoice::Unblock => 14,
+        MenuChoice::ServerNickname => 20,
+        MenuChoice::Roles => 21,
+        MenuChoice::CopyId => 100,
+        MenuChoice::CopyLink => 99,
+        _ => 50,
+    }
+}
+
+/// Puts a person's choices in Discord's order, with Apps where a member's
+/// menu has it: a menu that offers Message and Add note is a member's.
+pub(super) fn discord_order(choices: &mut Vec<MenuChoice>) {
+    let member = [MenuChoice::Profile, MenuChoice::Message, MenuChoice::AddNote]
+        .iter()
+        .all(|choice| choices.contains(choice));
+    if member && !choices.contains(&MenuChoice::Apps) {
+        choices.push(MenuChoice::Apps);
+    }
+    choices.sort_by_key(|choice| discord_rank(*choice));
 }
 
 /// A server member's roles submenu, built as it opens: every role of the
@@ -801,9 +865,10 @@ pub(super) fn choose(
         MenuChoice::OpenChat => Some(Action::OpenChat(target)),
         MenuChoice::Call if person => Some(Action::CallPerson(target.clone())),
         MenuChoice::Call => room.map(Action::RequestJoinVoice),
+        // Discord's Profile opens the full modal, not the popout.
         MenuChoice::Profile if person => Some(Action::ShowProfile {
             user: target,
-            large: false,
+            large: true,
         }),
         MenuChoice::Profile => Some(Action::ShowDmProfile(target)),
         MenuChoice::Message => Some(Action::MessagePerson(target)),
@@ -860,7 +925,10 @@ pub(super) fn choose(
         }),
         // Its roles are its submenu's, as are the servers to invite to and
         // the channels to move to.
-        MenuChoice::Roles | MenuChoice::InviteToServer | MenuChoice::MoveTo => None,
+        MenuChoice::Roles
+        | MenuChoice::InviteToServer
+        | MenuChoice::Apps
+        | MenuChoice::MoveTo => None,
         MenuChoice::LocalMute => {
             if let Some(muted) = ticked {
                 yapfast_core::volume::mute(&target, muted);
@@ -994,7 +1062,7 @@ pub(super) fn server_change(
     }
 }
 
-const CHOICES: [MenuChoice; 65] = [
+const CHOICES: [MenuChoice; 66] = [
     MenuChoice::MarkRead,
     MenuChoice::JoinVoice,
     MenuChoice::OpenChat,
@@ -1012,6 +1080,7 @@ const CHOICES: [MenuChoice; 65] = [
     MenuChoice::CloseDm,
     MenuChoice::LeaveGroup,
     MenuChoice::InviteToServer,
+    MenuChoice::Apps,
     MenuChoice::Unfriend,
     MenuChoice::Ignore,
     MenuChoice::Unignore,
@@ -1081,6 +1150,7 @@ fn choice_id(choice: MenuChoice) -> &'static str {
         MenuChoice::CloseDm => "close-dm",
         MenuChoice::LeaveGroup => "leave-group",
         MenuChoice::InviteToServer => "invite-to-server",
+        MenuChoice::Apps => "apps",
         MenuChoice::Unfriend => "unfriend",
         MenuChoice::Ignore => "ignore",
         MenuChoice::Unignore => "unignore",
